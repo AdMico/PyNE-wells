@@ -1,6 +1,7 @@
 """
-Brought to v4.0.0 on Fri Sep 1 2023 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
 
 This module's entire purpose is to load all required modules in the user's actual control script.

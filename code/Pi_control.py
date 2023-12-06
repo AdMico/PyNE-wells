@@ -1,7 +1,7 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@developers: Adam, Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 This class sets up the Pi to be controlled remotely. The truth table is that of the multiplexer.
 """

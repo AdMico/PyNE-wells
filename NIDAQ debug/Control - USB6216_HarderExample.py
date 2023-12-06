@@ -1,7 +1,7 @@
 """
-Brought to v3.1.0 on Fri Oct 10 2019 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Adam Micolich
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 Example program for using NIDAQ USB-6216 for full control of a transistor characterisation 2SK940 with 10kohm in series with channel.
 DAQ AO0 on the source, DAQ AO1 on the gate, Drain feeds a Femto at 10^4 gain, which feeds AI0. Program should give classic MOSFET saturation curve 

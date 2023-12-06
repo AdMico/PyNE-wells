@@ -1,7 +1,7 @@
 """
-Brought to v3.1.0 on Fri Oct 10 2019 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Adam Micolich
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 Program for using NIDAQ USB-6216 for full control of a transistor characterisation.
 DAQ AO0 on source, DAQ AO1 on gate, Drain feeds a Femto, which feeds AI0.

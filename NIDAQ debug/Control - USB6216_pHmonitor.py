@@ -1,7 +1,7 @@
 """
-Brought to v3.1.0 on Wed Oct 16 2019 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Adam Micolich
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 Program for doing sweeps of the pH meter vs time -- could be extended to testing pH vs other instrument variables
 """

@@ -1,7 +1,7 @@
 """
-Brought to v4.0.0 on Tue May 09 2023 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Adam Micolich
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 This module does the output handling for the USB-6216, which is effectively a pair of analog outputs
 and a set of 8 analog inputs. The input handling is done by a separate .py. There is a settable option for 

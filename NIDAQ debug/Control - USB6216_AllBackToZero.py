@@ -1,7 +1,7 @@
 """
-Brought to v3.1.0 on Fri Oct 10 2019 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Adam Micolich
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 NIDAQ USB-6216 program that simply drives outputs to zero and stops. Designed for recovery
 from an emergency (ctrl-c) stop of another program. Can be used also for quick spin-up.

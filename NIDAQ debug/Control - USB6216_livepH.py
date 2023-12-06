@@ -1,7 +1,7 @@
 """
-Brought to v3.1.0 on Fri Oct 10 2019 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Adam Micolich
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 Program to do live running of an ISFET pH meter for testing.
 Use the pH Monitor control program instead for traditional sweeps with pHmeter.py
