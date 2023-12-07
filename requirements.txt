@@ -30,3 +30,7 @@ easygui==0.98.3
 colorzero==2.0
 gpiozero==2.0
 pigpio==1.78
+pandastable==0.13.1
+xlrd==2.0.1
+numexpr==2.8.7
+future==0.18.3

@@ -1,13 +1,18 @@
+"""
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
+
+@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@author: Sam Shelton
+"""
+
 import threading
 import pandas as pd
 import numpy as np
-import time # Im still wrapping my head around time/datetime in Py, this can probably be improved
+import time
 from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog
-from pandastable import Table, TableModel  #for whatever reason this only works on Windows - no mac/linux
-
-#Maybe need to rewrite everthing in measure.py to use same GUI package (i.e., drop easyGUI)?
+from pandastable import Table, TableModel  #works on Windows - no mac/linux
 
 num_devices=52; loops=6
 devices = np.arange(num_devices + 1)[1:] # list of ints 1 to 52

@@ -1,8 +1,9 @@
 """
-Brought to v4.0.0 on Fri Sep 1 2023 by APM
+Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-@author: Jan Gluschke
+@developers: Adam Micolich, Jan Gluschke, Sam Shelton & Shuji Kojima
 """
+
 import threading
 import pandas as pd
 from matplotlib.pyplot import cm
