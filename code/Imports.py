@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from Instrument import closeInstruments
 from GUIs import fileDialog, initialize
+from Config import PiBox, MuxMode
 from TimeMeas import TimeMeas
 from USB6216In import USB6216In
 from USB6216Out import USB6216Out

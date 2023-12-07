@@ -7,14 +7,21 @@ This class sets up the Pi to be controlled remotely. The truth table is that of 
 """
 from gpiozero import LED
 from gpiozero.pins.pigpio import PiGPIOFactory
+from Config import PiBox, MuxMode
 
 class PiMUX:
 
-    def __init__(self, IP = '129.94.163.167'):
+    def __init__(self):
+        if PiBox == 'MeasureOne':
+            IP = '129.94.163.203'
+        if PiBox == 'MeasureTwo':
+            IP = '129.94.163.167'
         self.IP = IP
+        #print(IP) -- For PiBox testing
         self.PiFactory = PiGPIOFactory(host=self.IP)
-        #TruthTable format: Device: [A3,A2,A1,A0,EN1,EN2,EN3,EN4], #MUX <number> Pin <number> (Mx <number> out of 16)
-        self.TruthTable = {0: [0, 0, 0, 0, 0, 0, 0, 0],  #OFF state
+
+        #DeviceTable format: Device: [A3,A2,A1,A0,EN1,EN2,EN3,EN4], #MUX <number> Pin <number> (Mx <number> out of 16)
+        self.DeviceTable = {0: [0, 0, 0, 0, 0, 0, 0, 0],  #OFF state
                            1: [1, 1, 0, 0, 0, 1, 0, 0],  # MUX 2 Pin 7 (Mx13)
                            2: [1, 0, 1, 1, 0, 1, 0, 0],  # MUX 2 Pin 8 (Mx12)
                            3: [1, 0, 1, 0, 0, 1, 0, 0],  # MUX 2 Pin 9 (Mx11)
@@ -68,6 +75,35 @@ class PiMUX:
                            51: [1, 0, 1, 1, 0, 0, 0, 1],  # MUX 4 Pin 8 (Mx12)
                            52: [1, 1, 0, 0, 0, 0, 0, 1]}  # MUX 4 Pin 7 (Mx13)
 
+        # RowTable format: Row: [A3,A2,A1,A0,EN1,EN2,EN3,EN4], #Dev <number>/<number> MUX <number> & <number>
+        self.RowTable = {0: [0, 0, 0, 0, 0, 0, 0, 0],  # OFF state
+                        1: [1, 1, 0, 0, 0, 1, 0, 1],  # Dev 1/52 MUX 2-7 & 4-7
+                        2: [1, 0, 1, 1, 0, 1, 0, 1],  # Dev 2/51 MUX 2-8 & 4-8
+                        3: [1, 0, 1, 0, 0, 1, 0, 1],  # Dev 3/50 MUX 2-9 & 4-9
+                        4: [1, 0, 0, 1, 0, 1, 0, 1],  # Dev 4/49 MUX 2-10 & 4-10
+                        5: [1, 0, 0, 0, 0, 1, 0, 1],  # Dev 5/48 MUX 2-11 & 4-11
+                        6: [0, 1, 1, 1, 0, 1, 0, 1],  # Dev 6/47 MUX 2-26 & 4-26
+                        7: [0, 1, 1, 0, 0, 1, 0, 1],  # Dev 7/46 MUX 2-25 & 4-25
+                        8: [0, 1, 0, 1, 0, 1, 0, 1],  # Dev 8/45 MUX 2-24 & 4-24
+                        9: [0, 1, 0, 0, 0, 1, 0, 1],  # Dev 9/44 MUX 2-23 & 4-23
+                        10: [0, 0, 1, 1, 0, 1, 0, 1],  # Dev 10/43 MUX 2-22 & 4-22
+                        11: [0, 0, 1, 0, 0, 1, 0, 1],  # Dev 11/42 MUX 2-21 & 4-21
+                        12: [0, 0, 0, 1, 0, 1, 0, 1],  # Dev 12/41 MUX 2-20 & 4-20
+                        13: [0, 0, 0, 0, 0, 1, 0, 1],  # Dev 13/40 MUX 2-19 & 4-19
+                        14: [1, 1, 0, 0, 1, 0, 1, 0],  # Dev 14/39 MUX 1-7 & 3-7
+                        15: [1, 0, 1, 1, 1, 0, 1, 0],  # Dev 15/38 MUX 1-8 & 3-8
+                        16: [1, 0, 1, 0, 1, 0, 1, 0],  # Dev 16/37 MUX 1-9 & 3-9
+                        17: [1, 0, 0, 1, 1, 0, 1, 0],  # Dev 17/36 MUX 1-10 & 3-10
+                        18: [1, 0, 0, 0, 1, 0, 1, 0],  # Dev 18/35 MUX 1-11 & 3-11
+                        19: [0, 1, 1, 1, 1, 0, 1, 0],  # Dev 19/34 MUX 1-26 & 3-26
+                        20: [0, 1, 1, 0, 1, 0, 1, 0],  # Dev 20/33 MUX 1-25 & 3-25
+                        21: [0, 1, 0, 1, 1, 0, 1, 0],  # Dev 21/32 MUX 1-24 & 3-24
+                        22: [0, 1, 0, 0, 1, 0, 1, 0],  # Dev 22/31 MUX 1-23 & 3-23
+                        23: [0, 0, 1, 1, 1, 0, 1, 0],  # Dev 23/30 MUX 1-22 & 3-22
+                        24: [0, 0, 1, 0, 1, 0, 1, 0],  # Dev 24/29 MUX 1-21 & 3-21
+                        25: [0, 0, 0, 1, 1, 0, 1, 0],  # Dev 25/28 MUX 1-20 & 3-20
+                        26: [0, 0, 0, 0, 1, 0, 1, 0]}  # Dev 26/27 MUX 1-19 & 3-19
+
         #Define what GPIO pins are connected to the selector pins on the MUX
 
         self.E1_pin = LED(6,pin_factory = self.PiFactory)
@@ -82,14 +118,21 @@ class PiMUX:
 
         self.listPins = [self.A3_pin,self.A2_pin,self.A1_pin,self.A0_pin,self.E1_pin,self.E2_pin,self.E3_pin,self.E4_pin]
 
-        #Uses truth table to set GPIO pin voltages to activate desired output.
+        #Uses truthtables to set GPIO pin voltages to activate desired output.
 
     def setMuxToOutput(self, desiredOutput):
-        for index,item in enumerate(self.listPins):
-            if self.TruthTable[desiredOutput][index]:
-                item.on()
-            else:
-                item.off()
+        if MuxMode == 'Test':
+            for index, item in enumerate(self.listPins):
+                if self.DeviceTable[desiredOutput][index]:
+                    item.on()
+                else:
+                    item.off()
+        elif MuxMode == 'Run':
+            for index, item in enumerate(self.listPins):
+                if self.RowTable[desiredOutput][index]:
+                    item.on()
+                else:
+                    item.off()
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
