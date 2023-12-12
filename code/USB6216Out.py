@@ -26,7 +26,7 @@ class USB6216Out(Instrument.Instrument):
         super(USB6216Out, self).__init__()
         self.dev = address
         self.type ="USB6216"  #We can check each instrument for its type and react accordingly
-        self.name = "myUSB6216"
+        self.name = "USB6216"
         if self.dev == 0:
             self.port = "Dev1/ao0"
             self.fbp = "Dev1/_ao0_vs_aognd"
@@ -105,7 +105,7 @@ class USB6216Out(Instrument.Instrument):
     def _setScaleFactor(self,scaleFactor):
         self.scaleFactor = scaleFactor
             
-    def goTo(self,target,stepsize = 0.01,delay = 0.001): # Modified from usual as APM likes linspace better
+    def goTo(self,target,stepsize = 0.01,delay = 0.0): # Modified from usual as APM likes linspace better
         currentOutput = self.get("outputLevel")
         count = int(abs(target-currentOutput)/stepsize) + 1
         sweepArray = np.linspace(currentOutput,target,count,endpoint=True)

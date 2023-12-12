@@ -15,9 +15,10 @@ from itertools import product
 import matplotlib.pyplot as plt
 
 from Instrument import closeInstruments
-from GUIs import fileDialog, initialize
+from PyNE_GUI_Utils import fileDialog, initialize
 from Config import PiBox, MuxMode
 from TimeMeas import TimeMeas
+from SweepFunction import sweepAndSave, sweepNoSave
 from USB6216In import USB6216In
 from USB6216Out import USB6216Out
 from NoiseGenerator import LinearNoiseGenerator, SineNoiseGenerator, DoubleNoiseGenerator

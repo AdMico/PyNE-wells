@@ -17,7 +17,7 @@ class TimeMeas(Instrument.Instrument):
         self.timeInterval = timeInterval
         self.initTime = time.time()
         self.type = 'TimeMeas'
-        self.name = 'myTimeMeas'
+        self.name = 'TimeMeas'
  
     @Instrument.addOptionSetter("timeInterval")
     def _setTime(self,timeInterval):

@@ -20,7 +20,7 @@ class USB6216In(Instrument.Instrument):
         super(USB6216In, self).__init__()
         self.dev = address
         self.type ="USB6216"  #We can check each instrument for its type and react accordingly
-        self.name = "myUSB6216"
+        self.name = "USB6216"
         if self.dev == 0:
             self.port = "Dev1/ai0"
         elif self.dev == 1:
@@ -62,7 +62,7 @@ class USB6216In(Instrument.Instrument):
     def _setScaleFactor(self,scaleFactor):
         self.scaleFactor = scaleFactor
             
-    def goTo(self,target,stepsize=0.01,delay=0.002):
+    def goTo(self,target,stepsize=0.01,delay=0.0):
         pass
             
     def close(self):
