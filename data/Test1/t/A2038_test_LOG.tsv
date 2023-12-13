@@ -1,0 +1,59 @@
+Measurement Log file for measurement >>> A2038 <<< 
+Starting time and date: Wed Dec 13 12:22:50 2023
+
+Set/sweeped variables/instruments:
+Variable	Inst name	Inst type
+-----------------------------------
+time	TimeMeas	TimeMeas
+
+Measuring variables/instruments:
+Variable	Inst name	Inst type
+-----------------------------------
+I_DL	USB6216	USB6216
+I_DR	USB6216	USB6216
+
+User comments: No comments provided by user
+-----------------------------------
+Delay = 0.0s 
+Initial instrument configuration
+-----------------------------------
+{
+    "TimeMeas-TimeMeas-3": {
+        "name": "TimeMeas",
+        "timeInterval": 10.0,
+        "timeStamp": 10.596251964569092
+    },
+    "USB6216-USB6216In-1": {
+        "inputLevel": -0.02643564027048463,
+        "name": "USB6216",
+        "scaleFactor": 1
+    },
+    "USB6216-USB6216In-2": {
+        "inputLevel": -0.002764834459081371,
+        "name": "USB6216",
+        "scaleFactor": 1
+    }
+}
+-----------------------------------
+Ending time and date: Wed Dec 13 12:26:01 2023
+Time elapsed: 191.0862958431244 seconds.
+Final instrument configuration: 
+-----------------------------------
+{
+    "TimeMeas-TimeMeas-3": {
+        "name": "TimeMeas",
+        "timeInterval": 10.0,
+        "timeStamp": 10.596251964569092
+    },
+    "USB6216-USB6216In-1": {
+        "inputLevel": -0.02643564027048463,
+        "name": "USB6216",
+        "scaleFactor": 1
+    },
+    "USB6216-USB6216In-2": {
+        "inputLevel": -0.002764834459081371,
+        "name": "USB6216",
+        "scaleFactor": 1
+    }
+}
+-----------------------------------

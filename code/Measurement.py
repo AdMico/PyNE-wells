@@ -7,7 +7,7 @@ Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 import pandas as pd
 from matplotlib.pyplot import cm
 from scipy import stats
-import easygui
+import easyguigo
 import Analysis
 from datetime import datetime
 import os

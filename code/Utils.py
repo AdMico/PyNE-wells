@@ -3,6 +3,8 @@ Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
+
+A bunch of useful utility functions for various handling tasks in PyNE
 """
 
 import tkinter as tk
