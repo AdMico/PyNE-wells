@@ -14,4 +14,4 @@ PiBox = "MeasureTwo"
 # Information about which Truth Table to use (Devices, Rows, etc)
 # Details are in Pi-control.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
 
-MuxMode = "Run"
+MuxMode = "Test"
