@@ -67,25 +67,16 @@ def micr_measure(deviceList=1,
         "timeInterval":timeStep
     })
 
-    #---- NIDAQ Output Port for Source-Left --------------
-    daqout_SL = USB6216Out(0)
-    daqout_SL.setOptions({
+    #---- NIDAQ Output Port for Source --------------
+    daqout_S = USB6216Out(0)
+    daqout_S.setOptions({
         "feedBack":"Int",
         "extPort":6, # Can be any number 0-7 if in 'Int'
         "scaleFactor":1
     })
 
-    #---- NIDAQ Output Port for Source-Right --------------
-    daqout_SR = USB6216Out(1)
-    daqout_SR.setOptions({
-        "feedBack":"Int",
-        "extPort":7, # Can be any number 0-7 if in 'Int'
-        "scaleFactor":1
-    })
-
-    print('Ensure NIDAQ Outputs Zero') #Optional, but use unless you trust to be zero -- Remove in future version APM 13DEC23
-    daqout_SL.goTo(0.0,delay=0.0)
-    daqout_SR.goTo(0.0,delay=0.0)
+    print('Ensure NIDAQ Output Zero') #Optional, but use unless you trust to be zero -- Remove in future version APM 13DEC23
+    daqout_S.goTo(0.0,delay=0.0)
 
     #---- NIDAQ Input Port for Drain-Left --------------
     daqin_DL = USB6216In(0)
@@ -113,17 +104,15 @@ def micr_measure(deviceList=1,
 
     # Set NIDAQ outputs to operating values -- APM 13DEC23
     print('Set NIDAQ outputs for sweep')
-    daqout_SL.goTo(Vsd,delay=0.0)
-    daqout_SR.goTo(Vsd,delay=0.0)
+    daqout_S.goTo(Vsd,delay=0.0)
 
     # Run Sweep
     print ('Run the actual sweep')
     SF.sweepAndSave(Dct) # Perform timesweep using PyNE NIDAQ module
 
-    # Set NIDAQ outputs back to zero and switch MUX off
-    print('Return outputs to zero')
-    daqout_SL.goTo(0.0,delay=0.0)
-    daqout_SR.goTo(0.0,delay=0.0)
+    # Set NIDAQ output back to zero and switch MUX off
+    print('Return output to zero')
+    daqout_S.goTo(0.0,delay=0.0)
     print('MUX off')
     CtrlPi.setMuxToOutput(0)
 
