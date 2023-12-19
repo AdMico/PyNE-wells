@@ -27,3 +27,13 @@ DrainRight = 'Dev1/ai1'
 
 SR = float(2e5) #Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
 SpC = int(1e5) #Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+
+# Settings for Femto Preamplifiers
+
+P1Gain = float(1e4)
+P2Gain = float(1e4)
+
+# Settings for Measurement Biases
+
+VSource = float(0.5)
+VGate = float(0.0)
