@@ -15,15 +15,15 @@ from datetime import datetime
 from tkinter import *
 import tkinter as tk
 from pandastable import Table, TableModel
+import pandastable as pdtb
 import threading
 
 # Initialisation APM 19DEC23
 nRows=26
 nDev=2*nRows
 devices=np.zeros(nDev)
-#testGUIFrame = pd.DataFrame(np.zeros((nDev, 4)), columns=['DevID', 'Resistance', 'Error', 'Timestamp'], dtype='object')
-testGUIFrameL = pd.DataFrame(np.zeros((nRows, 4)), columns=['DevID', 'Resistance', 'Error', 'Timestamp'], dtype='object')
-testGUIFrameR = pd.DataFrame(np.zeros((nRows, 4)), columns=['DevID', 'Resistance', 'Error', 'Timestamp'], dtype='object')
+testGUIFrameL = pd.DataFrame(np.zeros((nRows, 4)), columns=['Device ID', 'Resistance', 'Uncertainty', 'Timestamp'], dtype='object')
+testGUIFrameR = pd.DataFrame(np.zeros((nRows, 4)), columns=['Device ID', 'Resistance', 'Uncertainty', 'Timestamp'], dtype='object')
 zeroThres = float(1e-2)
 start = np.zeros(nRows,float)
 end = np.zeros(nRows,float)
@@ -33,8 +33,6 @@ stop_text = """If you want to stop the program, simply replace this text with 's
 def updateDF():
     table_L.updateModel(TableModel(testGUIFrameL))
     table_R.updateModel(TableModel(testGUIFrameR))
-    table_L.autoResizeColumns()
-    table_R.autoResizeColumns()
     table_L.redraw()
     table_R.redraw()
 
@@ -92,8 +90,8 @@ def measLoop():
             DR = 0.0
             DRerr = 0.0
 
-        print(f'DL = {DL:.2f} +/- {DLerr:.2f} ohms')
-        print(f'DR = {DR:.2f} +/- {DRerr:.2f} ohms')
+#        print(f'DL = {DL:.2f} +/- {DLerr:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
+#        print(f'DR = {DR:.2f} +/- {DRerr:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
 
         #testGUIFrame.iloc[DevL-1] = [int(DevL), round(DL,2), round(DLerr,2), datetime.now().strftime("%H:%M:%S")]
         #testGUIFrame.iloc[DevR-1] = [int(DevR), round(DR,2), round(DRerr,2), datetime.now().strftime("%H:%M:%S")]
@@ -120,28 +118,36 @@ def measLoop():
     CtrlPi.setMuxToOutput(0)
     print()
     print ('Measurement Daemon Completed Successfully')
+    root.quit() ## remove this line for the program to not quit at the end
 
 if __name__ == "__main__":
 
     #GUI Code
     root = tk.Tk()
     root.title("Live Measurement GUI")
-    root.geometry("1000x700")
-    left_frame = Frame(root, width=250, height=700)
-    left_frame.pack(side='left', fill='both', expand=True)
-    right_frame = Frame(root, width=250, height=700)
-    right_frame.pack(side='right', fill='both', expand=True)
-    table_L = Table(left_frame, showtoolbar=True, showstatusbar=True)
+    root.maxsize(1200,800)
+    root.config(bg="skyblue")
+    left_table = Frame(root)
+    left_table.grid(row=0, column=1, padx=5, pady=5)
+    right_table = Frame(root)
+    right_table.grid(row=0, column =2, padx=5, pady=5)
+    table_L = Table(left_table, showtoolbar=True, showstatusbar=True, width=350, height=590)
+    options_L = {'align':'w', 'cellwidth': 80, 'floatprecision': 2,'font': 'Arial', 'fontsize': 12, 'linewidth': 1, 'rowheight': 22}
+    pdtb.config.apply_options(options_L,table_L)
     table_L.updateModel(TableModel(testGUIFrameL))
-    table_L.autoResizeColumns()
-    table_R = Table(right_frame, showtoolbar=True, showstatusbar=True)
+    table_R = Table(right_table, showtoolbar=True, showstatusbar=True, width=350, height=590)
+    options_R = {'align':'w', 'cellwidth': 80, 'floatprecision': 2,'font': 'Arial', 'fontsize': 12, 'linewidth': 1, 'rowheight': 22}
+    pdtb.config.apply_options(options_R,table_R)
     table_R.updateModel(TableModel(testGUIFrameR))
-    table_R.autoResizeColumns()
     table_L.show()
     table_R.show()
     updateDF()
     updateThread = threading.Thread(target=measLoop)
     updateThread.daemon = True
-    tk.Button(root, text='STOP Button', command=lambda *args: stop()).pack()
+#    tk.Button(root, text='STOP Button', command=lambda *args: stop()).grid(row=0, column=0, padx=5, pady=5) ## Remove in future version 15JAN24 APM
+    stop_button = tk.Button(root, text='STOP Button', command=lambda *args: stop())
+    stop_button.grid(row=0, column=0, padx=5, pady=5)
+    exit_button = tk.Button(root, text='Close GUI', command=root.quit)
+    exit_button.grid(row=1, column=0, padx=5, pady=5)
     updateThread.start()
     root.mainloop()
