@@ -16,6 +16,8 @@ class PiMUX:
             IP = '129.94.163.203'
         if PiBox == 'MeasureTwo':
             IP = '129.94.163.167'
+        if PiBox == 'MeasureThree':
+            IP = '129.94.163.75'
         self.IP = IP
         #print(IP) -- For PiBox testing
         self.PiFactory = PiGPIOFactory(host=self.IP)
