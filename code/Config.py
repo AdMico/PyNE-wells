@@ -35,3 +35,4 @@ VGate = float(0.0)
 # AssayRun settings
 ItersAR = int(10) # Number of iterations of device sampling to run before program ends
 WaitAR = float(30) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+zeroThres = float(1e-2) # If current is smaller, we consider current to be zero and resistance to be zero (i.e., open circuit) to help data handling
