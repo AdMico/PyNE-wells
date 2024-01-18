@@ -5,11 +5,12 @@ Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
 For debugging hardware setup
 """
-import numpy as np
 
+import numpy as np
 from Pi_control import PiMUX
+import GlobalMeasID as ID
 from Imports import *
-from Config import P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres
+from Config import P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
 import pandas as pd
 import time
 from datetime import datetime
@@ -19,7 +20,7 @@ from pandastable import Table, TableModel
 import pandastable as pdtb
 import threading
 
-#---- Definition of the data structures
+#---- Initialization of data structures
 nRows = 26
 nDev = 2*nRows
 devices = np.zeros(nDev)
@@ -27,6 +28,7 @@ DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
+#GUITrigger = 0
 GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
 GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
 PBStart = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
@@ -38,9 +40,25 @@ GrabStart = np.zeros(ItersAR) # For use in determining time taken to run a grab
 GrabEnd = np.zeros(ItersAR) # For use in determining time taken to run a grab
 GrabTime = np.zeros(ItersAR) # for use in determining time taken to run a grab
 GrabTime[:] = np.nan
+#---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
-with open('stop.txt', 'w') as f: # Initialise stop button
-    f.write(stopText)
+with open('stop.txt', 'w') as fStop: # Initialise stop button
+    fStop.write(stopText)
+measurementName = str(ID.readCurrentSetup()) + str(ID.readCurrentID())
+with open(basePath + '/log.txt', 'w') as fLog:
+    fLog.write('Start: '+str(datetime.now()) + '\n' +
+               'Assay Number: ' + measurementName + '\n' +
+               'Pi Box: ' + PiBox + '\n' +
+               'Preamp 1 gain: ' + str(P1Gain) + '\n' +
+               'Preamp 2 gain: ' + str(P2Gain) + '\n' +
+               'Source Voltage: ' + str(VSource) + ' V' + '\n' +
+               'NIDAQ Sample Rate: ' + str(SR) + ' Hz' + '\n' +
+               'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
+               'Number of Grabs: ' + str(ItersAR) + '\n' +
+               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n \n'
+               )
+
+#---- Initialization of instruments
 print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
 CtrlPi = PiMUX()
@@ -58,9 +76,19 @@ def updateDF(): # Updates the dataframes for the GUI -- last edited APM 17Jan24
     GUI_tableL.redraw()
     GUI_tableR.redraw()
 
+def grabStart(): # Operates the Grab Start button in the GUI
+    updateThread = threading.Thread(target=measLoop)
+    updateThread.daemon = True
+    updateThread.start()
+
 def stop(): # Operates mechanism to complete grab before ending program -- last edited APM 17Jan24
-    with open('stop.txt', 'w') as f:
-        f.write('stop')
+    with open('stop.txt', 'w') as fStop:
+        fStop.write('stop')
+
+def end(): # Operates mechanism to end the program entirely
+    with open(basePath + '/log.txt', 'a') as fLog:
+        fLog.write('End: ' + str(datetime.now()) + '\n')
+    root.quit
 
 def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices on a chip -- last edited APM 17Jan24
     print('Grab: ',nGrab+1)
@@ -120,8 +148,8 @@ def measLoop():
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
         #---- check for grab-stop signal
-        with open('stop.txt', 'r') as f:
-            r = f.read()
+        with open('stop.txt', 'r') as fStop:
+            r = fStop.read()
             if r == 'stop':
                 print('Stopped safely after completed grab: ',nGrab+1)
                 break
@@ -134,6 +162,10 @@ def measLoop():
     print(f'Average time per grab = {np.nanmean(GrabTime):.2f} s')
     print()
     print('Measurement Daemon Completed Successfully')
+    with open(basePath + '/log.txt', 'a') as fLog:
+        fLog.write('Measurement finished at: ' + str(datetime.now()) + '\n' +
+                   'with ' + str(nGrab+1) + ' of ' + str(ItersAR) + ' grabs completed.' + '\n \n'
+                   )
     print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
@@ -149,25 +181,24 @@ if __name__ == "__main__":
 #    root.maxsize(1200,800)
     root.config(bg="skyblue")
     left_table = Frame(root)
-    left_table.grid(row=0,column=1,padx=5,pady=5)
+    left_table.grid(row=0,column=1,rowspan=3,padx=5,pady=5)
     right_table = Frame(root)
-    right_table.grid(row=0,column=2,padx=5,pady=5)
-    GUI_tableL = Table(left_table,showtoolbar=True,showstatusbar=True,width=350,height=590)
+    right_table.grid(row=0,column=2,rowspan=3,padx=5,pady=5)
+    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=350,height=590)
     GUI_optionsL = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
     pdtb.config.apply_options(GUI_optionsL,GUI_tableL)
     GUI_tableL.updateModel(TableModel(GUIFrameL))
-    GUI_tableR = Table(right_table,showtoolbar=True,showstatusbar=True,width=350,height=590)
+    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=350,height=590)
     GUI_optionsR = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
     pdtb.config.apply_options(GUI_optionsR,GUI_tableR)
     GUI_tableR.updateModel(TableModel(GUIFrameR))
     GUI_tableL.show()
     GUI_tableR.show()
 #    updateDF() # Switching this off seems to stabilise the GUI -- to retest/remove at future version APM 18Jan24
-    updateThread = threading.Thread(target=measLoop)
-    updateThread.daemon = True
-    stop_button = tk.Button(root, text='STOP Button', command=lambda *args: stop())
-    stop_button.grid(row=0,column=0,padx=5,pady=5)
-    exit_button = tk.Button(root, text='Close GUI', command=root.quit)
-    exit_button.grid(row=1,column=0,padx=5,pady=5)
-    updateThread.start()
+    start_button = tk.Button(root, text='Start Run', command=lambda *args: grabStart())
+    start_button.grid(row=0, column=0, padx=5, pady=5)
+    stop_button = tk.Button(root, text='Last Grab', command=lambda *args: stop())
+    stop_button.grid(row=1,column=0,padx=5,pady=5)
+    exit_button = tk.Button(root, text='End Program', command=lambda *args: end())
+    exit_button.grid(row=2,column=0,padx=5,pady=5)
     root.mainloop()

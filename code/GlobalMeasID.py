@@ -17,7 +17,9 @@ import json
 relPath = os.path.realpath(__file__)[:-15] #Giving the full path without the GlobalMeasID.py script ending
 filePath =  relPath + 'GlobalMeasIDBinary'
 
-def initID(preFix = 'EL',ID= 0):
+Reset = 1 # Switch to enable/disable running of this .py from reseting the ID number
+
+def initID(preFix = 'TE',ID= 1):
     """ Initializes a new preFix dictionary with the default prefix 'EL' and a running ID of zero."""
     with open(filePath, 'w') as file:
      file.write(json.dumps({'currentPreFix':preFix,preFix:ID
@@ -99,3 +101,7 @@ def readCurrentSetup():
     with open(filePath, 'r') as file:
         Dict=  json.loads(file.read())
         return Dict['currentPreFix']
+
+if __name__ == "__main__":
+    if Reset == 1:
+        initID()
