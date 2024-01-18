@@ -45,7 +45,8 @@ stopText = """If you want to stop the program, simply replace this text with 'st
 with open('stop.txt', 'w') as fStop: # Initialise stop button
     fStop.write(stopText)
 measurementName = str(ID.readCurrentSetup()) + str(ID.readCurrentID())
-with open(basePath + '/log.txt', 'w') as fLog:
+nRun=1
+with open(basePath + '/log_'+measurementName+'.txt', 'w') as fLog:
     fLog.write('Start: '+str(datetime.now()) + '\n' +
                'Assay Number: ' + measurementName + '\n' +
                'Pi Box: ' + PiBox + '\n' +
@@ -86,9 +87,9 @@ def stop(): # Operates mechanism to complete grab before ending program -- last 
         fStop.write('stop')
 
 def end(): # Operates mechanism to end the program entirely
-    with open(basePath + '/log.txt', 'a') as fLog:
+    with open(basePath + '/log_'+measurementName+'.txt', 'a') as fLog:
         fLog.write('End: ' + str(datetime.now()) + '\n')
-    root.quit
+    ID.increaseID()
 
 def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices on a chip -- last edited APM 17Jan24
     print('Grab: ',nGrab+1)
@@ -140,7 +141,10 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
     return PBElapsed,PBAverage
 
 def measLoop():
+    global measurementName,nRun
     #---- Currently the main program
+    with open(basePath+'/log_'+measurementName+'.txt', 'a') as fLog:
+        fLog.write('Measurement '+measurementName+'R'+str(nRun)+' started at: '+str(datetime.now())+'\n')
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
@@ -162,10 +166,11 @@ def measLoop():
     print(f'Average time per grab = {np.nanmean(GrabTime):.2f} s')
     print()
     print('Measurement Daemon Completed Successfully')
-    with open(basePath + '/log.txt', 'a') as fLog:
-        fLog.write('Measurement finished at: ' + str(datetime.now()) + '\n' +
-                   'with ' + str(nGrab+1) + ' of ' + str(ItersAR) + ' grabs completed.' + '\n \n'
+    with open(basePath + '/log_'+measurementName+'.txt', 'a') as fLog:
+        fLog.write('Measurement '+measurementName+'R'+str(nRun)+' finished at: '+str(datetime.now())+'\n'+
+                   'with '+str(nGrab+1)+' of '+str(ItersAR)+' grabs completed.'+'\n \n'
                    )
+    nRun += 1
     print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
@@ -195,10 +200,10 @@ if __name__ == "__main__":
     GUI_tableL.show()
     GUI_tableR.show()
 #    updateDF() # Switching this off seems to stabilise the GUI -- to retest/remove at future version APM 18Jan24
-    start_button = tk.Button(root, text='Start Run', command=lambda *args: grabStart())
+    start_button = tk.Button(root, text='Start Run', command=lambda: grabStart())
     start_button.grid(row=0, column=0, padx=5, pady=5)
-    stop_button = tk.Button(root, text='Last Grab', command=lambda *args: stop())
+    stop_button = tk.Button(root, text='Last Grab', command=lambda: stop())
     stop_button.grid(row=1,column=0,padx=5,pady=5)
-    exit_button = tk.Button(root, text='End Program', command=lambda *args: end())
+    exit_button = tk.Button(root, text='End Program', command=lambda:[end(), root.quit()])
     exit_button.grid(row=2,column=0,padx=5,pady=5)
     root.mainloop()
