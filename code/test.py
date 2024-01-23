@@ -18,6 +18,8 @@ from pandastable import Table, TableModel
 import pandastable as pdtb
 import threading
 
+#Adam adding a line for test.
+
 # Initialisation APM 19DEC23
 nRows=26
 nDev=2*nRows
