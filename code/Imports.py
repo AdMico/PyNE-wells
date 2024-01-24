@@ -15,7 +15,7 @@ from itertools import product
 import matplotlib.pyplot as plt
 
 from Instrument import closeInstruments
-from PyNE_GUI_Utils import fileDialog, initialize
+from Pyne_GUI_Utils import fileDialog, initialize
 from Config import PiBox, MuxMode
 from TimeMeas import TimeMeas
 from SweepFunction import sweepAndSave, sweepNoSave
