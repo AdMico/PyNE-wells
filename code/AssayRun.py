@@ -31,6 +31,7 @@ DR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
 GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
+pd.set_option('future.no_silent_downcasting', True) # For fixing FutureWarding
 RD = np.zeros(105)
 PBStart = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
 PBEnd = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
@@ -79,10 +80,12 @@ daqin_Drain.setOptions({"scaleFactor":1})
 
 def updateGUI(): # Updates the data in the GUI -- last edited APM 19Jan24
     global nGrab
+
     GUI_tableL.updateModel(TableModel(GUIFrameL))
     GUI_tableR.updateModel(TableModel(GUIFrameR))
     GUI_tableL.redraw()
     GUI_tableR.redraw()
+
     assay = tk.Label(root, text=('Assay Number: '+t+'_'+measurementName),bg="skyblue")
     assay.grid(row=0,column=0,padx=5,pady=5)
     run = tk.Label(root, text=('Run Number: ' + str(nRun)),bg="skyblue")
