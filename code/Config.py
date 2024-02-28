@@ -14,10 +14,6 @@ PiBox = 'MeasureOne'
 # Details are in Pi-control.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
 MuxMode = 'Run'
 
-# Information about which Multiplexer Box you are using
-# Gen3a is for blue PCBs without the power-circuit relay, Gen4 is for red PCBs with the power-circuit relay.
-MuxGen = 'Gen4'
-
 # Information about which NIDAQ ports you are using
 Source = 'Dev1/ao0'
 Gate = 'Dev1/ao1'

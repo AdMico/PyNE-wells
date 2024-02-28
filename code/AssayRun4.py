@@ -7,7 +7,7 @@ For debugging hardware setup
 """
 
 from Imports import *
-from Pi_control import PiMUX
+from Pi_control_Gen4 import PiMUX
 import GlobalMeasID as ID
 from Config import P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
 import pandas as pd
