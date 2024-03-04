@@ -124,7 +124,7 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
 #        print('Row = ',nRow) ## Keep for diagnostics; Off from 15JAN24 APM
         nDevL = i+1
         nDevR = 27+i # Updated for Gen4 26FEB24 APM
-        print('Device Left =', nDevL ,'Device Right =', nDevR) ## Keep for diagnostics; Off from 15JAN24 APM
+#        print('Device Left =', nDevL ,'Device Right =', nDevR) ## Keep for diagnostics; Off from 15JAN24 APM
         #---- Set Multiplexer
         CtrlPi.setMuxToOutput(nRow)
         PBStart[i] = time.time()
@@ -142,8 +142,8 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         else:
             DR.iloc[i,nGrab] = 0.0
             DRerr.iloc[i,nGrab] = 0.0
-        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
-        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
+#        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
+#        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
         RD[(2*nDevL-1)] = round(DL.iloc[i,nGrab],3)
         RD[(2*nDevL)] = round(DLerr.iloc[i,nGrab],3)
         RD[(2*nDevR-1)] = round(DR.iloc[i,nGrab],3)
