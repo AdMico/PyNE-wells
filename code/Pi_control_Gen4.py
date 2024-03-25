@@ -8,13 +8,14 @@ This class sets up the Pi to be controlled remotely. The truth table is that of 
 from gpiozero import LED
 from gpiozero.pins.pigpio import PiGPIOFactory
 from Config import PiBox, MuxMode
+import pigpio
 import time
 
 class PiMUX:
 
     def __init__(self):
         if PiBox == 'MeasureOne':
-            IP = '129.94.163.203'
+            IP = '149.171.105.34' #IP changed for Lowy APM 25MAR24, was 129.94.163.203 on VLAN334 (Physics)
         if PiBox == 'MeasureTwo':
             IP = '129.94.163.167'
         if PiBox == 'MeasureThree':

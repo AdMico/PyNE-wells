@@ -13,12 +13,15 @@ Instrument will pull information from config.py
 
 import Instrument
 import numpy as np
+import pandas as pd
 import nidaqmx
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
 from nidaqmx import stream_writers
 from Config import DrainLeft, DrainRight, SR, SpC
+
+pd.set_option('future.no_silent_downcasting',True)
 
 @Instrument.enableOptions
 class USB6216InPB(Instrument.Instrument):

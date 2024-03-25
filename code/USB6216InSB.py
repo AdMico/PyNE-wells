@@ -13,9 +13,12 @@ Pulls NIDAQ information (e.g., sample rate and samples per channel) from Config.
 
 import Instrument
 import nidaqmx as nmx
+import pandas as pd
 from nidaqmx import constants
 from nidaqmx import stream_readers
 from Config import SR, SpC
+
+pd.set_option('future.no_silent_downcasting',True)
 
 @Instrument.enableOptions
 class USB6216InSB(Instrument.Instrument):
