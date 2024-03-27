@@ -22,5 +22,6 @@ from SweepFunction import sweepAndSave, sweepNoSave
 from USB6216InSS import USB6216InSS
 from USB6216InSB import USB6216InSB
 from USB6216InPB import USB6216InPB
+from USB6216InPB_SRT import USB6216InPB_SRT
 from USB6216Out import USB6216Out
 from NoiseGenerator import LinearNoiseGenerator, SineNoiseGenerator, DoubleNoiseGenerator
