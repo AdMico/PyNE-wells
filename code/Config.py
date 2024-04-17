@@ -36,4 +36,4 @@ VGate = float(0.0)
 ItersAR = int(3) # Number of iterations of device sampling to run before program ends
 WaitAR = float(60) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(1e-2) # If current is smaller, we consider current to be zero and resistance to be zero (i.e., open circuit) to help data handling
-basePath = '../data' # This should not need changing, the software will autoallocate data to sensible folders
+basePath = '../data'
