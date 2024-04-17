@@ -33,6 +33,7 @@ class USB6216InPB(Instrument.Instrument):
         super(USB6216InPB, self).__init__()
         self.type ="USB6216"  #We can check each instrument for its type and react accordingly
         self.name = "USB6216"
+        self.burstVolume = SpC #initialise burstVolume to the Samples per Chanel - Sample rate still fixed!!!!
         self.port1 = DrainLeft
         self.port2 = DrainRight
         
@@ -44,15 +45,23 @@ class USB6216InPB(Instrument.Instrument):
     def _getName(self):
         return self.name
 
+    @Instrument.addOptionSetter("burstVolume")
+    def _setBurstVolume(self, vol):
+        self.burstVolume = vol
+
+    @Instrument.addOptionGetter("burstVolume")
+    def _getBurstVolume(self):
+        return self.burstVolume
+
     @Instrument.addOptionGetter("inputLevel") ## New routine to get averaged/stdev data for two channels
     def _getInputLevel(self):
         with nmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(self.port1)
             task.ai_channels.add_ai_voltage_chan(self.port2)
-            task.timing.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquisitionType.CONTINUOUS, samps_per_chan=SpC)
+            task.timing.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquisitionType.CONTINUOUS, samps_per_chan=self.burstVolume)
             reader = stream_readers.AnalogMultiChannelReader(task.in_stream)
-            buffer = np.zeros((2, SpC), dtype = np.float64)
-            reader.read_many_sample(buffer, SpC, timeout=constants.WAIT_INFINITELY)
+            buffer = np.zeros((2, self.burstVolume), dtype = np.float64)
+            reader.read_many_sample(buffer, self.burstVolume, timeout=constants.WAIT_INFINITELY)
             data = buffer.T.astype(np.float64)/self.scaleFactor
             DL, DR = data[:,0], data[:,1]
             DLav = DL.mean()
