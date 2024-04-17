@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to Purgatory 17APR24 APM -- Development code
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Sam Shelton
 """
@@ -28,7 +30,7 @@ def dummy_measurement_loop(): #Number of Devices and Number of Loops, both ints
 
     stop_text = """If you want to stop the program, simply replace this text with 'stop' and save it."""
 
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write(stop_text)
 
     for i in range(loops): # Dummy logic that mimics structure of measure.py
@@ -47,7 +49,7 @@ def dummy_measurement_loop(): #Number of Devices and Number of Loops, both ints
         if __name__=="__main__": # will this allow measure to be calld externally?
             update_df()
 
-        with open('stop.txt', 'r') as f:
+        with open('../stop.txt', 'r') as f:
             r = f.read()
         if r == 'stop':
             print('stopped safely after repeat', i+1)
@@ -56,7 +58,7 @@ def dummy_measurement_loop(): #Number of Devices and Number of Loops, both ints
     print("Measurement Daemon Completed Successfully")
 
 def stop(): # This function runs when stop button pressed, havn't figured this out yet!
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write('stop')
 
 def update_df():

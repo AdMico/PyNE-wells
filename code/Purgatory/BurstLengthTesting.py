@@ -1,6 +1,8 @@
 """
 Testing uncertainties from different burst lengths
 
+Moved to purgatory 17APR24 APM -- superceded by SampleRateTest.py
+
 @developers: Adam Micolich, Sam Shelton
 """
 import matplotlib.pyplot as plt

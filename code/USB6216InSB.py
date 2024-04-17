@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
+Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
@@ -18,7 +18,7 @@ from nidaqmx import constants
 from nidaqmx import stream_readers
 from Config import SR, SpC
 
-pd.set_option('future.no_silent_downcasting',True)
+#pd.set_option('future.no_silent_downcasting',True) -- Uncomment and run if getting downcasting error, then recomment when fixed.
 
 @Instrument.enableOptions
 class USB6216InSB(Instrument.Instrument):

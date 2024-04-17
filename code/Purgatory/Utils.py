@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to purgatory 17APR24 APM -- Old PyNE code
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
 
@@ -10,7 +12,7 @@ A bunch of useful utility functions for various handling tasks in PyNE
 import tkinter as tk
 from tkinter.filedialog import asksaveasfilename
 import numpy as np
-import NoiseGenerator
+from code.Purgatory import NoiseGenerator
 import TimeMeas
 import SweepFunction
 

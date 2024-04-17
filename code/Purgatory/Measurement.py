@@ -1,14 +1,15 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to Purgatory 17APR24 APM -- old development code.
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 """
 
 import pandas as pd
 from matplotlib.pyplot import cm
 from scipy import stats
-import easyguigo
-import Analysis
+from code.Purgatory import Analysis
 from datetime import datetime
 import os
 from pathlib import Path
@@ -44,10 +45,10 @@ def micr_measure(deviceList=[i for i in range(1,DevNum+1)],
                  ):
     stop_text = """If you want to stop the program, simply replace this text with 'stop' and save it."""
 
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write(stop_text)
 
-    os.system('stop_button.py')
+    os.system('Stop_button.py')
 
     start_sd = start_end_step[0]
     end_sd = start_end_step[1]
@@ -135,7 +136,7 @@ def micr_measure(deviceList=[i for i in range(1,DevNum+1)],
 
             plt.pause(0.01)  # needed for live plotting to work
 
-        with open('stop.txt', 'r') as f:
+        with open('../stop.txt', 'r') as f:
             r = f.read()
         if r == 'stop':
             print('stopped on repeat', j)

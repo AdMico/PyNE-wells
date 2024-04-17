@@ -1,12 +1,14 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to purgatory 17APR24 APM -- Old development code
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 For debugging hardware setup
 """
 
-from Pi_control import PiMUX
+from code.Purgatory.Pi_control import PiMUX
 from Imports import *
 from Config import P1Gain, P2Gain, VSource
 import pandas as pd
@@ -37,13 +39,13 @@ def updateDF():
     table_R.redraw()
 
 def stop():
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write('stop')
 
 def measLoop():
 
     # Initialise stop button
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write(stop_text)
 
     print ('Initialise instruments')
@@ -103,7 +105,7 @@ def measLoop():
         end[i]=time.time()
         timing[i] = end[i]-start[i]
 
-        with open('stop.txt', 'r') as f:
+        with open('../stop.txt', 'r') as f:
             r = f.read()
         if r == 'stop':
             print('stopped safely after repeat')

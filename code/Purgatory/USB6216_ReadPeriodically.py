@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to purgatory 17APR24 APM -- Old NIDAQ code no longer used.
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 Program for using NIDAQ USB-6216 for full control of a transistor characterisation.
@@ -14,7 +16,7 @@ import Utils as U
 import pandas as pd
 import easygui
 from datetime import datetime
-from Pi_control import PiMUX
+from code.Purgatory.Pi_control import PiMUX
 import collections.abc
 collections.Iterable = collections.abc.Iterable
 from Imports import *
@@ -32,7 +34,7 @@ def micr_measure(deviceList=1,
     # Using old stop button setup for now -- APM 13DEC23
     print ('Resetting Stop Button')
     stop_text = """If you want to stop the program, simply replace this text with 'stop' and save it."""
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write(stop_text)
     # os.system('stop_button.py') -- Deactivated for now APM 13DEC23
 

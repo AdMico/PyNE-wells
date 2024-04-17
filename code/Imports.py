@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
+Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
@@ -10,12 +10,10 @@ This is then done via 'from Imports import *'. The star imports all functions de
 
 import numpy as np
 import time
-import json
 from itertools import product
 import matplotlib.pyplot as plt
 
 from Instrument import closeInstruments
-from Pyne_GUI_Utils import fileDialog, initialize
 from Config import PiBox, MuxMode
 from TimeMeas import TimeMeas
 from SweepFunction import sweepAndSave, sweepNoSave
@@ -24,4 +22,3 @@ from USB6216InSB import USB6216InSB
 from USB6216InPB import USB6216InPB
 from USB6216InPB_SRT import USB6216InPB_SRT
 from USB6216Out import USB6216Out
-from NoiseGenerator import LinearNoiseGenerator, SineNoiseGenerator, DoubleNoiseGenerator

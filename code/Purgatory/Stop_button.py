@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to purgatory 17APR24 APM -- Function merged into the AssayRun4.py code
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Sam Shelton
 """
@@ -19,7 +21,7 @@ while switch == True:
     output = buttonbox(text, window_title, button_text)
 
     if output == 'STOP':
-        with open('stop.txt', 'w') as f:
+        with open('../stop.txt', 'w') as f:
             f.write(stop_text)
             switch = False #added APM 04SEP23 to auto-kill window
 

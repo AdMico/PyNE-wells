@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to purgatory 17APR24 APM -- Used by the old Gen3a board now retired.
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 For debugging hardware setup
@@ -43,7 +45,7 @@ GrabTime = np.zeros(ItersAR) # for use in determining time taken to run a grab
 GrabTime[:] = np.nan
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
-with open('stop.txt', 'w') as fStop: # Initialise stop button
+with open('../stop.txt', 'w') as fStop: # Initialise stop button
     fStop.write(stopText)
 nRun=1
 measurementName = str(ID.readCurrentSetup()) + str(ID.readCurrentID())
@@ -99,7 +101,7 @@ def grabStart(): # Operates the Grab Start button in the GUI
     updateThread.start()
 
 def stop(): # Operates mechanism to complete grab before ending program -- last edited APM 17Jan24
-    with open('stop.txt', 'w') as fStop:
+    with open('../stop.txt', 'w') as fStop:
         fStop.write('stop')
 
 def end(): # Operates mechanism to end the program entirely
@@ -201,7 +203,7 @@ def measLoop():
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
         #---- check for grab-stop signal
-        with open('stop.txt', 'r') as fStop:
+        with open('../stop.txt', 'r') as fStop:
             r = fStop.read()
             if r == 'stop':
                 print('Stopped safely after completed grab: ',nGrab+1)

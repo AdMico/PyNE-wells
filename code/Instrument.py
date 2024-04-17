@@ -1,8 +1,10 @@
 """
-Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
+Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
+
+Possibly legacy. Test removal ahead of a future release and move to purgatory if needed.
 """
 
 import collections.abc

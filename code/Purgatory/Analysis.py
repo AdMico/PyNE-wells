@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Code to purgatory 17APR24 APM -- relic from Jan's older development code.
+
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 """
 

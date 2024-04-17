@@ -1,9 +1,9 @@
 """
-Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
+Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
-This informs various parts of the software about aspects of your bench setup
+This informs various parts of the software about aspects of your bench setup. Edit as needed for your setup.
 """
 
 # Information about which Raspberry Pi you are using (MeasureOne, MeasureTwo, etc)

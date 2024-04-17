@@ -1,6 +1,8 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
+Moved to purgatory 17APR24 APM -- Old development code
+
 @developers: Adam Micolich, Jan Gluschke, Sam Shelton & Shuji Kojima
 """
 
@@ -8,7 +10,7 @@ import threading
 import pandas as pd
 from matplotlib.pyplot import cm
 from scipy import stats
-import Analysis
+from code.Purgatory import Analysis
 from datetime import datetime
 from pathlib import Path
 from Pi_control import PiMUX
@@ -31,7 +33,7 @@ def fit_for_Master(df, xVar='V_SD', yVar='I_SD'):
     return {'G': [slope], 'std_err': [std_err]}
 
 def stop():
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write('stop')
 
 def update_df():
@@ -56,7 +58,7 @@ def micr_measure(deviceList=[i for i in range(1,DevNum+1)],
                  ):
     stop_text = """If you want to stop the program, simply replace this text with 'stop' and save it."""
 
-    with open('stop.txt', 'w') as f:
+    with open('../stop.txt', 'w') as f:
         f.write(stop_text)
 
     start_sd = start_end_step[0]
@@ -153,7 +155,7 @@ def micr_measure(deviceList=[i for i in range(1,DevNum+1)],
 
             plt.pause(0.01)  # needed for live plotting to work
 
-        with open('stop.txt', 'r') as f:
+        with open('../stop.txt', 'r') as f:
             r = f.read()
         if r == 'stop':
             print('stopped on repeat', j)
