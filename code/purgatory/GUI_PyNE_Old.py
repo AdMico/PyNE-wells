@@ -1,7 +1,7 @@
 """
 Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
 
-Purgatory 17APR24 APM -- Old PyNE software, only here for reference.
+purgatory 17APR24 APM -- Old PyNE software, only here for reference.
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl

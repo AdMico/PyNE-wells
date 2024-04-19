@@ -18,7 +18,7 @@ from nidaqmx import constants
 from nidaqmx import stream_readers
 from Config import SR, SpC
 
-#pd.set_option('future.no_silent_downcasting',True) -- Uncomment and run if getting downcasting error, then recomment when fixed.
+#pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
 
 @Instrument.enableOptions
 class USB6216InSB(Instrument.Instrument):
