@@ -17,9 +17,9 @@ import json
 relPath = os.path.realpath(__file__)[:-15] #Giving the full path without the GlobalMeasID.py script ending
 filePath =  relPath + 'GlobalMeasIDBinary'
 
-Reset = 1 # Switch to enable/disable running of this .py from reseting the ID number
+Reset = 1 #Switch to enable/disable running of this .py from reseting the ID number. Default as 1 for code download but you probably want to set to 0 once you've initialised the GMID to prevent accidental GMID reset.
 
-def initID(preFix = 'TE',ID= 1):
+def initID(preFix = 'TE',ID= 1): ## Routine initialises the Global Measurement ID (GMID). See bottom of code for running as main. The string and starting number are specified here though.
     """ Initializes a new preFix dictionary with the default prefix 'EL' and a running ID of zero."""
     with open(filePath, 'w') as file:
      file.write(json.dumps({'currentPreFix':preFix,preFix:ID
@@ -102,6 +102,6 @@ def readCurrentSetup():
         Dict=  json.loads(file.read())
         return Dict['currentPreFix']
 
-if __name__ == "__main__":
+if __name__ == "__main__": # Code below will run if this file is run as main (i.e., it will initialise the GMID to your specified values at the function definition if Reset = 1)
     if Reset == 1:
         initID()

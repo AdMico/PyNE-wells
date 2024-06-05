@@ -151,8 +151,8 @@ class PiMUX:
         time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
         self.ROff_pin.off()
 
-if __name__ == "__main__": # execute only if this script is run, not when it's being imported
+if __name__ == "__main__": # execute only if this script is run, not when it's being imported -- Code will switch on the power relay, set the MUX to the disconnected state and switch the power relay back off.
     my_pi = PiMUX()
-    my_pi.setRelayToOn()
-    my_pi.setMuxToOutput(0)
-    my_pi.setRelayToOff()
+    my_pi.setRelayToOn() # comment to switch on/off as needed.
+    my_pi.setMuxToOutput(0) #0 here will disconnect, can specify other truth-table settings for direct connection accordingly.
+    my_pi.setRelayToOff() # comment to switch on/off as needed.

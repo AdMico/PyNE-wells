@@ -6,6 +6,7 @@ Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
 This informs various parts of the software about aspects of your bench setup. Edit as needed for your setup.
 """
 
+## IMPORTANT -- You need to set PiBox correctly before you first use the software to avoid controlling someone else's hardware by mistake -- see main README.md file
 # Information about which Raspberry Pi you are using (MeasureOne, MeasureTwo, etc)
 # Details for the various Pis are in Pi_control.py
 PiBox = 'MeasureThree'
@@ -14,7 +15,7 @@ PiBox = 'MeasureThree'
 # Details are in Pi-control.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
 MuxMode = 'Run'
 
-# Information about which NIDAQ ports you are using
+# Information about which NIDAQ ports you are using for your NI USB6216BNC instance.
 Source = 'Dev1/ao0'
 Gate = 'Dev1/ao1'
 DrainLeft = 'Dev1/ai0'
