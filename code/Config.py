@@ -1,12 +1,12 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thur Aug 07 2025 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
 This informs various parts of the software about aspects of your bench setup. Edit as needed for your setup.
 """
 
-## IMPORTANT -- You need to set PiBox correctly before you first use the software to avoid controlling someone else's hardware by mistake -- see main README.md file
+## IMPORTANT -- YOU NEED TO SET PiBox CORRECTLY BEFORE YOU FIRST USE THE SOFTWARE to avoid controlling someone else's hardware by mistake -- see main README.md file
 # Information about which Raspberry Pi you are using (MeasureOne, MeasureTwo, etc)
 # Details for the various Pis are in Pi_control.py
 PiBox = 'MeasureThree'

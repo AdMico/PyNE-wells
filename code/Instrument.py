@@ -1,10 +1,11 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
 
-Possibly legacy. Test removal ahead of a future release and move to purgatory if needed.
+Utility code for the instrument setting/getting capabilities in the various instruments.
+Used currently in all of the USB6216 components
 """
 
 import collections.abc
@@ -93,7 +94,7 @@ class Instrument(object):
             self.set(option, *args)
 
 # Having a "totalOptions" variable lets us assign a total order to the options,
-# by giving each option an unique number. This way we can ensure an order to
+# by giving each option a unique number. This way we can ensure an order to
 # setting the options when setting multiple options at once, since some options
 # might require being set before others
             
@@ -141,46 +142,3 @@ def closeInstruments(instrumentList1,instrumentList2=None):
             instrument.close()
         except:
             continue
-        
-# Defining a new instrument
-# ------------------------
-# import Instrument
-#
-# @Instrument.enableOptions # Actually populate _optionSetters
-# class Keithley2401(Instrument.Instrument):
-#    def __init__(self, address):
-#        super(Keithley2401, self).__init__() # Call Instrument's __init__
-#        # Other initialisation stuff, like connecting to the instrument
-#
-#    @Instrument.addOptionSetter("beepEnable")
-#    def _setBeepEnable(self, enable):
-#        # Actually enable or disable beep here
-#
-#    @Instrument.addOptionSetter("option2")
-#    def _setOption2(self, value):
-#        # etc
-#
-# # By defining "beepEnable" before "option2", "beepEnable" is guaranteed to be
-# # set before "option2", when both options are passed into setOptions().
-# # Basically, the order the @addOption appear in define the order they are set
-# # when they appear in setOptions()
-
-# Saving/loading options
-# ----------------------
-# How options are saved/loaded is up to the user (though we could add a default
-# way of doing so to sweeper.defaultWriter)
-#
-# For example, we could save two instruments' options as JSON:
-# import json
-# options = open("options.json", "w")
-# options.write(json.dumps(
-#     {"keithley": keithley.getOptions(), "lockin": lockin.getOptions()},
-#     indent = 4, sort_keys = True
-# ))
-#
-# To load the values back:
-# import json
-# options = open("options.json", "r")
-# options = json.loads(options.read())
-# keithley.setOptions(options["keithley"])
-# lockin.setOptions(options["lockin"])

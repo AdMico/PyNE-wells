@@ -14,14 +14,11 @@ APM 27MAR24 -- This is a special version that enables the samples per channel (S
 rather than as a constant from the Config.py file
 """
 
-import Instrument
+from code.purgatory import Instrument
 import numpy as np
-import pandas as pd
-import nidaqmx
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
-from nidaqmx import stream_writers
 from Config import DrainLeft, DrainRight, SR #SpC removed here APM 27MAR24
 
 #pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.

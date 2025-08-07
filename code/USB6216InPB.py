@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
@@ -14,11 +14,9 @@ Instrument will pull information from config.py
 import Instrument
 import numpy as np
 import pandas as pd
-import nidaqmx
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
-from nidaqmx import stream_writers
 from Config import DrainLeft, DrainRight, SR, SpC
 
 pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
@@ -77,7 +75,15 @@ class USB6216InPB(Instrument.Instrument):
     @Instrument.addOptionSetter("scaleFactor")
     def _setScaleFactor(self,scaleFactor):
         self.scaleFactor = scaleFactor
-            
+
+    @Instrument.addOptionGetter("SpC")
+    def _getSpC(self):
+        return self.SpC
+
+    @Instrument.addOptionSetter("SpC")
+    def _setSpC(self, SpC):
+        self.SpC = SpC
+
     def goTo(self,target,stepsize=0.01,delay=0.0):
         pass
             

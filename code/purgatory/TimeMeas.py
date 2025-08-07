@@ -8,7 +8,8 @@ Old PyNE timesweep instrument -- Conserve for possible future use.
 """
 
 import time
-import Instrument 
+from code.purgatory import Instrument
+
 
 @Instrument.enableOptions        
 class TimeMeas(Instrument.Instrument):

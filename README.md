@@ -1,4 +1,4 @@
-# PyNE-wells v1.1.1 (Updated 05JUN24 APM)
+# PyNE-wells v1.2.0 (Updated 07AUG25APM)
 
 **Written by:** Adam Micolich, Jan Gluschke, Shuji Kojima & Sidd Rawat
 
@@ -12,9 +12,9 @@ Top level has two folders -- *code* and *data*. The *code* folder has all the ac
 
 ## Program Components
 
-The main functional component is `AssayRun4.py`, which runs the electrical measurement GUI, everything else is a subroutine.
+The main functional component is `AssayRunGen4.py`, which runs the electrical measurement GUI, everything else is a subroutine.
 
-`AssayRun4.py`: Main GUI for the electrical setup. There are only three buttons in the GUI. The first button is *start run* which will start a measurement. The specifications for the measurements (e.g., number of 'grabs', delay between 'grabs', etc. are set in `Config.py`). A 'grab' is a single readout of all 52 devices on the chip. The second button is *last grab*, which enables you to stop a sequence of immediately after the next grab. When used, *last grab* will leave the GUI running just as would be the case if you had let the specified number of grabs in `Config.py` complete. This enables a new sequence of grabs to be started without needing to restart the software. When you commence a new grab, the datafile structure (folder and names) will update automatically, no intervention is required. The third button is *End Program*, which shuts down the GUI and terminates `AssayRun4.py`.
+`AssayRunGen4.py`: Main GUI for the electrical setup. There are only three buttons in the GUI. The first button is *start run* which will start a measurement. The specifications for the measurements (e.g., number of 'grabs', delay between 'grabs', etc. are set in `Config.py`). A 'grab' is a single readout of all 52 devices on the chip. The second button is *last grab*, which enables you to stop a sequence of immediately after the next grab. When used, *last grab* will leave the GUI running just as would be the case if you had let the specified number of grabs in `Config.py` complete. This enables a new sequence of grabs to be started without needing to restart the software. When you commence a new grab, the datafile structure (folder and names) will update automatically, no intervention is required. The third button is *End Program*, which shuts down the GUI and terminates `AssayRun4.py`.
 
 `Config.py`: This contains all the key configuration details for your instance of the software. The individual parameters are explained in the comments. The most crucial one to note is the `PiBox` parameter. You need to ensure this matches the Raspberry Pi you are using in your hardware set-up, otherwise when you run the GUI, all the multiplexer commands will be going to another set-up, which may be running at the time.
 
@@ -22,21 +22,11 @@ The main functional component is `AssayRun4.py`, which runs the electrical measu
 
 `GlobalMeasIDBinary`: Binary file containing the GMID. Automatically incremented by the software via routines in `GlobalMeasID.py`.
 
-`Imports.py`: Master import file to simplify code. Doesn't need edits unless you add new library calls to the software (if you do, please update `requirements.txt` accordingly).
-
 `Instrument.py`: This appears to be legacy from PyNE-probe, likely to be deprecated in a future version of PyNE-wells.
 
-`Pi_control_Gen4.py`: This controls all the hardware interactions with the Raspberry Pi, including setting the respective IP address, switching the power control relay for the MUXes, and specifying the truth-tables to correctly connect the measure circuit to a given device. The MUXes are MAX306 16-channel CMOS analog multiplexer ICs, and there are currently four in each MUXBox. Further details can be found in a future GitHub repository for the hardware design. Instance can be run as main to enable direct debugging control of the multiplexers, see bottom of code for details.
-
-`Res_Pull.py`: This is useful legacy from development and enables the resistance to be pulled outside of the GUI in `AssayRun4.py` for testing purposes. Left in the code folder for this instance, but will be moved to the `debugging` folder later.
-
-`SampleRateTest.py`: This is a special instance of `AssayRun4.py` that assists with setting the samples per channel (`SpC`) variable in `Config.py`. This will be moved to `debugging` folder in a future update.
+`PiControlGen4.py`: This controls all the hardware interactions with the Raspberry Pi, including setting the respective IP address, switching the power control relay for the MUXes, and specifying the truth-tables to correctly connect the measure circuit to a given device. The MUXes are MAX306 16-channel CMOS analog multiplexer ICs, and there are currently four in each MUXBox. Further details can be found in a future GitHub repository for the hardware design. Instance can be run as main to enable direct debugging control of the multiplexers, see bottom of code for details.
 
 `stop.txt`: Software stop button, not sure it's used currently, may deprecate in future version.
-
-`SweepFunction.py`: Old PyNE sweep code, likely to be deprecated in future update as I don't think it gets used here currently.
-
-`TimeMeas.py`: Old PyNE sweep code, likely to be deprecated in future update as I don't think it gets used here currently. 
 
 `USB6216InSS.py`: Basic code for reading in single-shot, single-channel measurements from the National Instruments USB6216-BNC instrument. Used by other programs.
 
@@ -44,21 +34,10 @@ The main functional component is `AssayRun4.py`, which runs the electrical measu
 
 `USB6216InPB.py`: Code for reading in burst-averaged, dual-channel measurements from the National Instruments USB6216-BNC instrument. Used by other programs.
 
-`USB6216InPB_SRT.py`: Special version of `USB6216InPB.py` that enables the samples per channel to be specified in the function call rather than by `Config.py`. Used by `SampleRateTest.py` only.
-
 `USB6216Out.py`: Basic code for setting the voltage on the analog outputs in the National Instruments USB6216-BNC instrument. Used by other programs.
 
 ## Updates to be made in next version (submit requests here)
 
-- Deprecate `Instrument.py` if none of its functions are used (i.e., is true legacy).
-- Update filename for Pi_control_Gen4 to remove underscores.
-- Update filename for Res_Pull to remove underscore.
-- Move `Res_Pull.py` across to `debugging` folder.
-- Move `SampleRateTest.py` across to `debugging` folder.
-- Do we still need `stop.txt` or can we deprecate?
-- Can we deprecate `SweepFunction.py` and `TimeMeas.py` in next version?
-- How do I deal with `USB6216InPB_SRT.py` long-term? Can I put a software switch into `USB6216InPB.py` to make it redundant and remove?
-- Clean up the `PiBox` issue where a user who hasn't read the documentation can accidentally run someone else's MUXBox by mistake.
 - APM to create github repo for the hardware and link to it here for context.
 
 ## Installation
@@ -74,4 +53,13 @@ APM currently runs this software in PyCharm, you may need to change accordingly 
 7. Install the requirements for the package as specified in `requirements.txt`.
 8. Go to `Config.py` file and set the hardware configurations, making particular note to correctly set the `PiBox` parameter so you don't send commands to someone else's MUXBox.
 9. Go to `GlobalMeasID.py` and initialise the GMID for your particular instance.
-10. You are ready to run, and `AssayRun4.py` is the best place to start. Further information in the repo for our electrical set-up, which is coming in the near future.
+10. Double check you have the correct `PiBox` setting in `Config.Py`
+11. You are ready to run, and `AssayRun4.py` is the best place to start. Further information in the repo for our electrical set-up, which is coming in the near future.
+
+This software will connect to Raspberry Pi via the `pigpio` daemon. You need to ensure that Port 8888 is accessible if you are running a firewall (e.g., ufw) on your Raspberry Pi. You also need to check the `pigpio` daemon is running and configured correctly on your Raspberry Pi. The best way to do this is to edit your Pi's `crontab` file to ensure it has the following three lines:
+
+@reboot sudo pigpiod &  
+@reboot export PIGPIO_ADDR=soft  
+@reboot export PIGPIO_PORT=8888
+
+Then reboot.
