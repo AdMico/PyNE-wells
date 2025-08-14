@@ -1,10 +1,12 @@
-# PyNE-wells v1.2.0 (Updated 07AUG25APM)
+# DEV -- PyNE-wells v2.0.0 (Updated 14AUG25APM)
+
+**Note:** This is a development package for our Gen 6 setup with Raspberry Pi & Teensy 4.1 support. Work in progress, contact APM for details if needed.
 
 **Written by:** Adam Micolich, Jan Gluschke, Shuji Kojima & Sidd Rawat
 
 **Purpose:** Software for the electronic measurements for the lipid-sealed wells project (Australian Research Council DP210102085).
 
-*Developed and tested using Python 3.12.*
+*Developed and tested using Python 3.13.*
 
 ## Structure
 
