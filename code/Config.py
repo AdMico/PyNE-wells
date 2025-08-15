@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.2.0 on Thur Aug 07 2025 by APM
+Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 
@@ -9,21 +9,42 @@ This informs various parts of the software about aspects of your bench setup. Ed
 ## IMPORTANT -- YOU NEED TO SET PiBox CORRECTLY BEFORE YOU FIRST USE THE SOFTWARE to avoid controlling someone else's hardware by mistake -- see main README.md file
 # Information about which Raspberry Pi you are using (MeasureOne, MeasureTwo, etc)
 # Details for the various Pis are in Pi_control.py
-PiBox = 'MeasureThree'
+PiBox = 'MeasureFour'
 
 # Information about which Truth Table to use (Devices, Rows, etc)
 # Details are in Pi-control.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
 MuxMode = 'Run'
 
+#
+# Settings for Gen 4/5 setup
+#
+
 # Information about which NIDAQ ports you are using for your NI USB6216BNC instance.
-Source = 'Dev1/ao0'
-Gate = 'Dev1/ao1'
-DrainLeft = 'Dev1/ai0'
-DrainRight = 'Dev1/ai1'
+Source_Gen5 = 'Dev1/ao0'
+Gate_Gen5 = 'Dev1/ao1'
+DrainLeft_Gen5 = 'Dev1/ai0'
+DrainRight_Gen5 = 'Dev1/ai1'
 
 # Settings for NIDAQ PairBurst Mode operation
-SR = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
-SpC = int(1e5) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+SR_Gen5 = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
+SpC_Gen5 = int(1e5) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+
+#
+# Settings for Generation 6 Setup
+#
+
+# Information about which MCC ports you are using
+Source_Gen6 = 'MCC152/ao0'
+Hold_Gen6 = 'MCC152/ao1'
+Drain_Gen6 = 'MCC128/ai0'
+
+# Settings for MCC128 Burst Mode operation
+SR_Gen6 = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
+SpC_Gen6 = int(1e5) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+
+#
+# Settings for measurements
+#
 
 # Settings for Femto Preamplifiers
 P1Gain = float(1e4)
