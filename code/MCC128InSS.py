@@ -3,11 +3,12 @@ Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
 
 @developers: Adam Micolich
 
-This module does the input handling for the MCC128, which has a set of 8 analog inputs. The output handling is done by a separate .py.
+This module does the input handling for the MCC128, in basic single shot measurement mode.
+The output handling is done by a separate .py.
 """
 
 import Instrument
-from daqhats import mcc128,HatIDs
+from daqhats import mcc128,HatIDs,AnalogInputMode,AnalogInputRange
 from daqhats_utils import select_hat_device
 
 @Instrument.enableOptions
@@ -23,6 +24,10 @@ class MCC128InSS(Instrument.Instrument):
         self.name = "MCC128"
         self.address=select_hat_device(HatIDs.MCC_128)
         self.hat=mcc128(self.address)
+        input_mode = AnalogInputMode.SE
+        input_range = AnalogInputRange.BIP_10V
+        self.hat.a_in_mode_write(input_mode)
+        self.hat.a_in_range_write(input_range)
         
     @Instrument.addOptionSetter("name")
     def _setName(self,instrumentName):

@@ -1,39 +1,39 @@
 """
-Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
+Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich
 
-This module does the input handling for the USB-6216, which is effectively a pair of analog outputs
-and a set of 8 analog inputs. The output handling is done by a separate .py.
-
-APM 19DEC23 -- This is a new instrument functionality that enables hardware-buffered read from the USB-6216 for a pair of analog inputs.
-The two buffers are averaged to return the value & error in a much faster way (by factor of 2000) than the single-shot routine.
-Instrument will pull information from config.py
+This module does the input handling for the MCC128, in dual channel burst mode (pairburst), returning average and standard deviation.
+The output handling is done by a separate .py.
 """
 
 import Instrument
-import numpy as np
-import pandas as pd
-import nidaqmx as nmx
-from nidaqmx import constants
-from nidaqmx import stream_readers
-from Config import DrainLeft, DrainRight, SR, SpC
-
-pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
+from daqhats import mcc128,HatIDs,AnalogInputMode,AnalogInputRange,OptionFlags
+from daqhats_utils import select_hat_device,chan_list_to_mask
+from Config import SR_Gen6,SpC_Gen6
 
 @Instrument.enableOptions
-class USB6216InPB(Instrument.Instrument):
+class MCC128InPB(Instrument.Instrument):
     # Default options to set/get when the instrument is passed into the sweeper
     defaultInput = "inputLevel"
     defaultOutput = "None"
 
-    def __init__(self):
-        super(USB6216InPB, self).__init__()
-        self.type ="USB6216"  #We can check each instrument for its type and react accordingly
-        self.name = "USB6216"
-        self.burstVolume = SpC #initialise burstVolume to the Samples per Chanel - Sample rate still fixed!!!!
-        self.port1 = DrainLeft
-        self.port2 = DrainRight
+    def __init__(self, address1,address2):
+        super(MCC128InPB, self).__init__()
+        self.port1 = address1
+        self.port2 = address2
+        self.type ="MCC128"  #We can check each instrument for its type and react accordingly
+        self.name = "MCC128"
+        self.address = select_hat_device(HatIDs.MCC_128)
+        self.hat = mcc128(self.address)
+        input_mode = AnalogInputMode.SE
+        input_range = AnalogInputRange.BIP_10V
+        self.hat.a_in_mode_write(input_mode)
+        self.hat.a_in_range_write(input_range)
+        self.hat.a_in_scan_cleanup()
+        channels = [self.port1,self.port2]
+        self.channel_mask = chan_list_to_mask(channels)
+        self.options = OptionFlags.DEFAULT
         
     @Instrument.addOptionSetter("name")
     def _setName(self,instrumentName):
@@ -42,31 +42,21 @@ class USB6216InPB(Instrument.Instrument):
     @Instrument.addOptionGetter("name")
     def _getName(self):
         return self.name
-
-    @Instrument.addOptionSetter("burstVolume")
-    def _setBurstVolume(self, vol):
-        self.burstVolume = vol
-
-    @Instrument.addOptionGetter("burstVolume")
-    def _getBurstVolume(self):
-        return self.burstVolume
-
-    @Instrument.addOptionGetter("inputLevel") ## New routine to get averaged/stdev data for two channels
+        
+    @Instrument.addOptionGetter("inputLevel")
     def _getInputLevel(self):
-        with nmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan(self.port1)
-            task.ai_channels.add_ai_voltage_chan(self.port2)
-            task.timing.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquisitionType.CONTINUOUS, samps_per_chan=self.burstVolume)
-            reader = stream_readers.AnalogMultiChannelReader(task.in_stream)
-            buffer = np.zeros((2, self.burstVolume), dtype = np.float64)
-            reader.read_many_sample(buffer, self.burstVolume, timeout=constants.WAIT_INFINITELY)
-            data = buffer.T.astype(np.float64)/self.scaleFactor
-            DL, DR = data[:,0], data[:,1]
-            DLav = DL.mean()
-            DLerr = DL.std()
-            DRav = DR.mean()
-            DRerr = DR.std()
-        return [DLav, DLerr, DRav, DRerr] # Drops values as an array, that you can strip out as s[0], s[1], s[2] and s[3]
+        self.hat.a_in_scan_start(self.channel_mask,SpC_Gen6,SR_Gen6,self.options)
+        buffer=self.hat.a_in_scan_read_numpy(SpC_Gen6,-1)
+        tempData=buffer.data
+        split = int(len(tempData)/2)
+        DL, DR = tempData[0:split],tempData[split+1:2*split]
+        DLav = DL.mean()
+        DLerr = DL.std()
+        DRav = DR.mean()
+        DRerr = DR.std()
+        self.hat.a_in_scan_stop()
+        self.hat.a_in_scan_cleanup()
+        return [DLav, DLerr, DRav, DRerr]  # Drops values as an array, that you can strip out as s[0], s[1], s[2] and s[3]
 
     @Instrument.addOptionGetter("scaleFactor")
     def _getScaleFactor(self):
@@ -75,15 +65,7 @@ class USB6216InPB(Instrument.Instrument):
     @Instrument.addOptionSetter("scaleFactor")
     def _setScaleFactor(self,scaleFactor):
         self.scaleFactor = scaleFactor
-
-    @Instrument.addOptionGetter("SpC")
-    def _getSpC(self):
-        return self.SpC
-
-    @Instrument.addOptionSetter("SpC")
-    def _setSpC(self, SpC):
-        self.SpC = SpC
-
+            
     def goTo(self,target,stepsize=0.01,delay=0.0):
         pass
             

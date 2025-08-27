@@ -11,20 +11,20 @@ ser = serial.Serial(
 
 flag = True
 def tell(msg):
-    msg = msg + '\n'
-    x = msg.encode('ascii') # encode n send
+    msg = msg + "\n"
+    x = msg.encode("ascii") # encode n send
     ser.write(x)
 
 def hear():
     msg = ser.read_until() # read until a new line
 #    msg = ser.read()
-    mystring = msg.decode('ascii')  # decode n return
+    mystring = msg.decode("ascii")  # decode n return
 #    mystring = msg
     return mystring
 
 while flag == True:
     val = input() # take user input
-    if val=='exit':
+    if (val == "exit"):
         flag = False
     tell(val) # send it to arduino
     var = hear() # listen to arduino

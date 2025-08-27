@@ -23,7 +23,7 @@ p18 = Pin('D18',Pin.OUT)
 
 def main_loop():
     while True:
-        if (teensy.any() > 0):
+        if teensy.any():
             comm = teensy.readline()
             command = comm.strip()
             commandIndex = command.index(":")  # Find a delimiter (e.g., semicolon) to split the string
@@ -43,10 +43,12 @@ def main_loop():
                         p17.value(Set)
                     elif (Pin == 18):
                         p18.value(Set)
-#                    teensy.write("GPIO Set OK")
-#                else:
-#                    teensy.write("GPIO Set Fail: Outside bounds")
-#            else:
-#                teensy.write("GPIO Set Fail: No delimiter found")
+                    teensy.write("GPIO Set OK")
+                else:
+                    teensy.write("GPIO Set Fail: Outside bounds")
+            else:
+                teensy.write("GPIO Set Fail: No delimiter found")
+            time.sleep(0.1)
 
-main_loop()
+if __name__ == "__main__":
+    main_loop()

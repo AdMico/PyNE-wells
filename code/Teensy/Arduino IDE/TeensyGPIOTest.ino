@@ -26,25 +26,22 @@ void loop() {
     String command = Serial.readStringUntil('\n'); // Read until newline
     command.trim(); // Remove any leading/trailing whitespace    
     int commandIndex = command.indexOf(':'); // Find a delimiter (e.g., semicolon) to split the string
-    if (commandIndex != -1) { // If a semicolon is found
+    if (commandIndex > 0) { // If a semicolon is found
       String PinStr = command.substring(0,commandIndex);
       String SetStr = command.substring(commandIndex+1,commandIndex+2);
       Pin = PinStr.toInt();
       Set = SetStr.toInt();
-//      Send back one of the parts --- Hold commented for now for use with TeensyBasicCommsTest.py to enable debugging
-//      Serial.println(Set);
       if ((Pin >= 14) && (Pin <=18) && ((Set == 0) || (Set == 1))){
         if (Set == 0){
           digitalWrite(Pin,LOW);
+          Serial.println("GPIO Set OK");
         } else {
           digitalWrite(Pin,HIGH);
-        }
-        Serial.println("GPIO Set OK");     
+          Serial.println("GPIO Set OK");
+        }     
       } else {
         Serial.println("GPIO Set Fail: Outside bounds");
       }
-    } else {
-      Serial.println("GPIO Set Fail: No delimiter found");
-    }
+    } 
   }
 }

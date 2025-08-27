@@ -9,19 +9,18 @@ End loop using 'exit'. Code is purely for serial byte traffic check.
 """
 
 from machine import UART
+import time
 
 teensy = UART(1,9600)
 teensy.init(9600,bits=8,parity=None,stop=1)
 
 def main_loop():
-    val=""
     while True:
-        if (teensy.any() > 0):
-            val = teensy.readline()
-        if (val != ""):
-            teensy.write(val)
-            if (val == 'exit'):
-                return
-            val = ""
+        if teensy.any():
+            rec = teensy.readline()
+            if rec:
+                teensy.write(rec)
+        time.sleep(0.1)
 
-main_loop()
+if __name__ == "__main__":
+    main_loop()

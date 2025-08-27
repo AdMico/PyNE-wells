@@ -1,51 +1,38 @@
 """
-Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
+Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich
 
-This module does the input handling for the USB-6216, which is effectively a pair of analog outputs
-and a set of 8 analog inputs. The output handling is done by a separate .py.
-
-APM 19DEC23 -- Renamed as USB6216InSB.py and dedicated as a single channel and burst reader option for the USB-6216 device.
-This enables us to preserve old usages, e.g., in IV generation, but build in the new 'burst' functionality for more accurate reads.
-Pulls NIDAQ information (e.g., sample rate and samples per channel) from Config.py. The rest works as usual (address = port)
+This module does the input handling for the MCC128, in single channel burst mode, returning average and standard deviation.
+The output handling is done by a separate .py.
 """
 
 import Instrument
-import nidaqmx as nmx
-from nidaqmx import constants
-from nidaqmx import stream_readers
-from Config import SR, SpC
-
-#pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
+from daqhats import mcc128,HatIDs,AnalogInputMode,AnalogInputRange,OptionFlags
+from daqhats_utils import select_hat_device,chan_list_to_mask
+from Config import SR_Gen6,SpC_Gen6
 
 @Instrument.enableOptions
-class USB6216InSB(Instrument.Instrument):
+class MCC128InSB(Instrument.Instrument):
     # Default options to set/get when the instrument is passed into the sweeper
     defaultInput = "inputLevel"
     defaultOutput = "None"
 
     def __init__(self, address):
-        super(USB6216InSB, self).__init__()
-        self.dev = address
-        self.type ="USB6216"  #We can check each instrument for its type and react accordingly
-        self.name = "USB6216"
-        if self.dev == 0:
-            self.port = "Dev1/ai0"
-        elif self.dev == 1:
-            self.port = "Dev1/ai1"
-        elif self.dev == 2:
-            self.port = "Dev1/ai2"
-        elif self.dev == 3:
-            self.port = "Dev1/ai3"
-        elif self.dev == 4:
-            self.port = "Dev1/ai4"
-        elif self.dev == 5:
-            self.port = "Dev1/ai5"
-        elif self.dev == 6:
-            self.port = "Dev1/ai6"
-        elif self.dev == 7:
-            self.port = "Dev1/ai7"
+        super(MCC128InSB, self).__init__()
+        self.port = address
+        self.type ="MCC128"  #We can check each instrument for its type and react accordingly
+        self.name = "MCC128"
+        self.address=select_hat_device(HatIDs.MCC_128)
+        self.hat=mcc128(self.address)
+        input_mode=AnalogInputMode.SE
+        input_range=AnalogInputRange.BIP_10V
+        self.hat.a_in_mode_write(input_mode)
+        self.hat.a_in_range_write(input_range)
+        self.hat.a_in_scan_cleanup()
+        channels=[self.port]
+        self.channel_mask=chan_list_to_mask(channels)
+        self.options=OptionFlags.DEFAULT
         
     @Instrument.addOptionSetter("name")
     def _setName(self,instrumentName):
@@ -55,17 +42,16 @@ class USB6216InSB(Instrument.Instrument):
     def _getName(self):
         return self.name
         
-    @Instrument.addOptionGetter("inputLevel")  ## This is the new burst read routine but single channel
+    @Instrument.addOptionGetter("inputLevel")
     def _getInputLevel(self):
-        with nmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan(self.port)
-            task.ai_channels.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquistionType.CONTINUOUS, samps_per_chan=SpC)
-            reader = stream_readers.AnalogSingleChannelReader(task.in_stream)
-            buffer = np.zeros((1,SpC), dtype=np.float64)
-            reader.read_many_sample(buffer, SpC, timeout=constants.WAIT_INFINITELY)
-            data = buffer.T.astype(np.float64)/self.scaleFactor
-            measInput = data.mean() ## Current version only returns the average, we can add error return later if needed APM 19DEC23
-        return measInput
+        self.hat.a_in_scan_start(self.channel_mask,SpC_Gen6,SR_Gen6,self.options)
+        buffer = self.hat.a_in_scan_read_numpy(SpC_Gen6,-1)
+        tempData = buffer.data
+        Dav = tempData.mean()/self.scaleFactor
+        Derr = tempData.std()/self.scaleFactor
+        self.hat.a_in_scan_stop()
+        self.hat.a_in_scan_cleanup()
+        return [Dav,Derr]  # Drops values as an array, that you can strip out as s[0] and s[1]
 
     @Instrument.addOptionGetter("scaleFactor")
     def _getScaleFactor(self):
