@@ -7,7 +7,7 @@ This class sets up the Pi to be controlled remotely. The truth table is that of 
 """
 from gpiozero import LED
 from gpiozero.pins.pigpio import PiGPIOFactory
-from Config import PiBox, MuxMode
+from Config import PiBox, MuxMode_Gen4
 import pigpio
 import time
 
@@ -128,13 +128,13 @@ class PiMUX:
         #Uses truthtables to set GPIO pin voltages to activate desired output.
 
     def setMuxToOutput(self, desiredOutput):
-        if MuxMode == 'Test':
+        if MuxMode_Gen4 == 'Test':
             for index, item in enumerate(self.listPins):
                 if self.DeviceTable[desiredOutput][index]:
                     item.on()
                 else:
                     item.off()
-        elif MuxMode == 'Run':
+        elif MuxMode_Gen4 == 'Run':
             for index, item in enumerate(self.listPins):
                 if self.RowTable[desiredOutput][index]:
                     item.on()

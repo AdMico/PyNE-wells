@@ -1,10 +1,11 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
 
 @developers: Adam Micolich, Jan Gluschke & Shuji Kojima
 @author: Jakob Seidl
 
 Old PyNE architecture for running sweeps -- conserve for possible future use.
+NB. Used by MCC and USB6216 test routines in Debugging, keep for this purpose APM 15AUG25
 """
 
 from collections.abc import Iterable

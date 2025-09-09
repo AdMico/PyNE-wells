@@ -12,20 +12,25 @@ This informs various parts of the software about aspects of your bench setup. Ed
 PiBox = 'MeasureThree'
 
 # Information about which Truth Table to use (Devices, Rows, etc)
-# Details are in Pi-control.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
-MuxMode = 'Run'
+# Details are in PiControlGen4.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
+MuxMode_Gen4 = 'Run'
 
-# Information about which NIDAQ ports you are using for your NI USB6216BNC instance.
-Source = 'Dev1/ao0'
-Gate = 'Dev1/ao1'
-DrainLeft = 'Dev1/ai0'
-DrainRight = 'Dev1/ai1'
+# Information about which NIDAQ ports you are using for your NI USB6216BNC instance -- For AssayRunGen4.py
+Source_Gen4 = 'Dev1/ao0'
+Gate_Gen4 = 'Dev1/ao1'
+DrainLeft_Gen4 = 'Dev1/ai0'
+DrainRight_Gen4 = 'Dev1/ai1'
+
+# Information about which NIDAQ ports you are using for your NI USB6216BNC instance -- For AssayRunGen5.py
+Source_Gen5 = 'Dev1/ao0'
+Hold_Gen5 = 'Dev1/ao1'
+Drain_Gen5 = 'Dev1/ai0'
 
 # Settings for NIDAQ PairBurst Mode operation
 SR = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
 SpC = int(1e5) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
 
-# Settings for Femto Preamplifiers
+# Settings for Femto Preamplifiers -- Only P1Gain matters for Gen 5/6, both matter for Gen4.
 P1Gain = float(1e4)
 P2Gain = float(1e4)
 

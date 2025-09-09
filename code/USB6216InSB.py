@@ -9,6 +9,9 @@ and a set of 8 analog inputs. The output handling is done by a separate .py.
 APM 19DEC23 -- Renamed as USB6216InSB.py and dedicated as a single channel and burst reader option for the USB-6216 device.
 This enables us to preserve old usages, e.g., in IV generation, but build in the new 'burst' functionality for more accurate reads.
 Pulls NIDAQ information (e.g., sample rate and samples per channel) from Config.py. The rest works as usual (address = port)
+
+APM 09SEP25 -- This routine gets used exclusively in Gen5, so I've set the config.py calls specifically to Gen5.
+If implemented elsewhere, change the calls. To be made more robust in a later version.
 """
 
 import Instrument

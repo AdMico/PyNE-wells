@@ -9,6 +9,9 @@ and a set of 8 analog inputs. The output handling is done by a separate .py.
 APM 19DEC23 -- This is a new instrument functionality that enables hardware-buffered read from the USB-6216 for a pair of analog inputs.
 The two buffers are averaged to return the value & error in a much faster way (by factor of 2000) than the single-shot routine.
 Instrument will pull information from config.py
+
+APM 09SEP25 -- This routine gets used exclusively in Gen4, so I've set the config.py calls specifically to Gen4.
+If implemented elsewhere, change the calls. To be made more robust in a later version.
 """
 
 import Instrument
@@ -17,7 +20,7 @@ import pandas as pd
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
-from Config import DrainLeft, DrainRight, SR, SpC
+from Config import DrainLeft_Gen4, DrainRight_Gen4, SR, SpC
 
 pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
 
@@ -32,8 +35,8 @@ class USB6216InPB(Instrument.Instrument):
         self.type ="USB6216"  #We can check each instrument for its type and react accordingly
         self.name = "USB6216"
         self.burstVolume = SpC #initialise burstVolume to the Samples per Chanel - Sample rate still fixed!!!!
-        self.port1 = DrainLeft
-        self.port2 = DrainRight
+        self.port1 = DrainLeft_Gen4
+        self.port2 = DrainRight_Gen4
         
     @Instrument.addOptionSetter("name")
     def _setName(self,instrumentName):
