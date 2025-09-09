@@ -219,6 +219,20 @@ class PiMUX:
         self.setBatteryToOn() # Ensures MUXes powered by Battery
         self.setBattLPRToOff() # Connects ground to LPR to power down MUXes
 
+    def SysTest(self,word,bit,time): # Switches a given bit over to connection for a specified time -- APM 10SEP25
+        self.setToBiasWords()
+        self.setWMuxToOutput(word)
+        self.setWordToOn()
+        self.setBMuxToOutput(bit)
+        self.setBitToOn()
+        time.sleep(time)
+        self.setWMuxToOutput(word)
+        self.setWordToOff()
+        self.setBMuxToOutput(bit)
+        self.setBitToOff()
+
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
     my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
+#    my_pi.SysTest(1,1,30) # Will connect to device A1 for 30 sec -- APM 10SEP25
+#    my_pi.SysReset() # Runs a reset -- APM 10SEP25
