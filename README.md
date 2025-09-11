@@ -1,10 +1,10 @@
-# PyNE-wells v1.1.1 (Updated 05JUN24 APM)
+# PyNE-wells v1.1.2 (Updated 11SEP25 APM)
 
-**Written by:** Adam Micolich, Jan Gluschke, Shuji Kojima & Sidd Rawat
+**Written by:** Adam Micolich & Jan Gluschke
 
 **Purpose:** Software for the electronic measurements for the lipid-sealed wells project (Australian Research Council DP210102085).
 
-*Developed and tested using Python 3.12.*
+*Developed and tested using Python 3.13.5*
 
 ## Structure
 
