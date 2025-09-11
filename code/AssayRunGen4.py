@@ -8,9 +8,9 @@ Main software for running assays using the Generation 4 set-up (52 OECTs/chip, g
 
 from PiControlGen4 import PiMUX
 import GlobalMeasID as ID
-from Config import PiBox,P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
-import USB6216Out
-import USB6216InPB
+from Config import PiBox,P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC, GuiUpdateMode
+from USB6216Out import USB6216Out
+from USB6216InPB import USB6216InPB
 import pandas as pd
 import numpy as np
 import time
@@ -35,8 +35,8 @@ dDL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four data
 dDLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 dDR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 dDRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
-GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
+GUIFrameL = pd.DataFrame(np.zeros((nRows,3)),columns=['Resistance','Uncertainty','Timestamp'],dtype='object')
+GUIFrameR = pd.DataFrame(np.zeros((nRows,3)),columns=['Resistance','Uncertainty','Timestamp'],dtype='object')
 RD = np.zeros(105)
 PBStart = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
 PBEnd = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
@@ -167,9 +167,13 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
             writer = csv.writer(f)
             writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
         #---- Update data for the GUI, now uses the display dataframes 11SEP25 APM
-        GUIFrameL.iloc[nRow-1] = [nDevL,round(dDL.iloc[i,nGrab],2),round(dDLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
-        GUIFrameR.iloc[nRow-1] = [nDevR,round(dDR.iloc[i,nGrab],2),round(dDRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
-        updateGUI()
+        GUIFrameL.iloc[nRow-1] = [round(dDL.iloc[i,nGrab],2),round(dDLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
+        GUIFrameR.iloc[nRow-1] = [round(dDR.iloc[i,nGrab],2),round(dDRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
+        #---- Decision tree below implements GuiUpdateMode switching of GUI updating from config.py -- New 11Sep25 APM
+        if GuiUpdateMode == 'point': #Update the GUI every datapair from the NIDAQ
+            updateGUI()
+        elif GuiUpdateMode == 'grab' and i == (nRows-1): #Update the GUI only at the end of the grab
+            updateGUI()
         #---- End of row timing
         PBEnd[i] = time.time()
         PBTime[i] = PBEnd[i]-PBStart[i]
@@ -221,10 +225,17 @@ def measLoop():
                 print('Stopped safely after completed grab: ',nGrab+1)
                 break
         GT = WaitAR-GrabTime[i]
-        print('GT= ',GT) # Added for diagnostic testing 11SEP25 APM
+#        print('WaitAR=',WaitAR) ## Keep for diagnostics; Off from 11Sep25 APM
+#        print('GrabTime=',GrabTime[i]) ## Keep for diagnostics; Off from 11Sep25 APM
+#        print('GT= ',GT) ## Keep for diagnostics; Off from 11Sep25 APM
         #---- wait for the next scheduled grab
-        if nGrab+1 < ItersAR:
-            time.sleep(GT)
+        if nGrab+1 < ItersAR: # Edited to prevent GT < 0 from producing ValueError 11Sep25 APM
+            if GT >= 0.0:
+                print('Pause before next grab: ',round(GT,3),'s')
+                time.sleep(GT)
+            else:
+                print('GrabTime exceeds WaitAR, immediately starting next grab.')
+                time.sleep(0.001)
     print()
     print(f'Time elapsed = {(GrabEnd[i]-GrabStart[0]):.2f} s')
     print(f'Average time per grab = {np.nanmean(GrabTime):.2f} s')
@@ -245,7 +256,7 @@ def measLoop():
 
 if __name__ == "__main__":
     # GUI Code
-    nGrab=0
+    nGrab = 0
     root = tk.Tk()
     root.title("Live Measurement GUI")
     root.geometry('1100x650')

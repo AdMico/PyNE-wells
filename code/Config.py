@@ -23,7 +23,7 @@ DrainRight = 'Dev1/ai1'
 
 # Settings for NIDAQ PairBurst Mode operation
 SR = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
-SpC = int(1e5) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+SpC = int(1e3) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
 
 # Settings for Femto Preamplifiers
 P1Gain = float(1e4)
@@ -34,7 +34,8 @@ VSource = float(0.5)
 VGate = float(0.0)
 
 # AssayRun settings
-ItersAR = int(1) # Number of iterations of device sampling to run before program ends
-WaitAR = float(60) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
-zeroThres = float(1e6) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11SEP25 APM
+ItersAR = int(15) # Number of iterations of device sampling to run before program ends
+WaitAR = float(10) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+zeroThres = float(1e5) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11Sep25 APM
 basePath = '../data'
+GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
