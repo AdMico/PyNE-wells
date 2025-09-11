@@ -1,7 +1,7 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 This informs various parts of the software about aspects of your bench setup. Edit as needed for your setup.
 """
@@ -36,5 +36,5 @@ VGate = float(0.0)
 # AssayRun settings
 ItersAR = int(1) # Number of iterations of device sampling to run before program ends
 WaitAR = float(60) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
-zeroThres = float(1e-2) # If current is smaller, we consider current to be zero and resistance to be zero (i.e., open circuit) to help data handling
+zeroThres = float(1e6) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11SEP25 APM
 basePath = '../data'

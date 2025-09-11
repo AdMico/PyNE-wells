@@ -1,18 +1,18 @@
 """
-Brought to PyNE-wells v1.0.0 on Thu Nov 1 2023 by APM
+Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
 
-Moved to purgatory 17APR24 APM -- Used by the old Gen3a board now retired.
+@developers: Adam Micolich & Jan Gluschke
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
-
-For debugging hardware setup
+Main software for running assays using the Generation 4 set-up (52 OECTs/chip, green multiplexer box).
 """
 
-from Imports import *
-from Pi_control_Gen3 import PiMUX
+from PiControlGen4 import PiMUX
 import GlobalMeasID as ID
-from Config import P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
+from Config import PiBox,P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
+import USB6216Out
+import USB6216InPB
 import pandas as pd
+import numpy as np
 import time
 from datetime import datetime,date
 from tkinter import *
@@ -27,10 +27,14 @@ import csv
 nRows = 26
 nDev = 2*nRows
 devices = np.zeros(nDev)
-DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
+DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four dataframes for resistance/uncertainty data
 DLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
+dDL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four dataframes are for GUI use -- New 11SEP25 APM
+dDLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
+dDR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
+dDRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
 GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
 RD = np.zeros(105)
@@ -45,7 +49,7 @@ GrabTime = np.zeros(ItersAR) # for use in determining time taken to run a grab
 GrabTime[:] = np.nan
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
-with open('../stop.txt', 'w') as fStop: # Initialise stop button
+with open('stop.txt', 'w') as fStop: # Initialise stop button
     fStop.write(stopText)
 nRun=1
 measurementName = str(ID.readCurrentSetup()) + str(ID.readCurrentID())
@@ -101,7 +105,7 @@ def grabStart(): # Operates the Grab Start button in the GUI
     updateThread.start()
 
 def stop(): # Operates mechanism to complete grab before ending program -- last edited APM 17Jan24
-    with open('../stop.txt', 'w') as fStop:
+    with open('stop.txt', 'w') as fStop:
         fStop.write('stop')
 
 def end(): # Operates mechanism to end the program entirely
@@ -109,7 +113,7 @@ def end(): # Operates mechanism to end the program entirely
         fLog.write('End: ' + str(datetime.now()) + '\n')
     ID.increaseID()
 
-def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices on a chip -- last edited APM 17Jan24
+def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices on a chip -- last edited APM 11SEP25
     global nRun,RD
     print('Grab: ',nGrab+1)
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
@@ -117,30 +121,38 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set NIDAQ Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(VSource, delay=0.0)  # Run the source up to specified voltage
+    CtrlPi.setRelayToOn()  # Ensure power relay is on
+    time.sleep(0.5) # Give time for MUXes to properly run up.
     RD[0]=nGrab+1
     for i in range(nRows):
         nRow = i+1
 #        print('Row = ',nRow) ## Keep for diagnostics; Off from 15JAN24 APM
         nDevL = i+1
-        nDevR = 52-i
+        nDevR = 27+i
 #        print('Device Left =', nDevL ,'Device Right =', nDevR) ## Keep for diagnostics; Off from 15JAN24 APM
         #---- Set Multiplexer
         CtrlPi.setMuxToOutput(nRow)
         PBStart[i] = time.time()
         #---- Grab row data from NIDAQ
         Drain = daqin_Drain.get('inputLevel')
-        if Drain[0] > zeroThres: # Converts to resistance and sets open circuit to zero for left-bank devices
-            DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
-            DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
+        #---- Calculate resistance values and uncertainties
+        DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
+        DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
+        DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
+        DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
+        #---- Create the display version of resistances as separate dataframes and apply zeroThres -- New 11SEP25 APM
+        if DL.iloc[i,nGrab] < zeroThres: # Fills the left-bank display dataframes and sets to zero if resistance > zeroThres -- New 11SEP25 APM
+            dDL.iloc[i,nGrab] = DL.iloc[i,nGrab]
+            dDLerr.iloc[i,nGrab] = DLerr.iloc[i,nGrab]
         else:
-            DL.iloc[i,nGrab] = 0.0
-            DLerr.iloc[i,nGrab] = 0.0
-        if Drain[2] > zeroThres: # Converts to resistance and sets open circuit to zero for right-bank devices
-            DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
-            DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
+            dDL.iloc[i,nGrab] = 0.0
+            dDLerr.iloc[i,nGrab] = 0.0
+        if DR.iloc[i,nGrab] < zeroThres: # Fills the right-bank display dataframes and sets to zero if resistance > zeroThres -- New 11SEP25 APM
+            dDR.iloc[i,nGrab] = DR.iloc[i,nGrab]
+            dDRerr.iloc[i,nGrab] = DRerr.iloc[i,nGrab]
         else:
-            DR.iloc[i,nGrab] = 0.0
-            DRerr.iloc[i,nGrab] = 0.0
+            dDR.iloc[i,nGrab] = 0.0
+            dDRerr.iloc[i,nGrab] = 0.0
 #        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
 #        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
         RD[(2*nDevL-1)] = round(DL.iloc[i,nGrab],3)
@@ -154,9 +166,9 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(nDevR)+'.csv', 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
-        #---- Update data for the GUI
-        GUIFrameL.iloc[nRow-1] = [nDevL,round(DL.iloc[i,nGrab],2),round(DLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
-        GUIFrameR.iloc[nRows-nRow] = [nDevR,round(DR.iloc[i,nGrab],2),round(DRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
+        #---- Update data for the GUI, now uses the display dataframes 11SEP25 APM
+        GUIFrameL.iloc[nRow-1] = [nDevL,round(dDL.iloc[i,nGrab],2),round(dDLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
+        GUIFrameR.iloc[nRow-1] = [nDevR,round(dDR.iloc[i,nGrab],2),round(dDRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
         updateGUI()
         #---- End of row timing
         PBEnd[i] = time.time()
@@ -167,11 +179,11 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
     with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','a',newline='') as f:
         writer = csv.writer(f)
         writer.writerow(RD[:])
-#    ResData.to_csv(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv', index=False)
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
     # ---- Switch Multiplexer to off state.
     CtrlPi.setMuxToOutput(0)
+    CtrlPi.setRelayToOff()  # Switches multiplexer power off
 #    print('End of grab: ', nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 
     return PBElapsed,PBAverage
@@ -203,31 +215,33 @@ def measLoop():
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
         #---- check for grab-stop signal
-        with open('../stop.txt', 'r') as fStop:
+        with open('stop.txt', 'r') as fStop:
             r = fStop.read()
             if r == 'stop':
                 print('Stopped safely after completed grab: ',nGrab+1)
                 break
         GT = WaitAR-GrabTime[i]
+        print('GT= ',GT) # Added for diagnostic testing 11SEP25 APM
         #---- wait for the next scheduled grab
         if nGrab+1 < ItersAR:
             time.sleep(GT)
     print()
-    print(f'Time elapsed = {(GrabEnd[i] - GrabStart[0]):.2f} s')
+    print(f'Time elapsed = {(GrabEnd[i]-GrabStart[0]):.2f} s')
     print(f'Average time per grab = {np.nanmean(GrabTime):.2f} s')
     print()
-    print('Measurement Daemon Completed Successfully')
+    print('measLoop completed successfully')
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
         fLog.write('Measurement '+measurementName+'R'+str(nRun)+' finished at: '+str(datetime.now())+'\n'+
                    'with '+str(nGrab+1)+' of '+str(ItersAR)+' grabs completed.'+'\n \n'
                    )
     nRun += 1
-    print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
+#    print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
     # ---- Switch Multiplexer to off state.
     CtrlPi.setMuxToOutput(0)
-    #root.quit() ## remove this line for the program to not quit at the end
+    CtrlPi.setRelayToOff()  # Switches multiplexer power off
+    #root.quit() # comment/remove this line for the program to not quit at the end
 
 if __name__ == "__main__":
     # GUI Code

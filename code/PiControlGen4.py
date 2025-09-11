@@ -1,14 +1,13 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 This class sets up the Pi to be controlled remotely. The truth table is that of the multiplexer.
 """
 from gpiozero import LED
 from gpiozero.pins.pigpio import PiGPIOFactory
 from Config import PiBox, MuxMode
-import pigpio
 import time
 
 class PiMUX:

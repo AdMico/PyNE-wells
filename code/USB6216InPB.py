@@ -1,7 +1,7 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 This module does the input handling for the USB-6216, which is effectively a pair of analog outputs
 and a set of 8 analog inputs. The output handling is done by a separate .py.
@@ -14,14 +14,12 @@ Instrument will pull information from config.py
 import Instrument
 import numpy as np
 import pandas as pd
-import nidaqmx
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
-from nidaqmx import stream_writers
 from Config import DrainLeft, DrainRight, SR, SpC
 
-pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
+#pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
 
 @Instrument.enableOptions
 class USB6216InPB(Instrument.Instrument):
