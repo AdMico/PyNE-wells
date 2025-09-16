@@ -136,18 +136,20 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         #---- Grab row data from NIDAQ
         Drain = daqin_Drain.get('inputLevel')
         #---- Calculate resistance values and uncertainties
+        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3])
         DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
         DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
         DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
         DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
+        print('test: ',DL.iloc[i,nGrab],DR.iloc[i,nGrab])
         #---- Create the display version of resistances as separate dataframes and apply zeroThres -- New 11SEP25 APM
-        if DL.iloc[i,nGrab] < zeroThres: # Fills the left-bank display dataframes and sets to zero if resistance > zeroThres -- New 11SEP25 APM
+        if abs(DL.iloc[i,nGrab]) < zeroThres: # Fills the left-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
             dDL.iloc[i,nGrab] = DL.iloc[i,nGrab]
             dDLerr.iloc[i,nGrab] = DLerr.iloc[i,nGrab]
         else:
             dDL.iloc[i,nGrab] = 0.0
             dDLerr.iloc[i,nGrab] = 0.0
-        if DR.iloc[i,nGrab] < zeroThres: # Fills the right-bank display dataframes and sets to zero if resistance > zeroThres -- New 11SEP25 APM
+        if abs(DR.iloc[i,nGrab]) < zeroThres: # Fills the right-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
             dDR.iloc[i,nGrab] = DR.iloc[i,nGrab]
             dDRerr.iloc[i,nGrab] = DRerr.iloc[i,nGrab]
         else:
@@ -259,18 +261,18 @@ if __name__ == "__main__":
     nGrab = 0
     root = tk.Tk()
     root.title("Live Measurement GUI")
-    root.geometry('1100x650')
+    root.geometry('1450x650') # Values set to prevent GUI crash 16Sep25 APM
 #    root.maxsize(1200,800)
     root.config(bg="skyblue")
     left_table = Frame(root)
     left_table.grid(row=0,column=1,rowspan=7,padx=5,pady=5)
     right_table = Frame(root)
     right_table.grid(row=0,column=2,rowspan=7,padx=5,pady=5)
-    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=365,height=590)
-    GUI_optionsL = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
+    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=485,height=590) # Values set to prevent GUI crash 16Sep25 APM
+    GUI_optionsL = {'align':'center','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22} # Values set to prevent GUI crash 16Sep25 APM
     pdtb.config.apply_options(GUI_optionsL,GUI_tableL)
-    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=365,height=590)
-    GUI_optionsR = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
+    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=485,height=590) # Values set to prevent GUI crash 16Sep25 APM
+    GUI_optionsR = {'align':'center','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22} # Values set to prevent GUI crash 16Sep25 APM
     pdtb.config.apply_options(GUI_optionsR,GUI_tableR)
     GUI_tableL.show()
     GUI_tableR.show()

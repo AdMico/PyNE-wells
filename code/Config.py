@@ -38,4 +38,4 @@ ItersAR = int(15) # Number of iterations of device sampling to run before progra
 WaitAR = float(10) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(1e5) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11Sep25 APM
 basePath = '../data'
-GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
+GuiUpdateMode = 'point' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
