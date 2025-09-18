@@ -9,7 +9,7 @@ This informs various parts of the software about aspects of your bench setup. Ed
 ## IMPORTANT -- You need to set PiBox correctly before you first use the software to avoid controlling someone else's hardware by mistake -- see main README.md file
 # Information about which Raspberry Pi you are using (MeasureOne, MeasureTwo, etc)
 # Details for the various Pis are in Pi_control.py
-PiBox = 'MeasureThree'
+PiBox = 'MeasureTwo'
 
 # Information about which Truth Table to use (Devices, Rows, etc)
 # Details are in Pi-control.py but Test is for hardware test (devices), Run is for measurements with two pre-amps (rows) on Gen 3a/4 MuxBoards
@@ -34,8 +34,8 @@ VSource = float(0.5)
 VGate = float(0.0)
 
 # AssayRun settings
-ItersAR = int(15) # Number of iterations of device sampling to run before program ends
+ItersAR = int(3) # Number of iterations of device sampling to run before program ends
 WaitAR = float(10) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
-zeroThres = float(1e5) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11Sep25 APM
+zeroThres = float(2e5) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11Sep25 APM
 basePath = '../data'
-GuiUpdateMode = 'point' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
+GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM

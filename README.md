@@ -1,4 +1,4 @@
-# PyNE-wells v1.1.2 (Updated 11SEP25 APM)
+# PyNE-wells v1.1.2 (Updated 18SEP25 APM)
 
 **Written by:** Adam Micolich & Jan Gluschke
 
@@ -16,27 +16,19 @@ The main functional component is `AssayRun4.py`, which runs the electrical measu
 
 `AssayRun4.py`: Main GUI for the electrical setup. There are only three buttons in the GUI. The first button is *start run* which will start a measurement. The specifications for the measurements (e.g., number of 'grabs', delay between 'grabs', etc. are set in `Config.py`). A 'grab' is a single readout of all 52 devices on the chip. The second button is *last grab*, which enables you to stop a sequence of immediately after the next grab. When used, *last grab* will leave the GUI running just as would be the case if you had let the specified number of grabs in `Config.py` complete. This enables a new sequence of grabs to be started without needing to restart the software. When you commence a new grab, the datafile structure (folder and names) will update automatically, no intervention is required. The third button is *End Program*, which shuts down the GUI and terminates `AssayRun4.py`.
 
-`Config.py`: This contains all the key configuration details for your instance of the software. The individual parameters are explained in the comments. The most crucial one to note is the `PiBox` parameter. You need to ensure this matches the Raspberry Pi you are using in your hardware set-up, otherwise when you run the GUI, all the multiplexer commands will be going to another set-up, which may be running at the time.
+`Config.py`: This contains all the key configuration details for your instance of the software. The individual parameters are explained in the comments. The most crucial one to note is the `PiBox` parameter. You need to ensure this matches the Raspberry Pi you are using in your hardware set-up, otherwise when you run the GUI, all the multiplexer commands will be going to another set-up, which may be running at the time. If you are getting weird errors on test devices (e.g., only half the samples measure, unexpected values, etc.), be sure to check this setting is correct before deeper debug testing. The default in the downloaded version is 'MeasureTwo', which is only correct for the ion-sensitivity set-up in LG51 OMB. Note also the `GuiUpdateMode` setting at the bottom, significant speed improvements can be obtained if it is set to 'grab' rather than 'point'.
 
 `GlobalMeasID.py`: This contains all the code for setting, reading and incrementing the Global Measurement ID (GMID) used to trace data files to hardware-setup and owner. A user will only need to interact with this program to initialise the GMID for their setup. This is done at the `initID` function by setting the desired prefix (ideally 2 letter string, but can be more) and ID number. If this file is run (and the Reset switch at the top = 1) then the GMID will reinitialise to the value you set in `initID`. Can be useful to leave Reset = 0 once you've initialised the first time, just to prevent accidental loss of GMID value, but it ships with Reset = 1 as that's the most common usage case.
 
-`GlobalMeasIDBinary`: Binary file containing the GMID. Automatically incremented by the software via routines in `GlobalMeasID.py`.
+`GlobalMeasIDBinary`: Binary file containing the GMID. Automatically incremented by the software via routines in `GlobalMeasID.py`. This defaults to 'TE' and '1' in the downloaded version.
 
-`Imports.py`: Master import file to simplify code. Doesn't need edits unless you add new library calls to the software (if you do, please update `requirements.txt` accordingly).
+`Instrument.py`: This contains a few functions from PyNE-probe that are still needed for the way instrument drivers are coded in PyNE-wells (i.e., USB6216*.py).
 
-`Instrument.py`: This appears to be legacy from PyNE-probe, likely to be deprecated in a future version of PyNE-wells.
-
-`Pi_control_Gen4.py`: This controls all the hardware interactions with the Raspberry Pi, including setting the respective IP address, switching the power control relay for the MUXes, and specifying the truth-tables to correctly connect the measure circuit to a given device. The MUXes are MAX306 16-channel CMOS analog multiplexer ICs, and there are currently four in each MUXBox. Further details can be found in a future GitHub repository for the hardware design. Instance can be run as main to enable direct debugging control of the multiplexers, see bottom of code for details.
-
-`Res_Pull.py`: This is useful legacy from development and enables the resistance to be pulled outside of the GUI in `AssayRun4.py` for testing purposes. Left in the code folder for this instance, but will be moved to the `debugging` folder later.
+`PiControlGen4.py`: This controls all the hardware interactions with the Raspberry Pi, including setting the respective IP address, switching the power control relay for the MUXes, and specifying the truth-tables to correctly connect the measure circuit to a given device. The MUXes are MAX306 16-channel CMOS analog multiplexer ICs, and there are currently four in each MUXBox. Further details can be found in a future GitHub repository for the hardware design. Instance can be run as main to enable direct debugging control of the multiplexers, see bottom of code for details.
 
 `SampleRateTest.py`: This is a special instance of `AssayRun4.py` that assists with setting the samples per channel (`SpC`) variable in `Config.py`. This will be moved to `debugging` folder in a future update.
 
 `stop.txt`: Software stop button, not sure it's used currently, may deprecate in future version.
-
-`SweepFunction.py`: Old PyNE sweep code, likely to be deprecated in future update as I don't think it gets used here currently.
-
-`TimeMeas.py`: Old PyNE sweep code, likely to be deprecated in future update as I don't think it gets used here currently. 
 
 `USB6216InSS.py`: Basic code for reading in single-shot, single-channel measurements from the National Instruments USB6216-BNC instrument. Used by other programs.
 
@@ -50,14 +42,8 @@ The main functional component is `AssayRun4.py`, which runs the electrical measu
 
 ## Updates to be made in next version (submit requests here)
 
-- Deprecate `Instrument.py` if none of its functions are used (i.e., is true legacy).
-- Update filename for Pi_control_Gen4 to remove underscores.
-- Update filename for Res_Pull to remove underscore.
-- Move `Res_Pull.py` across to `debugging` folder.
-- Move `SampleRateTest.py` across to `debugging` folder.
-- Do we still need `stop.txt` or can we deprecate?
-- Can we deprecate `SweepFunction.py` and `TimeMeas.py` in next version?
-- How do I deal with `USB6216InPB_SRT.py` long-term? Can I put a software switch into `USB6216InPB.py` to make it redundant and remove?
+- Move sample rate test programs permanently to debugging folder.
+- Consider/implement deprecation of `stop.txt` functionality.
 - Clean up the `PiBox` issue where a user who hasn't read the documentation can accidentally run someone else's MUXBox by mistake.
 - APM to create github repo for the hardware and link to it here for context.
 

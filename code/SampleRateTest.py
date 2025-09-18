@@ -1,18 +1,18 @@
 """
-Brought to PyNE-wells v1.1.0 on Wed Apr 17 2024 by APM
+Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 Software for determining the number of samples per channel where the improvement in noise performance plateaus
 """
 
-from Imports import *
 from PiControlGen4 import PiMUX
 import GlobalMeasID as ID
-from Config import P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR #SpC removed for this code APM 27MAR24
+from Config import PiBox, P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, GuiUpdateMode
 from USB6216Out import USB6216Out
-from USB6216InPB import USB6216InPB
+from USB6216InPB_SRT import USB6216InPB_SRT
 import pandas as pd
+import numpy as np
 import time
 from datetime import datetime,date
 from tkinter import *
@@ -56,8 +56,12 @@ DL = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
 DLerr = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
 DR = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
 DRerr = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
-GUIFrameL = pd.DataFrame(np.zeros((nRows,5)),columns=['Device ID','SpC','Resistance','Uncertainty','Timestamp'],dtype='object')
-GUIFrameR = pd.DataFrame(np.zeros((nRows,5)),columns=['Device ID','Spc','Resistance','Uncertainty','Timestamp'],dtype='object')
+dDL = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float')) # Following four dataframes are for GUI use -- New 11SEP25 APM
+dDLerr = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
+dDR = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
+dDRerr = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
+GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['SpC','Resistance','Uncertainty','Timestamp'],dtype='object')
+GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['SpC','Resistance','Uncertainty','Timestamp'],dtype='object')
 RD = np.zeros(106)
 PBStart = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
 PBEnd = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
@@ -160,18 +164,26 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
 #        print('nGrab',nGrab,'Samp',samp) ## Keep for diagnostics; off from 27MAR24 APM
         daqin_Drain.set('SpC',samp)
         Drain = daqin_Drain.get('inputLevel')
-        if Drain[0] > zeroThres: # Converts to resistance and sets open circuit to zero for left-bank devices
-            DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
-            DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
+        # ---- Calculate resistance values and uncertainties
+#        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3]) ## Keep for diagnostics; Off from 18SEP25 APM
+        DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
+        DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
+        DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
+        DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
+#        print('test: ',DL.iloc[i,nGrab],DR.iloc[i,nGrab]) ## Keep for diagnostics; Off from 18SEP25 APM
+        # ---- Create the display version of resistances as separate dataframes and apply zeroThres -- New 11SEP25 APM
+        if abs(DL.iloc[i,nGrab]) < zeroThres:  # Fills the left-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
+            dDL.iloc[i,nGrab] = DL.iloc[i,nGrab]
+            dDLerr.iloc[i,nGrab] = DLerr.iloc[i,nGrab]
         else:
-            DL.iloc[i,nGrab] = 0.0
-            DLerr.iloc[i,nGrab] = 0.0
-        if Drain[2] > zeroThres: # Converts to resistance and sets open circuit to zero for right-bank devices
-            DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
-            DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
+            dDL.iloc[i,nGrab] = 0.0
+            dDLerr.iloc[i,nGrab] = 0.0
+        if abs(DR.iloc[i,nGrab]) < zeroThres:  # Fills the right-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
+            dDR.iloc[i,nGrab] = DR.iloc[i,nGrab]
+            dDRerr.iloc[i,nGrab] = DRerr.iloc[i,nGrab]
         else:
-            DR.iloc[i,nGrab] = 0.0
-            DRerr.iloc[i,nGrab] = 0.0
+            dDR.iloc[i,nGrab] = 0.0
+            dDRerr.iloc[i,nGrab] = 0.0
 #        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
 #        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
         RD[(2*nDevL)] = round(DL.iloc[i,nGrab],3)
@@ -185,10 +197,14 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(nDevR)+'.csv', 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([str(nGrab+1),str(samp),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
-        #---- Update data for the GUI
-        GUIFrameL.iloc[nRow-1] = [nDevL,samp,round(DL.iloc[i,nGrab],2),round(DLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
-        GUIFrameR.iloc[nRow-1] = [nDevR,samp,round(DR.iloc[i,nGrab],2),round(DRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")] # Updated for Gen4 26FEB24 APM
-        updateGUI()
+        # ---- Update data for the GUI, now uses the display dataframes 11SEP25 APM
+        GUIFrameL.iloc[nRow-1] = [samp,round(dDL.iloc[i,nGrab],2),round(dDLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
+        GUIFrameR.iloc[nRow-1] = [samp,round(dDR.iloc[i,nGrab],2),round(dDRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
+        # ---- Decision tree below implements GuiUpdateMode switching of GUI updating from config.py -- New 11Sep25 APM
+        if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
+            updateGUI()
+        elif GuiUpdateMode == 'grab' and i == (nRows-1):  # Update the GUI only at the end of the grab
+            updateGUI()
         #---- End of row timing
         PBEnd[i] = time.time()
         PBTime[i] = PBEnd[i]-PBStart[i]
@@ -267,18 +283,18 @@ if __name__ == "__main__":
     nGrab=0
     root = tk.Tk()
     root.title("Live Measurement GUI")
-    root.geometry('1300x650')
+    root.geometry('1450x650') # Values set to prevent GUI crash 16Sep25 APM
 #    root.maxsize(1200,800)
     root.config(bg="skyblue")
     left_table = Frame(root)
     left_table.grid(row=0,column=1,rowspan=7,padx=5,pady=5)
     right_table = Frame(root)
     right_table.grid(row=0,column=2,rowspan=7,padx=5,pady=5)
-    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=455,height=590)
-    GUI_optionsL = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
+    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=485,height=590)  # Values set to prevent GUI crash 16Sep25 APM
+    GUI_optionsL = {'align':'center','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}  # Values set to prevent GUI crash 16Sep25 APM
     pdtb.config.apply_options(GUI_optionsL,GUI_tableL)
-    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=455,height=590)
-    GUI_optionsR = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
+    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=485,height=590)  # Values set to prevent GUI crash 16Sep25 APM
+    GUI_optionsR = {'align':'center','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}  # Values set to prevent GUI crash 16Sep25 APM
     pdtb.config.apply_options(GUI_optionsR,GUI_tableR)
     GUI_tableL.show()
     GUI_tableR.show()

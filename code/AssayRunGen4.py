@@ -4,6 +4,8 @@ Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
 @developers: Adam Micolich & Jan Gluschke
 
 Main software for running assays using the Generation 4 set-up (52 OECTs/chip, green multiplexer box).
+
+IMPORTANT: Check that you have the correct PiBox setting in config.py before you run this code -- 18Sep25 APM
 """
 
 from PiControlGen4 import PiMUX
@@ -136,12 +138,12 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         #---- Grab row data from NIDAQ
         Drain = daqin_Drain.get('inputLevel')
         #---- Calculate resistance values and uncertainties
-        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3])
+#        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3]) ## Keep for diagnostics; Off from 18SEP25 APM
         DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
         DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
         DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
         DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
-        print('test: ',DL.iloc[i,nGrab],DR.iloc[i,nGrab])
+#        print('test: ',DL.iloc[i,nGrab],DR.iloc[i,nGrab]) ## Keep for diagnostics; Off from 18SEP25 APM
         #---- Create the display version of resistances as separate dataframes and apply zeroThres -- New 11SEP25 APM
         if abs(DL.iloc[i,nGrab]) < zeroThres: # Fills the left-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
             dDL.iloc[i,nGrab] = DL.iloc[i,nGrab]
