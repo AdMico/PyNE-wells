@@ -7,7 +7,7 @@ This class sets up the Pi to be controlled remotely. The truth table is that of 
 """
 from gpiozero import LED
 from gpiozero.pins.pigpio import PiGPIOFactory
-from Config import PiBox
+from Config import PiBox,MuxMode_Gen5,LineBias_Gen5
 import time
 
 class PiMUX:
@@ -83,9 +83,9 @@ class PiMUX:
                             26: [1, 0, 1, 1, 0, 1],  # B-MUX 2/4 Pin 8 (Mx12)
                             27: [1, 1, 0, 0, 0, 1]}  # B-MUX 2/4 Pin 7 (Mx13)
 
-        #Define what GPIO pins are connected to the selector pins on the MUX
-        #This is the GPIO number not the 40 pin cable number
-        #GPIO 0, 1, 14, 15 not use as protected for EEPROM/UART
+        # Define what GPIO pins are connected to the selector pins on the MUX
+        # This is the GPIO number not the 40 pin cable number
+        # GPIO 0, 1, 14, 15 not use as protected for EEPROM/UART
 
         self.WEN1_pin = LED(2, pin_factory=self.PiFactory)
         self.WEN2_pin = LED(3, pin_factory=self.PiFactory)
@@ -186,9 +186,16 @@ class PiMUX:
         self.BitOn_pin.off()
 
     def SysInit(self):  # Runs a sequence to initialise all the relays at start -- APM 09SEP25
-        self.setBatteryToOn() # Ensures MUXes powered by Battery
-        self.setBattLPRToOn() # Connects battery to LPR to power MUXes
-        self.setToBiasWords()
+        if MuxMode_Gen5 == 'Battery':
+            self.setBatteryToOn() # Sets MUX power to Battery
+            self.setBattLPRToOn() # Connects battery to LPR to power MUXes
+        elif MuxMode_Gen5 == 'Pi-power':
+            self.setPiPowerToOn() # Sets MUX power to Pi +5V line
+            self.setBattLPRToOff() # Connects LPR circuit to ground
+        if LineBias_Gen5 == 'Words':
+            self.setToBiasWords()
+        elif LineBias_Gen5 == 'Bits':
+            self.setToBiasBits()
         for i in range(27): # Sets all word/bit lines to hold
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
@@ -198,7 +205,6 @@ class PiMUX:
         self.setBMuxToOutput(0) # Switches bit MUXes off
 
     def SysReset(self):  # Runs a sequence to reset all the relays for next run -- APM 09SEP25
-        self.setToBiasWords()
         for i in range(27): # Sets all word/bit lines to hold
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
@@ -207,8 +213,16 @@ class PiMUX:
         self.setWMuxToOutput(0) # Switches word MUXes off
         self.setBMuxToOutput(0) # Switches bit MUXes off
 
-    def SysShutdown(self):  # Runs a sequence to setup for shutdown -- APM 09SEP25
-        self.setToBiasWords()
+    def SysSoftShutdown(self):  # Runs a sequence to setup for shutdown but leave MUXes powered -- APM 09SEP25
+        for i in range(27): # Sets all word/bit lines to hold
+            self.setWMuxToOutput(i+1)
+            self.setWordToOff()
+            self.setBMuxToOutput(i+1)
+            self.setBitToOff()
+        self.setWMuxToOutput(0) # Switches word MUXes off
+        self.setBMuxToOutput(0) # Switches bit MUXes off
+
+    def SysHardShutdown(self):  # Runs a sequence to setup for shutdown including depowering the MUXes -- APM 09SEP25
         for i in range(27): # Sets all word/bit lines to hold
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
@@ -219,20 +233,34 @@ class PiMUX:
         self.setBatteryToOn() # Ensures MUXes powered by Battery
         self.setBattLPRToOff() # Connects ground to LPR to power down MUXes
 
-    def SysTest(self,word,bit,time): # Switches a given bit over to connection for a specified time -- APM 10SEP25
-        self.setToBiasWords()
+    def SysTestSingle(self,word,bit,wait): # Switches a given bit over to connection for a specified time -- APM 10SEP25
         self.setWMuxToOutput(word)
         self.setWordToOn()
         self.setBMuxToOutput(bit)
         self.setBitToOn()
-        time.sleep(time)
-        self.setWMuxToOutput(word)
-        self.setWordToOff()
+        time.sleep(wait)
         self.setBMuxToOutput(bit)
         self.setBitToOff()
+        self.setWMuxToOutput(word)
+        self.setWordToOff()
+
+    def SysTestFull(self,wait): # Switches each node on for a specified time in sequence -- APM 10SEP25
+        for i in range(27):
+            self.setWMuxToOutput(i+1)
+            self.setWordToOn()
+            for j in range(27):
+                self.setBMuxToOutput(j+1)
+                self.setBitToOn()
+                print('Testing: ',i+1,j+1)
+                time.sleep(wait)
+                self.setBMuxToOutput(j+1)
+                self.setBitToOff()
+            self.setWMuxToOutput(i+1)
+            self.setWordToOff()
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
     my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
-#    my_pi.SysTest(1,1,30) # Will connect to device A1 for 30 sec -- APM 10SEP25
-#    my_pi.SysReset() # Runs a reset -- APM 10SEP25
+#    my_pi.SysTestSingle(1,1,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
+#    my_pi.SysTestFull(3) # Will connect to each device for 1 sec -- APM 10SEP25
+    my_pi.SysReset() # Runs a reset -- APM 10SEP25
