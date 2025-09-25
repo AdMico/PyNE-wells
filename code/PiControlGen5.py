@@ -22,6 +22,11 @@ class PiMUX:
         self.IP = IP
         #print(IP) -- For PiBox testing
         self.PiFactory = PiGPIOFactory(host=self.IP)
+        self.WordList = ['OFF','A','B','C','D','E','F','G','H','I','J','K','L','M','N',
+                           '&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
+        self.BitList = ['OFF','1','2','3','4','5','6','7','8','9','10','11','12','13','14',
+                           '15','16','17','18','19','20','21','22','23','24','25','26','27']
+        self.RelayTime = 0.1
 
         #WordTable format: Device: [W-A3,W-A2,W-A1,W-A0,W-EN1,W-EN2], #MUX <number> Pin <number> (Mx <number> out of 16)
         self.WordTable = {0: [0, 0, 0, 0, 0, 0],  # OFF state
@@ -137,52 +142,52 @@ class PiMUX:
 
     def setPiPowerToOn(self): # Switches power supply to the RPi -- APM 09SEP25
         self.PiPowerOn_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.PiPowerOn_pin.off()
 
     def setBatteryToOn(self): # Switches power supply to the battery -- APM 09SEP25
         self.BatteryOn_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BatteryOn_pin.off()
 
     def setBattLPRToOff(self): # Connects battery regulator circuit to ground -- APM 09SEP25
         self.BattLPROff_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BattLPROff_pin.off()
 
     def setBattLPRToOn(self): # Connects battery regulator circuit to battery -- APM 09SEP25
         self.BattLPROn_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BattLPROn_pin.off()
 
     def setToBiasBits(self): # Connects the source AO0 to Meas-B -- APM 09SEP25
         self.BiasBits_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BiasBits_pin.off()
 
     def setToBiasWords(self): # Connects the source AO0 to Meas-W -- APM 09SEP25
         self.BiasWords_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BiasWords_pin.off()
 
     def setWordToOff(self): # Connects the given word line back to hold -- APM 09SEP25
         self.WordOff_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.WordOff_pin.off()
 
     def setWordToOn(self): # Connects the given word line to Meas-W -- APM 09SEP25
         self.WordOn_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.WordOn_pin.off()
 
     def setBitToOff(self): # Connects the given bit line back to hold -- APM 09SEP25
         self.BitOff_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BitOff_pin.off()
 
     def setBitToOn(self): # Connects the given bit line to Meas-B -- APM 09SEP25
         self.BitOn_pin.on()
-        time.sleep(0.001) # Tested at 1ms wait being ok APM 26Feb24
+        time.sleep(self.RelayTime) # Tested at 1ms wait being ok APM 26Feb24
         self.BitOn_pin.off()
 
     def SysInit(self):  # Runs a sequence to initialise all the relays at start -- APM 09SEP25
@@ -233,6 +238,58 @@ class PiMUX:
         self.setBatteryToOn() # Ensures MUXes powered by Battery
         self.setBattLPRToOff() # Connects ground to LPR to power down MUXes
 
+    def WordRelayTest(self,bias,HoldTime):
+        if bias == 'S':
+            self.setToBiasWords()
+        elif bias == 'D':
+            self.setToBiasBits()
+        print('Prepare to test Word:',self.WordList[1],' in 3 seconds.')
+        time.sleep(5)
+        for i in range(27):
+            print ('Wordline: ',self.WordList[i+1],' to Hold for ',HoldTime,' seconds.')
+            self.setWMuxToOutput(i+1)
+            self.setWordToOff()
+            time.sleep(HoldTime)
+            print('Wordline: ',self.WordList[i+1],' to ',bias,' for ',HoldTime,' seconds.')
+            self.setWMuxToOutput(i+1)
+            self.setWordToOn()
+            time.sleep(HoldTime)
+            print('Wordline: ',self.WordList[i+1],' to Hold for ',HoldTime,' seconds.')
+            self.setWMuxToOutput(i+1)
+            self.setWordToOff()
+            time.sleep(HoldTime)
+            if i <= 26:
+                print('Prepare to test Word:',self.WordList[i+2],' in 3 seconds.')
+                time.sleep(5)
+            else:
+                print('Finished Test.')
+
+    def BitRelayTest(self,bias,HoldTime):
+        if bias == 'S':
+            self.setToBiasBits()
+        elif bias == 'D':
+            self.setToBiasWords()
+        print('Prepare to test Bit:',self.BitList[1],' in 3 seconds.')
+        time.sleep(3)
+        for i in range(27):
+            print ('Bitline: ',self.BitList[i+1],' to Hold for ',HoldTime,' seconds.')
+            self.setBMuxToOutput(i+1)
+            self.setBitToOff()
+            time.sleep(HoldTime)
+            print('Bitline: ',self.BitList[i+1],' to ',bias,' for ',HoldTime,' seconds.')
+            self.setBMuxToOutput(i+1)
+            self.setBitToOn()
+            time.sleep(HoldTime)
+            print('Bitline: ',self.BitList[i+1],' to Hold for ',HoldTime,' seconds.')
+            self.setBMuxToOutput(i+1)
+            self.setBitToOff()
+            time.sleep(HoldTime)
+            if i <= 26:
+                print('Prepare to test Bit:',self.BitList[i+2],' in 3 seconds.')
+                time.sleep(3)
+            else:
+                print('Finished Test.')
+
     def SysTestSingle(self,word,bit,wait): # Switches a given bit over to connection for a specified time -- APM 10SEP25
         self.setWMuxToOutput(word)
         self.setWordToOn()
@@ -260,7 +317,28 @@ class PiMUX:
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
-    my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
+#    my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
+#    my_pi.BitRelayTest('D',1.5)
 #    my_pi.SysTestSingle(1,1,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
 #    my_pi.SysTestFull(3) # Will connect to each device for 1 sec -- APM 10SEP25
-    my_pi.SysReset() # Runs a reset -- APM 10SEP25
+#    my_pi.SysReset() # Runs a reset -- APM 10SEP25
+# Single Steps
+
+#    my_pi.setPiPowerToOn()
+#    my_pi.setBattLPRToOff()
+
+for i in range(10):
+#    my_pi.setPiPowerToOn()
+#    my_pi.setBattLPRToOff()
+    my_pi.setToBiasBits()
+    time.sleep(3)
+#    my_pi.setBatteryToOn()
+#    my_pi.setBattLPRToOn()
+    my_pi.setToBiasWords()
+    time.sleep(3)
+
+
+
+
+#    my_pi.setToBiasWords()
+#    my_pi.setToBiasBits()
