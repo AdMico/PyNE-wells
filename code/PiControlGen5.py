@@ -26,7 +26,7 @@ class PiMUX:
                            '&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
         self.BitList = ['OFF','1','2','3','4','5','6','7','8','9','10','11','12','13','14',
                            '15','16','17','18','19','20','21','22','23','24','25','26','27']
-        self.RelayTime = 0.1
+        self.RelayTime = 0.01
 
         #WordTable format: Device: [W-A3,W-A2,W-A1,W-A0,W-EN1,W-EN2], #MUX <number> Pin <number> (Mx <number> out of 16)
         self.WordTable = {0: [0, 0, 0, 0, 0, 0],  # OFF state
@@ -258,7 +258,7 @@ class PiMUX:
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
             time.sleep(HoldTime)
-            if i <= 26:
+            if i < 26:
                 print('Prepare to test Word:',self.WordList[i+2],' in 3 seconds.')
                 time.sleep(5)
             else:
@@ -284,7 +284,7 @@ class PiMUX:
             self.setBMuxToOutput(i+1)
             self.setBitToOff()
             time.sleep(HoldTime)
-            if i <= 26:
+            if i < 26:
                 print('Prepare to test Bit:',self.BitList[i+2],' in 3 seconds.')
                 time.sleep(3)
             else:
@@ -317,28 +317,24 @@ class PiMUX:
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
-#    my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
+    my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
+#    my_pi.WordRelayTest('D', 1.5)
 #    my_pi.BitRelayTest('D',1.5)
 #    my_pi.SysTestSingle(1,1,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
-#    my_pi.SysTestFull(3) # Will connect to each device for 1 sec -- APM 10SEP25
-#    my_pi.SysReset() # Runs a reset -- APM 10SEP25
+    my_pi.SysTestFull(0.1) # Will connect to each device for 1 sec -- APM 10SEP25
+    my_pi.SysReset() # Runs a reset -- APM 10SEP25
+
 # Single Steps
 
 #    my_pi.setPiPowerToOn()
 #    my_pi.setBattLPRToOff()
 
-for i in range(10):
+#for i in range(10):
 #    my_pi.setPiPowerToOn()
 #    my_pi.setBattLPRToOff()
-    my_pi.setToBiasBits()
-    time.sleep(3)
+#    my_pi.setToBiasBits()
+#    time.sleep(3)
 #    my_pi.setBatteryToOn()
 #    my_pi.setBattLPRToOn()
-    my_pi.setToBiasWords()
-    time.sleep(3)
-
-
-
-
 #    my_pi.setToBiasWords()
-#    my_pi.setToBiasBits()
+#    time.sleep(3)
