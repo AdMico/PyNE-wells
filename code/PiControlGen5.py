@@ -26,7 +26,7 @@ class PiMUX:
                            '&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
         self.BitList = ['OFF','1','2','3','4','5','6','7','8','9','10','11','12','13','14',
                            '15','16','17','18','19','20','21','22','23','24','25','26','27']
-        self.RelayTime = 0.01
+        self.RelayTime = 0.001
 
         #WordTable format: Device: [W-A3,W-A2,W-A1,W-A0,W-EN1,W-EN2], #MUX <number> Pin <number> (Mx <number> out of 16)
         self.WordTable = {0: [0, 0, 0, 0, 0, 0],  # OFF state
@@ -243,9 +243,11 @@ class PiMUX:
             self.setToBiasWords()
         elif bias == 'D':
             self.setToBiasBits()
-        print('Prepare to test Word:',self.WordList[1],' in 3 seconds.')
-        time.sleep(5)
+        print('Prepare to test Word:',self.WordList[1],' in 1 seconds.')
+        time.sleep(1)
         for i in range(27):
+            if i == 14:
+                time.sleep(3) # Added to allow for realising you need to jump to & from N -- APM 30Sep25
             print ('Wordline: ',self.WordList[i+1],' to Hold for ',HoldTime,' seconds.')
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
@@ -259,18 +261,20 @@ class PiMUX:
             self.setWordToOff()
             time.sleep(HoldTime)
             if i < 26:
-                print('Prepare to test Word:',self.WordList[i+2],' in 3 seconds.')
-                time.sleep(5)
+                print('Prepare to test Word:',self.WordList[i+2],' in 1 second.')
+                time.sleep(1)
             else:
                 print('Finished Test.')
+                print()
+                time.sleep(3)
 
     def BitRelayTest(self,bias,HoldTime):
         if bias == 'S':
             self.setToBiasBits()
         elif bias == 'D':
             self.setToBiasWords()
-        print('Prepare to test Bit:',self.BitList[1],' in 3 seconds.')
-        time.sleep(3)
+        print('Prepare to test Bit:',self.BitList[1],' in 1 seconds')
+        time.sleep(1)
         for i in range(27):
             print ('Bitline: ',self.BitList[i+1],' to Hold for ',HoldTime,' seconds.')
             self.setBMuxToOutput(i+1)
@@ -285,16 +289,19 @@ class PiMUX:
             self.setBitToOff()
             time.sleep(HoldTime)
             if i < 26:
-                print('Prepare to test Bit:',self.BitList[i+2],' in 3 seconds.')
-                time.sleep(3)
+                print('Prepare to test Bit:',self.BitList[i+2],' in 1 second.')
+                time.sleep(1)
             else:
                 print('Finished Test.')
+                print()
+                time.sleep(3)
 
     def SysTestSingle(self,word,bit,wait): # Switches a given bit over to connection for a specified time -- APM 10SEP25
         self.setWMuxToOutput(word)
         self.setWordToOn()
         self.setBMuxToOutput(bit)
         self.setBitToOn()
+        print('Testing: ', self.WordList[word], self.BitList[bit])
         time.sleep(wait)
         self.setBMuxToOutput(bit)
         self.setBitToOff()
@@ -308,7 +315,21 @@ class PiMUX:
             for j in range(27):
                 self.setBMuxToOutput(j+1)
                 self.setBitToOn()
-                print('Testing: ',i+1,j+1)
+                print('Testing: ',self.WordList[i+1],self.BitList[j+1])
+                time.sleep(wait)
+                self.setBMuxToOutput(j+1)
+                self.setBitToOff()
+            self.setWMuxToOutput(i+1)
+            self.setWordToOff()
+
+    def SysTest4x4(self,wait): # Switches each node on for a specified time in sequence -- APM 10SEP25
+        for i in range(4):
+            self.setWMuxToOutput(i+1)
+            self.setWordToOn()
+            for j in range(4):
+                self.setBMuxToOutput(j+1)
+                self.setBitToOn()
+                print('Testing: ',self.WordList[i+1],self.BitList[j+1])
                 time.sleep(wait)
                 self.setBMuxToOutput(j+1)
                 self.setBitToOff()
@@ -318,23 +339,9 @@ class PiMUX:
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
     my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
-#    my_pi.WordRelayTest('D', 1.5)
-#    my_pi.BitRelayTest('D',1.5)
-#    my_pi.SysTestSingle(1,1,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
-    my_pi.SysTestFull(0.1) # Will connect to each device for 1 sec -- APM 10SEP25
+#    my_pi.WordRelayTest('S', 1.5)
+#    my_pi.BitRelayTest('S',1.5)
+    my_pi.SysTestSingle(1,1,120) # Will connect to device A1 for 10 sec -- APM 10SEP25
+#    my_pi.SysTestFull(1) # Will connect to each device for 0.1 sec -- APM 10SEP25
+#    my_pi.SysTest4x4(3) # Runs a test using the 4x4 board -- APM 30SEP25
     my_pi.SysReset() # Runs a reset -- APM 10SEP25
-
-# Single Steps
-
-#    my_pi.setPiPowerToOn()
-#    my_pi.setBattLPRToOff()
-
-#for i in range(10):
-#    my_pi.setPiPowerToOn()
-#    my_pi.setBattLPRToOff()
-#    my_pi.setToBiasBits()
-#    time.sleep(3)
-#    my_pi.setBatteryToOn()
-#    my_pi.setBattLPRToOn()
-#    my_pi.setToBiasWords()
-#    time.sleep(3)

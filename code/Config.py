@@ -17,7 +17,7 @@ MuxMode_Gen4 = 'Run'
 # Details are in PiControlGen5.py but 'Pi-power' is for powering the MUXes off the RPi, 'Battery' is for powering the MUXes off the batteries on Gen 5 MuxBoards
 MuxMode_Gen5 = 'Pi-power'
 # Details are in PiControlGen5.py but 'Words' will connect wordlines to source voltage (AO0), 'Bits' will connect bitlines to source voltage (AO0) on Gen 5 MuxBoards
-LineBias_Gen5 = 'Bits'
+LineBias_Gen5 = 'Words'
 
 # Information about which NIDAQ ports you are using for your NI USB6216BNC instance -- For AssayRunGen4.py
 Source_Gen4 = 'Dev1/ao0'
