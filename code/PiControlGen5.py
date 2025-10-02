@@ -341,7 +341,7 @@ if __name__ == "__main__": # execute only if this script is run, not when it's b
     my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
 #    my_pi.WordRelayTest('S', 1.5)
 #    my_pi.BitRelayTest('S',1.5)
-    my_pi.SysTestSingle(1,1,120) # Will connect to device A1 for 10 sec -- APM 10SEP25
+    my_pi.SysTestSingle(3,3,3) # Will connect to device A1 for 10 sec -- APM 10SEP25
+#    my_pi.SysTest4x4(20) # Runs a test using the 4x4 board -- APM 30SEP25
 #    my_pi.SysTestFull(1) # Will connect to each device for 0.1 sec -- APM 10SEP25
-#    my_pi.SysTest4x4(3) # Runs a test using the 4x4 board -- APM 30SEP25
     my_pi.SysReset() # Runs a reset -- APM 10SEP25
