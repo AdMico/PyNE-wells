@@ -6,11 +6,13 @@ Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
 Main software for running assays.
 """
 
-from code.purgatory.Imports import *
-from PiControlGen4 import PiMUX
+from PiControlGen5 import PiMUX
 import GlobalMeasID as ID
-from Config import P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
+from Config import P1Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
 import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 import time
 from datetime import datetime,date
 from tkinter import *
@@ -22,19 +24,17 @@ import os
 import csv
 
 #---- Initialization of data structures
-nRows = 26
-nDev = 2*nRows
-devices = np.zeros(nDev)
-DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-DLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-DR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-DRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
-GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
+nWords = 27
+nBits = 27
+nDev = nWords*nBits
+devices = np.zeros(nWords*nBits)
+DD = pd.DataFrame(np.zeros((nWords,nBits,ItersAR),dtype='float'))
+DDerr = pd.DataFrame(np.zeros((nWords,nBits,ItersAR),dtype='float'))
+GUIFrame = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
 RD = np.zeros(105)
-PBStart = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
-PBEnd = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
-PBTime = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
+PBStart = np.zeros(nDev) # For use in determining time taken to obtain measurements from USB6216
+PBEnd = np.zeros(nDev) # For use in determining time taken to obtain measurements from USB6216
+PBTime = np.zeros(nDev) # For use in determining time taken to obtain measurements from USB6216
 PBElapsed = np.zeros(ItersAR) # For use in determining time taken to obtain measurements from USB6216
 PBAverage = np.zeros(ItersAR) # For use in determining time taken to obtain measurements from USB6216
 GrabStart = np.zeros(ItersAR) # For use in determining time taken to run a grab
@@ -57,7 +57,6 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Assay Number: ' + measurementName + '\n' +
                'Pi Box: ' + PiBox + '\n' +
                'Preamp 1 gain: ' + str(P1Gain) + '\n' +
-               'Preamp 2 gain: ' + str(P2Gain) + '\n' +
                'Source Voltage: ' + str(VSource) + ' V' + '\n' +
                'NIDAQ Sample Rate: ' + str(SR) + ' Hz' + '\n' +
                'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
@@ -69,8 +68,7 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
 print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
 CtrlPi = PiMUX()
-#CtrlPi.setRelayToOn() # Switches multiplexer power on -- deactivated to save power 26FEB24 APM
-CtrlPi.setMuxToOutput(0)  # Sets multiplexer to state with all outputs off
+CtrlPi.SysInit()  # Initialises the multiplexer for running a measurement
 #---- NIDAQ Output Port for Source --------------
 daqout_S = USB6216Out(0)
 daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
