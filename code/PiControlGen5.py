@@ -1,7 +1,7 @@
 """
 Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 This class sets up the Pi to be controlled remotely. The truth table is that of the multiplexer.
 """
@@ -296,7 +296,7 @@ class PiMUX:
                 print()
                 time.sleep(3)
 
-    def SysTestSingle(self,word,bit,wait): # Switches a given bit over to connection for a specified time -- APM 10SEP25
+    def SysTestSingle(self,word,bit,wait): # Switches a given device over to connection for a specified time -- APM 10SEP25
         self.setWMuxToOutput(word)
         self.setWordToOn()
         self.setBMuxToOutput(bit)
@@ -335,6 +335,18 @@ class PiMUX:
                 self.setBitToOff()
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
+
+    def SysDevOn(self,word,bit): # Switches a given device on for AssayRunGen5.py -- APM 16Oct25
+        self.setWMuxToOutput(word)
+        self.setWordToOn()
+        self.setBMuxToOutput(bit)
+        self.setBitToOn()
+
+    def SysDevOff(self,word,bit): # Switches a given device off for AssayRunGen5.py -- APM 16Oct25
+        self.setBMuxToOutput(bit)
+        self.setBitToOff()
+        self.setWMuxToOutput(word)
+        self.setWordToOff()
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()

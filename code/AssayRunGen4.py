@@ -1,7 +1,7 @@
 """
 Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 Main software for running assays.
 """

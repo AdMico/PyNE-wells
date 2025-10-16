@@ -1,7 +1,7 @@
 """
 Brought to PyNE-wells v1.2.0 on Thur Aug 07 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 This informs various parts of the software about aspects of your bench setup. Edit as needed for your setup.
 """

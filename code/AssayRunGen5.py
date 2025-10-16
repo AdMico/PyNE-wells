@@ -1,7 +1,7 @@
 """
 Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich & Jan Gluschke
 
 Main software for running assays.
 """
@@ -31,16 +31,18 @@ devices = np.zeros(nWords*nBits)
 DD = pd.DataFrame(np.zeros((nWords,nBits,ItersAR),dtype='float'))
 DDerr = pd.DataFrame(np.zeros((nWords,nBits,ItersAR),dtype='float'))
 GUIFrame = pd.DataFrame(np.zeros((nRows,4)),columns=['Device ID','Resistance','Uncertainty','Timestamp'],dtype='object')
-RD = np.zeros(105)
-PBStart = np.zeros(nDev) # For use in determining time taken to obtain measurements from USB6216
-PBEnd = np.zeros(nDev) # For use in determining time taken to obtain measurements from USB6216
-PBTime = np.zeros(nDev) # For use in determining time taken to obtain measurements from USB6216
-PBElapsed = np.zeros(ItersAR) # For use in determining time taken to obtain measurements from USB6216
-PBAverage = np.zeros(ItersAR) # For use in determining time taken to obtain measurements from USB6216
+RD = np.zeros(1459)
+SBStart = np.zeros(nWords,nBits) # For use in determining time taken to obtain measurements from USB6216
+SBEnd = np.zeros(nWords,nBits) # For use in determining time taken to obtain measurements from USB6216
+SBTime = np.zeros(nWords,nBits) # For use in determining time taken to obtain measurements from USB6216
+SBElapsed = np.zeros(ItersAR) # For use in determining time taken to obtain measurements from USB6216
+SBAverage = np.zeros(ItersAR) # For use in determining time taken to obtain measurements from USB6216
 GrabStart = np.zeros(ItersAR) # For use in determining time taken to run a grab
 GrabEnd = np.zeros(ItersAR) # For use in determining time taken to run a grab
 GrabTime = np.zeros(ItersAR) # for use in determining time taken to run a grab
 GrabTime[:] = np.nan
+WordList = ['OFF','A','B','C','D','E','F','G','H','I','J','K','L','M','N','&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
+BitList = ['OFF','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27']
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
 with open('stop.txt', 'w') as fStop: # Initialise stop button
@@ -72,16 +74,17 @@ CtrlPi.SysInit()  # Initialises the multiplexer for running a measurement
 #---- NIDAQ Output Port for Source --------------
 daqout_S = USB6216Out(0)
 daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
+#---- NIDAQ Output Port for Source --------------
+daqout_H = USB6216Out(1)
+daqout_H.setOptions({"feedBack":"Int","scaleFactor":1})
 #---- NIDAQ Input Port for Drain running PairBurst on USB6216 --------------
-daqin_Drain = USB6216InPB()
+daqin_Drain = USB6216InSB(0)
 daqin_Drain.setOptions({"scaleFactor":1})
 
 def updateGUI(): # Updates the data in the GUI -- last edited APM 19Jan24
     global nGrab
-    GUI_tableL.updateModel(TableModel(GUIFrameL))
-    GUI_tableR.updateModel(TableModel(GUIFrameR))
-    GUI_tableL.redraw()
-    GUI_tableR.redraw()
+    GUI_table.updateModel(TableModel(GUIFrame))
+    GUI_table.redraw()
     assay = tk.Label(root, text=('Assay Number: '+t+'_'+measurementName),bg="skyblue")
     assay.grid(row=0,column=0,padx=5,pady=5)
     run = tk.Label(root, text=('Run Number: ' + str(nRun)),bg="skyblue")
@@ -114,67 +117,50 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set NIDAQ Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(VSource, delay=0.0)  # Run the source up to specified voltage
-    CtrlPi.setRelayToOn()  # Ensure power relay is on
     time.sleep(0.5) # Give time for MUXes to properly run up.
     RD[0]=nGrab+1
-    for i in range(nRows):
-        nRow = i+1
-#        print('Row = ',nRow) ## Keep for diagnostics; Off from 15JAN24 APM
-        nDevL = i+1
-        nDevR = 27+i # Updated for Gen4 26FEB24 APM
-#        print('Device Left =', nDevL ,'Device Right =', nDevR) ## Keep for diagnostics; Off from 15JAN24 APM
-        #---- Set Multiplexer
-        CtrlPi.setMuxToOutput(nRow)
-        PBStart[i] = time.time()
-        #---- Grab row data from NIDAQ
-        Drain = daqin_Drain.get('inputLevel')
-        if Drain[0] > zeroThres: # Converts to resistance and sets open circuit to zero for left-bank devices
-            DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
-            DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
-        else:
-            DL.iloc[i,nGrab] = 0.0
-            DLerr.iloc[i,nGrab] = 0.0
-        if Drain[2] > zeroThres: # Converts to resistance and sets open circuit to zero for right-bank devices
-            DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
-            DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
-        else:
-            DR.iloc[i,nGrab] = 0.0
-            DRerr.iloc[i,nGrab] = 0.0
-#        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
-#        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
-        RD[(2*nDevL-1)] = round(DL.iloc[i,nGrab],3)
-        RD[(2*nDevL)] = round(DLerr.iloc[i,nGrab],3)
-        RD[(2*nDevR-1)] = round(DR.iloc[i,nGrab],3)
-        RD[(2*nDevR)] = round(DRerr.iloc[i,nGrab],3)
-        #---- send data to file
-        with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(nDevL)+'.csv', 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([str(nGrab+1),str(DL.iloc[i,nGrab]),str(DLerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
-        with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(nDevR)+'.csv', 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
-        #---- Update data for the GUI
-        GUIFrameL.iloc[nRow-1] = [nDevL,round(DL.iloc[i,nGrab],2),round(DLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
-        GUIFrameR.iloc[nRow-1] = [nDevR,round(DR.iloc[i,nGrab],2),round(DRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")] # Updated for Gen4 26FEB24 APM
-        updateGUI()
-        #---- End of row timing
-        PBEnd[i] = time.time()
-        PBTime[i] = PBEnd[i]-PBStart[i]
-        PBElapsed[nGrab] = PBEnd[nRows-1]-PBStart[0]
-        PBAverage[nGrab] = PBTime.mean()
+    for i in range(nWords):
+        for j in range(nBits):
+            nWord = i+1
+            nBit = j+1
+            print('Word = ',WordList[nWord],'Bit = ',BitList[nBit]) ## Keep for diagnostics; On from 16Oct25 APM
+            # ---- Set multiplexer to given device
+            CtrlPi.SysDevOn(nWord,nBit)
+            SBStart[i,j] = time.time()
+            #---- Grab device data from NIDAQ
+            Drain = daqin_Drain.get('inputLevel')
+            if Drain[0] > zeroThres: # Converts to resistance and sets open circuit to zero for left-bank devices
+                DD.iloc[i,j,nGrab] = ((VSource*P1Gain)/Drain[0])
+                DDerr.iloc[i,j,nGrab] = (Drain[1]/Drain[0])*DD.iloc[i,j,nGrab]
+            else:
+                DD.iloc[i,j,nGrab] = 0.0
+                DDerr.iloc[i,j,nGrab] = 0.0
+        #        print(f'DD = {DD.iloc[i,j,nGrab]:.2f} +/- {DDerr.iloc[i,j,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
+            CtrlPi.SysDevOff(nWord,nBit)
+            RD[54*(nWord-1)+2*(nBit-1)] = round(DD.iloc[i,j,nGrab],3)
+            RD[54*(nWord-1)+2*(nBit-1)+1] = round(DDerr.iloc[i,j,nGrab],3)
+            # ---- send data to file
+            with open(runPath + '/' + t + '_' + measurementName + '_R' + str(nRun) + '_Dev' + str(WordList[nWord]) + str(BitList[nBit]) + '.csv','a',newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([str(nGrab+1),str(DD.iloc[i,j,nGrab]),str(DDerr.iloc[i,j,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
+            #---- Update data for the GUI
+#            GUIFrame.iloc[nRow-1] = [nDevL,round(DL.iloc[i,nGrab],2),round(DLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")] -- Commented until solved APM 16Oct25
+            updateGUI()
+            #---- End of row timing
+            SBEnd[i,j] = time.time()
+            SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
+            SBElapsed[nGrab] = SBEnd[nWord-1,nBit-1]-SBStart[0,0]
+            SBAverage[nGrab] = SBTime.mean()
     #---- Drop all device data to megatable at end of grab
     with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','a',newline='') as f:
         writer = csv.writer(f)
         writer.writerow(RD[:])
-#    ResData.to_csv(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv', index=False)
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
     # ---- Switch Multiplexer to off state.
-    CtrlPi.setMuxToOutput(0)
-    CtrlPi.setRelayToOff()  # Switches multiplexer power off
+    CtrlPi.SysReset()
 #    print('End of grab: ', nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
-
-    return PBElapsed,PBAverage
+    return SBElapsed,SBAverage
 
 def measLoop():
     global measurementName,nRun,runPath,nGrab
