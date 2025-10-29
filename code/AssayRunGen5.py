@@ -8,7 +8,7 @@ Main software for running assays.
 
 from PiControlGen5 import PiMUX
 import GlobalMeasID as ID
-from Config import P1Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
+from Config import P1Gain, VSource, VHold, ItersAR, WaitAR, zeroThres, basePath, SR, SpC
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -117,6 +117,7 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set NIDAQ Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(VSource, delay=0.0)  # Run the source up to specified voltage
+    daqout_H.goTo(VHold, delay=0.0)  # Run the source up to specified voltage
     time.sleep(0.5) # Give time for MUXes to properly run up.
     RD[0]=nGrab+1
     for i in range(nWords):
@@ -129,8 +130,8 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
             SBStart[i,j] = time.time()
             #---- Grab device data from NIDAQ
             Drain = daqin_Drain.get('inputLevel')
-            if Drain[0] > zeroThres: # Converts to resistance and sets open circuit to zero for left-bank devices
-                DD.iloc[i,j,nGrab] = ((VSource*P1Gain)/Drain[0])
+            if Drain[0] > zeroThres: # Converts to conductance and sets open circuit to zero
+                DD.iloc[i,j,nGrab] = (Drain[0]/(VSource*P1Gain)/1e-6)
                 DDerr.iloc[i,j,nGrab] = (Drain[1]/Drain[0])*DD.iloc[i,j,nGrab]
             else:
                 DD.iloc[i,j,nGrab] = 0.0
@@ -157,6 +158,8 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         writer.writerow(RD[:])
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
+    # ---- Run hold voltage back to zero
+    daqout_H.goTo(0.0, delay=0.0)
     # ---- Switch Multiplexer to off state.
     CtrlPi.SysReset()
 #    print('End of grab: ', nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
@@ -172,16 +175,18 @@ def measLoop():
         os.makedirs(runPath)
     with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','w',newline='') as f:
         writer=csv.writer(f)
-        writer.writerow(['Grab','R1','dR1','R2','dR2','R3','dR3','R4','dR4','R5','dR5','R6','dR6','R7','dR7','R8','dR8','R9','dR9','R10','dR10',
-                         'R11','dR11','R12','dR12','R13','dR13','R14','dR14','R15','dR15','R16','dR16','R17','dR17','R18','dR18','R19','dR19','R20','dR20',
-                         'R21','dR21','R22','dR22','R23','dR23','R24','dR24','R25','dR25','R26','dR26','R27','dR27','R28','dR28','R29','dR29','R30','dR30',
-                         'R31','dR31','R32','dR32','R33','dR33','R34','dR34','R35','dR35','R36','dR36','R37','dR37','R38','dR38','R39','dR39','R40','dR40',
-                         'R41','dR41','R42','dR42','R43','dR43','R44','dR44','R45','dR45','R46','dR46','R47','dR47','R48','dR48','R49','dR49','R50','dR50',
-                         'R51','dR51','R52','dR52'])
-    for i in range(nDev):
-        with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(i+1)+'.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['Grab','Resistance (ohms)','Uncertainty (ohms)','timestamp'])
+        MegatableHeader=[]
+        MegatableHeader.append('Grab')
+        for i in range(nWords):
+            for j in range(nBits):
+                MegatableHeader.append('G_'+Wordlist[i+1]+Bitlist[j+1])
+                MegatableHeader.append('dG_'+Wordlist[i+1]+Bitlist[j+1])
+        writer.writerow(MegatableHeader)
+    for i in range(nWords):
+        for j in range(nBits):
+            with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+WordList[i+1]+BitList[j+1]+'.csv', 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
@@ -209,11 +214,8 @@ def measLoop():
                    )
     nRun += 1
     print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
-    # ---- Run source voltage back to zero
-    daqout_S.goTo(0.0, delay=0.0)
     # ---- Switch Multiplexer to off state.
-    CtrlPi.setMuxToOutput(0)
-    CtrlPi.setRelayToOff()  # Switches multiplexer power off
+    CtrlPi.SysReset()
     #root.quit() ## remove this line for the program to not quit at the end
 
 if __name__ == "__main__":

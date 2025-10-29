@@ -41,6 +41,7 @@ P2Gain = float(1e4)
 # Settings for Measurement Biases
 VSource = float(0.5)
 VGate = float(0.0)
+VHold = float(0.5) #Sets the Hold voltage line for Gen5/6 only (not used in Gen4)
 
 # AssayRun settings
 ItersAR = int(1) # Number of iterations of device sampling to run before program ends
