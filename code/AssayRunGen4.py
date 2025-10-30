@@ -143,7 +143,7 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
 #    print('Set NIDAQ Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(VSource,delay=0.0)  # Run the source up to specified voltage
     if GateMode == 'K2401':
-        keithley.goTo(vGate,delay=0.0)  # Run the gate up to specified voltage
+        keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     else:
         daqout_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     CtrlPi.setRelayToOn()  # Ensure power relay is on
