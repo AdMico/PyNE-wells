@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.1.3 on Thu Oct 30 2025 by APM
+Brought to PyNE-wells v1.1.3a on Thu Oct 30 2025 by APM
 
 @developers: Adam Micolich & Jan Gluschke
 
@@ -10,9 +10,10 @@ IMPORTANT: Check that you have the correct PiBox setting in config.py before you
 
 from PiControlGen4 import PiMUX
 import GlobalMeasID as ID
-from Config import PiBox,P1Gain, P2Gain, VSource, ItersAR, WaitAR, zeroThres, basePath, SR, SpC, GuiUpdateMode
+from Config import PiBox,P1Gain, P2Gain, VSource, VGate, ItersAR, WaitAR, zeroThres, basePath, SR, SpC, GuiUpdateMode, GateMode
 from USB6216Out import USB6216Out
 from USB6216InPB import USB6216InPB
+from Keithley2401 import Keithley2401
 import pandas as pd
 import numpy as np
 import time
@@ -29,14 +30,17 @@ import csv
 nRows = 26
 nDev = 2*nRows
 devices = np.zeros(nDev)
-DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four dataframes for conductance/uncertainty data
-DLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-DR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-DRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-dDL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four dataframes are for GUI use -- New 11SEP25 APM
-dDLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-dDR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
-dDRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
+DL = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float')) # Following four dataframes for conductance/uncertainty data
+DLerr = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float'))
+DR = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float'))
+DRerr = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float'))
+dDL = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float')) # Following four dataframes are for GUI use -- New 11SEP25 APM
+dDLerr = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float'))
+dDR = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float'))
+dDRerr = pd.DataFrame(np.zeros((nRows,ItersAR),dtype='float'))
+if GateMode == 'K2401':
+    Ig = pd.DataFrame(np.zeros((nRows, ItersAR), dtype='float'))
+    Vg = pd.DataFrame(np.zeros((nRows, ItersAR), dtype='float'))
 GUIFrameL = pd.DataFrame(np.zeros((nRows,3)),columns=['Conductance (uS)','Uncertainty (uS)','Timestamp'],dtype='object')
 GUIFrameR = pd.DataFrame(np.zeros((nRows,3)),columns=['Conductance (uS)','Uncertainty (uS)','Timestamp'],dtype='object')
 RD = np.zeros(105)
@@ -70,7 +74,8 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'NIDAQ Sample Rate: ' + str(SR) + ' Hz' + '\n' +
                'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
-               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n \n'
+               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
+               'Ag/AgCl electrode on: ' + GateMode + '\n \n'
                )
 
 #---- Initialization of instruments
@@ -84,6 +89,20 @@ daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
 #---- NIDAQ Input Port for Drain running PairBurst on USB6216 --------------
 daqin_Drain = USB6216InPB()
 daqin_Drain.setOptions({"scaleFactor":1})
+#---- Code for instrument initialisation for Ag/AgCL electrode control -- New 30Oct25 APM
+if GateMode == 'K2401':
+    keithley = Keithley2401(27)
+    keithley.setOptions({
+        "beepEnable": False,
+        "sourceMode": "voltage",
+        "sourceRange": 10,
+        "senseRange": 1.05e-4,
+        "compliance": 1.0e-4,
+        "scaleFactor": 1
+    })
+else:
+    daqout_G = USB6216Out(1)
+    daqout_G.setOptions({"feedBack": "Int", "scaleFactor": 1})
 
 def updateGUI(): # Updates the data in the GUI -- last edited APM 19Jan24
     global nGrab
@@ -122,7 +141,11 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         fLog.write('Grab: '+str(nGrab+1)+' started: '+str(datetime.now())+'\n')
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set NIDAQ Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
-    daqout_S.goTo(VSource, delay=0.0)  # Run the source up to specified voltage
+    daqout_S.goTo(VSource,delay=0.0)  # Run the source up to specified voltage
+    if GateMode == 'K2401':
+        keithley.goTo(vGate,delay=0.0)  # Run the gate up to specified voltage
+    else:
+        daqout_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     CtrlPi.setRelayToOn()  # Ensure power relay is on
     time.sleep(0.5) # Give time for MUXes to properly run up.
     RD[0]=nGrab+1
@@ -137,6 +160,9 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         PBStart[i] = time.time()
         #---- Grab row data from NIDAQ
         Drain = daqin_Drain.get('inputLevel')
+        #---- Grab Ag/AgCl electrode information if K2401 is being used
+        if GateMode == 'K2401':
+            AgCl = keithley.get('senseLevel')
         #---- Calculate conductance values and uncertainties
 #        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3]) ## Keep for diagnostics; Off from 18SEP25 APM
         DL.iloc[i,nGrab] = ((Drain[0]/(VSource*P1Gain))/1e-6) ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
@@ -159,6 +185,11 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
             dDRerr.iloc[i,nGrab] = 0.0
 #        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
 #        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
+        #---- Create the Ag/AgCl electrode data arrays if using K2401
+        if GateMode == 'K2401':
+            Ig.iloc[i,nGrab] = AgCl[0]
+            Vg.iloc[i,nGrab] = AgCl[1]
+        #---- Make the Megatable Information
         RD[(2*nDevL-1)] = round(DL.iloc[i,nGrab],3)
         RD[(2*nDevL)] = round(DLerr.iloc[i,nGrab],3)
         RD[(2*nDevR-1)] = round(DR.iloc[i,nGrab],3)
@@ -166,10 +197,16 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         #---- send data to file
         with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+str(nDevL)+'.csv', 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([str(nGrab+1),str(DL.iloc[i,nGrab]),str(DLerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
+            if GateMode == 'K2401':
+                writer.writerow([str(nGrab + 1),str(DL.iloc[i,nGrab]),str(DLerr.iloc[i,nGrab]),str(Ig.iloc[i,nGrab]),str(Vg.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
+            else:
+                writer.writerow([str(nGrab+1),str(DL.iloc[i,nGrab]),str(DLerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
         with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+str(nDevR)+'.csv', 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
+            if GateMode == 'K2401':
+                writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(Ig.iloc[i,nGrab]),str(Vg.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
+            else:
+                writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
         #---- Update data for the GUI, now uses the display dataframes 11SEP25 APM
         GUIFrameL.iloc[nRow-1] = [round(dDL.iloc[i,nGrab],2),round(dDLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
         GUIFrameR.iloc[nRow-1] = [round(dDR.iloc[i,nGrab],2),round(dDRerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")]
@@ -187,8 +224,13 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
     with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
         writer = csv.writer(f)
         writer.writerow(RD[:])
-    # ---- Run source voltage back to zero
+    #---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
+    #---- Run Ag/AgCl electrode back to zero
+    if GateMode == 'K2401':
+        keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
+    else:
+        daqout_G.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
     # ---- Switch Multiplexer to off state.
     CtrlPi.setMuxToOutput(0)
     CtrlPi.setRelayToOff()  # Switches multiplexer power off
@@ -215,7 +257,10 @@ def measLoop():
     for i in range(nDev):
         with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+str(i+1)+'.csv', 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
+            if GateMode == 'K2401':
+                writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])
+            else:
+                writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
@@ -253,6 +298,11 @@ def measLoop():
 #    print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0, delay=0.0)
+    # ---- Run Ag/AgCl electrode back to zero
+    if GateMode == 'K2401':
+        keithley.goTo(0.0, delay=0.0)  # Run the gate up to specified voltage
+    else:
+        daqout_G.goTo(0.0, delay=0.0)  # Run the gate up to specified voltage
     # ---- Switch Multiplexer to off state.
     CtrlPi.setMuxToOutput(0)
     CtrlPi.setRelayToOff()  # Switches multiplexer power off
