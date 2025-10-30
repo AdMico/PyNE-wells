@@ -1,10 +1,12 @@
-# PyNE-wells v1.1.2 (Updated 18SEP25 APM)
+# PyNE-wells v1.1.3 (Updated 30OCT25 APM)
 
 **Written by:** Adam Micolich & Jan Gluschke
 
 **Purpose:** Software for the electronic measurements for the lipid-sealed wells project (Australian Research Council DP210102085).
 
 *Developed and tested using Python 3.13.5*
+
+*Note: From v1.1.3 measurement has switched to conductance in microsiemens from resistance in ohms.*
 
 ## Structure
 
@@ -51,13 +53,12 @@ The main functional component is `AssayRun4.py`, which runs the electrical measu
 
 APM currently runs this software in PyCharm, you may need to change accordingly for use in another IDE.
 
-1. In PyCharm set up a new Python project called `PyNE-wells` and ensure it is configured as Project venv and using your Python 3.12 interpreter.
+1. In PyCharm set up a new Python project called `PyNE-wells` and ensure it is configured as Project venv and using your Python 3.13 interpreter.
 2. Navigate using GitBash to the folder where the project is (typically `C:/Users/.../PyCharmProjects/PyNE-wells/`).
 3. Initialise the folder using `git init`.
-4. Switch the default branch from `master` to `main` using `git branch -m master main`, as an option, you might also set this as a default using `git config --global init.defaultBranch main`.
-5. Connect to the PyNE-wells repo using `git remote add origin https://github.com/AdMico/PyNE-wells/`.
-6. Pull the repo using `git pull origin main`.
-7. Install the requirements for the package as specified in `requirements.txt`.
-8. Go to `Config.py` file and set the hardware configurations, making particular note to correctly set the `PiBox` parameter so you don't send commands to someone else's MUXBox.
-9. Go to `GlobalMeasID.py` and initialise the GMID for your particular instance.
-10. You are ready to run, and `AssayRun4.py` is the best place to start. Further information in the repo for our electrical set-up, which is coming in the near future.
+4. Connect to the PyNE-wells repo using `git remote add origin https://github.com/AdMico/PyNE-wells/`.
+5. Pull the repo using `git pull origin main`.
+6. Install the requirements for the package as specified in `requirements.txt`.
+7. Go to `Config.py` file and set the hardware configurations, making particular note to correctly set the `PiBox` parameter so you don't send commands to someone else's MUXBox.
+8. Go to `GlobalMeasID.py` and initialise the GMID for your particular instance. 
+9. You are ready to run, and `AssayRun4.py` is the best place to start. Further information in the repo for our electrical set-up, which is coming in the near future.

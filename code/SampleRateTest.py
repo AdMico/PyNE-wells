@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
+Brought to PyNE-wells v1.1.3 on Thu Oct 30 2025 by APM
 
 @developers: Adam Micolich & Jan Gluschke
 
@@ -60,8 +60,8 @@ dDL = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float')) # Following four datafra
 dDLerr = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
 dDR = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
 dDRerr = pd.DataFrame(np.zeros((nDev,nSpC),dtype='float'))
-GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['SpC','Resistance','Uncertainty','Timestamp'],dtype='object')
-GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['SpC','Resistance','Uncertainty','Timestamp'],dtype='object')
+GUIFrameL = pd.DataFrame(np.zeros((nRows,4)),columns=['SpC','Conductance (uS)','Uncertainty (uS)','Timestamp'],dtype='object')
+GUIFrameR = pd.DataFrame(np.zeros((nRows,4)),columns=['SpC','Conductance (uS)','Uncertainty (uS)','Timestamp'],dtype='object')
 RD = np.zeros(106)
 PBStart = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
 PBEnd = np.zeros(nRows) # For use in determining time taken to obtain measurements from USB6216
@@ -166,19 +166,19 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         Drain = daqin_Drain.get('inputLevel')
         # ---- Calculate resistance values and uncertainties
 #        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3]) ## Keep for diagnostics; Off from 18SEP25 APM
-        DL.iloc[i,nGrab] = ((VSource*P1Gain)/Drain[0])
+        DL.iloc[i,nGrab] = ((Drain[0]/(VSource*P1Gain))/1e-6) ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
         DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
-        DR.iloc[i,nGrab] = ((VSource*P2Gain)/Drain[2])
+        DR.iloc[i,nGrab] = ((Drain[2]/(VSource*P2Gain))/1e-6) ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
         DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
 #        print('test: ',DL.iloc[i,nGrab],DR.iloc[i,nGrab]) ## Keep for diagnostics; Off from 18SEP25 APM
         # ---- Create the display version of resistances as separate dataframes and apply zeroThres -- New 11SEP25 APM
-        if abs(DL.iloc[i,nGrab]) < zeroThres:  # Fills the left-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
+        if abs(DL.iloc[i,nGrab]) > zeroThres:  # Fills the left-bank display dataframes and sets to zero if conductance < zeroThres, needs abs for fluctuations around zero current -- Updated 30Oct25 APM
             dDL.iloc[i,nGrab] = DL.iloc[i,nGrab]
             dDLerr.iloc[i,nGrab] = DLerr.iloc[i,nGrab]
         else:
             dDL.iloc[i,nGrab] = 0.0
             dDLerr.iloc[i,nGrab] = 0.0
-        if abs(DR.iloc[i,nGrab]) < zeroThres:  # Fills the right-bank display dataframes and sets to zero if resistance > zeroThres, needs abs for fluctuations around zero current -- New 11SEP25 APM
+        if abs(DR.iloc[i,nGrab]) > zeroThres:  # Fills the right-bank display dataframes and sets to zero if conductance < zeroThres, needs abs for fluctuations around zero current -- Updated 30Oct25 APM
             dDR.iloc[i,nGrab] = DR.iloc[i,nGrab]
             dDRerr.iloc[i,nGrab] = DRerr.iloc[i,nGrab]
         else:
@@ -228,22 +228,22 @@ def measLoop():
     global measurementName,nRun,runPath,nGrab
     #---- Currently the main program
     with open(dataPath+'/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
-        fLog.write('Measurement '+measurementName+'R'+str(nRun)+' started at: '+str(datetime.now())+'\n')
-    runPath = dataPath+'/'+t+'_'+measurementName+'_R'+str(nRun)
+        fLog.write('Measurement '+measurementName+'G'+str(nRun)+' started at: '+str(datetime.now())+'\n')
+    runPath = dataPath+'/'+t+'_'+measurementName+'_G'+str(nRun)
     if not os.path.exists(runPath):
         os.makedirs(runPath)
-    with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','w',newline='') as f:
+    with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','w',newline='') as f:
         writer=csv.writer(f)
-        writer.writerow(['Grab','SpC','R1','dR1','R2','dR2','R3','dR3','R4','dR4','R5','dR5','R6','dR6','R7','dR7','R8','dR8','R9','dR9','R10','dR10',
-                         'R11','dR11','R12','dR12','R13','dR13','R14','dR14','R15','dR15','R16','dR16','R17','dR17','R18','dR18','R19','dR19','R20','dR20',
-                         'R21','dR21','R22','dR22','R23','dR23','R24','dR24','R25','dR25','R26','dR26','R27','dR27','R28','dR28','R29','dR29','R30','dR30',
-                         'R31','dR31','R32','dR32','R33','dR33','R34','dR34','R35','dR35','R36','dR36','R37','dR37','R38','dR38','R39','dR39','R40','dR40',
-                         'R41','dR41','R42','dR42','R43','dR43','R44','dR44','R45','dR45','R46','dR46','R47','dR47','R48','dR48','R49','dR49','R50','dR50',
-                         'R51','dR51','R52','dR52'])
+        writer.writerow(['Grab','SpC','G1','dG1','G2','dG2','G3','dG3','G4','dG4','G5','dG5','G6','dG6','G7','dG7','G8','dG8','G9','dG9','G10','dG10',
+                         'G11','dG11','G12','dG12','G13','dG13','G14','dG14','G15','dG15','G16','dG16','G17','dG17','G18','dG18','G19','dG19','G20','dG20',
+                         'G21','dG21','G22','dG22','G23','dG23','G24','dG24','G25','dG25','G26','dG26','G27','dG27','G28','dG28','G29','dG29','G30','dG30',
+                         'G31','dG31','G32','dG32','G33','dG33','G34','dG34','G35','dG35','G36','dG36','G37','dG37','G38','dG38','G39','dG39','G40','dG40',
+                         'G41','dG41','G42','dG42','G43','dG43','G44','dG44','G45','dG45','G46','dG46','G47','dG47','G48','dG48','G49','dG49','G50','dG50',
+                         'G51','dG51','G52','dG52'])
     for i in range(nDev):
-        with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(i+1)+'.csv', 'w', newline='') as f:
+        with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+str(i+1)+'.csv', 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['Grab','SpC','Resistance (ohms)','Uncertainty (ohms)','timestamp'])
+            writer.writerow(['Grab','SpC','Conductance (uS)','Uncertainty (uS)','timestamp'])
     for i in range(nSpC): #Edited from ItersAR for this code APM 27MAR24
         nGrab = i
         GrabStart[i] = time.time()

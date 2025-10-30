@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
+Brought to PyNE-wells v1.1.3 on Thu Oct 30 2025 by APM
 
 @developers: Adam Micolich & Jan Gluschke
 
@@ -36,6 +36,6 @@ VGate = float(0.0)
 # AssayRun settings
 ItersAR = int(3) # Number of iterations of device sampling to run before program ends
 WaitAR = float(10) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
-zeroThres = float(2e5) # If resistance is larger, the GUI will display zero for GUI management reasons (but correct resistance will go to data file) -- 11Sep25 APM
+zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- 30Oct25 APM
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM

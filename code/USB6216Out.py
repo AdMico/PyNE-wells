@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v1.2.0 on Thu Sep 11 2025 by APM
+Brought to PyNE-wells v1.1.3 on Thu Sep 11 2025 by APM
 
 @developers: Adam Micolich & Jan Gluschke
 
