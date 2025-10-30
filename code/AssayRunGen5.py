@@ -130,13 +130,18 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
             SBStart[i,j] = time.time()
             #---- Grab device data from NIDAQ
             Drain = daqin_Drain.get('inputLevel')
-            if Drain[0] > zeroThres: # Converts to conductance and sets open circuit to zero
-                DD.iloc[i,j,nGrab] = (Drain[0]/(VSource*P1Gain)/1e-6)
-                DDerr.iloc[i,j,nGrab] = (Drain[1]/Drain[0])*DD.iloc[i,j,nGrab]
+            # ---- Calculate conductance values and uncertainties
+#            print("input: ",Drain[0],Drain[1],Drain[2],Drain[3]) ## Keep for diagnostics; Off from 18SEP25 APM
+            DD.iloc[i,j,nGrab] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
+            DDerr.iloc[i,j,nGrab] = (Drain[1]/Drain[0])*DD.iloc[i,j,nGrab]
+            # ---- Create the display version of conductance as separate dataframes and apply zeroThres -- New 11SEP25 APM
+            if abs(DD.iloc[i,j,nGrab]) > zeroThres:  # Fills the left-bank display dataframes and sets to zero if conductance < zeroThres, needs abs for fluctuations around zero current -- Updated 30Oct25 APM
+                dDD.iloc[i,j,nGrab] = DD.iloc[i,j,nGrab]
+                dDDerr.iloc[i,j,nGrab] = DDerr.iloc[i,j,nGrab]
             else:
-                DD.iloc[i,j,nGrab] = 0.0
-                DDerr.iloc[i,j,nGrab] = 0.0
-        #        print(f'DD = {DD.iloc[i,j,nGrab]:.2f} +/- {DDerr.iloc[i,j,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
+                dDD.iloc[i,j,nGrab] = 0.0
+                dDDerr.iloc[i,j,nGrab] = 0.0
+#               print(f'DD = {DD.iloc[i,j,nGrab]:.2f} +/- {DDerr.iloc[i,j,nGrab]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
             CtrlPi.SysDevOff(nWord,nBit)
             RD[54*(nWord-1)+2*(nBit-1)] = round(DD.iloc[i,j,nGrab],3)
             RD[54*(nWord-1)+2*(nBit-1)+1] = round(DDerr.iloc[i,j,nGrab],3)
@@ -146,34 +151,38 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
                 writer.writerow([str(nGrab+1),str(DD.iloc[i,j,nGrab]),str(DDerr.iloc[i,j,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
             #---- Update data for the GUI
 #            GUIFrame.iloc[nRow-1] = [nDevL,round(DL.iloc[i,nGrab],2),round(DLerr.iloc[i,nGrab],2),datetime.now().strftime("%H:%M:%S")] -- Commented until solved APM 16Oct25
-            updateGUI()
+            # ---- Decision tree below implements GuiUpdateMode switching of GUI updating from config.py -- New 11Sep25 APM
+            if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
+                updateGUI()
+            elif GuiUpdateMode == 'grab' and i == (nWords-1) and j == (nBits-1):  # Update the GUI only at the end of the grab
+                updateGUI()
             #---- End of row timing
             SBEnd[i,j] = time.time()
             SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
             SBElapsed[nGrab] = SBEnd[nWord-1,nBit-1]-SBStart[0,0]
             SBAverage[nGrab] = SBTime.mean()
     #---- Drop all device data to megatable at end of grab
-    with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','a',newline='') as f:
+    with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
         writer = csv.writer(f)
         writer.writerow(RD[:])
     # ---- Run source voltage back to zero
-    daqout_S.goTo(0.0, delay=0.0)
+    daqout_S.goTo(0.0,delay=0.0)
     # ---- Run hold voltage back to zero
-    daqout_H.goTo(0.0, delay=0.0)
+    daqout_H.goTo(0.0,delay=0.0)
     # ---- Switch Multiplexer to off state.
     CtrlPi.SysReset()
-#    print('End of grab: ', nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
+#    print('End of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
     return SBElapsed,SBAverage
 
 def measLoop():
     global measurementName,nRun,runPath,nGrab
     #---- Currently the main program
     with open(dataPath+'/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
-        fLog.write('Measurement '+measurementName+'R'+str(nRun)+' started at: '+str(datetime.now())+'\n')
-    runPath = dataPath+'/'+t+'_'+measurementName+'_R'+str(nRun)
+        fLog.write('Measurement '+measurementName+'G'+str(nRun)+' started at: '+str(datetime.now())+'\n')
+    runPath = dataPath+'/'+t+'_'+measurementName+'_G'+str(nRun)
     if not os.path.exists(runPath):
         os.makedirs(runPath)
-    with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','w',newline='') as f:
+    with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','w',newline='') as f:
         writer=csv.writer(f)
         MegatableHeader=[]
         MegatableHeader.append('Grab')
@@ -184,7 +193,7 @@ def measLoop():
         writer.writerow(MegatableHeader)
     for i in range(nWords):
         for j in range(nBits):
-            with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+WordList[i+1]+BitList[j+1]+'.csv', 'w', newline='') as f:
+            with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList[i+1]+BitList[j+1]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
     for i in range(ItersAR):
@@ -193,6 +202,9 @@ def measLoop():
         grab(nGrab,zeroThres)
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
+#        print('WaitAR=',WaitAR) ## Keep for diagnostics; Off from 11Sep25 APM
+#        print('GrabTime=',GrabTime[i]) ## Keep for diagnostics; Off from 11Sep25 APM
+#        print('GT= ',GT) ## Keep for diagnostics; Off from 11Sep25 APM
         #---- check for grab-stop signal
         with open('stop.txt', 'r') as fStop:
             r = fStop.read()
@@ -220,38 +232,38 @@ def measLoop():
 
 if __name__ == "__main__":
     # GUI Code
-    nGrab=0
+    nGrab = 0
     root = tk.Tk()
     root.title("Live Measurement GUI")
-    root.geometry('1100x650')
-#    root.maxsize(1200,800)
+    root.geometry('1450x650')  # Values set to prevent GUI crash 16Sep25 APM
+    #    root.maxsize(1200,800)
     root.config(bg="skyblue")
     left_table = Frame(root)
     left_table.grid(row=0,column=1,rowspan=7,padx=5,pady=5)
     right_table = Frame(root)
     right_table.grid(row=0,column=2,rowspan=7,padx=5,pady=5)
-    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=365,height=590)
-    GUI_optionsL = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
-    pdtb.config.apply_options(GUI_optionsL,GUI_tableL)
-    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=365,height=590)
-    GUI_optionsR = {'align':'w','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}
-    pdtb.config.apply_options(GUI_optionsR,GUI_tableR)
+    GUI_tableL = Table(left_table,showtoolbar=False,showstatusbar=False,width=485,height=590)  # Values set to prevent GUI crash 16Sep25 APM
+    GUI_optionsL = {'align':'center','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}  # Values set to prevent GUI crash 16Sep25 APM
+    pdtb.config.apply_options(GUI_optionsL, GUI_tableL)
+    GUI_tableR = Table(right_table,showtoolbar=False,showstatusbar=False,width=485,height=590)  # Values set to prevent GUI crash 16Sep25 APM
+    GUI_optionsR = {'align':'center','cellwidth':85,'floatprecision':2,'font':'Arial','fontsize':12,'linewidth':1,'rowheight':22}  # Values set to prevent GUI crash 16Sep25 APM
+    pdtb.config.apply_options(GUI_optionsR, GUI_tableR)
     GUI_tableL.show()
     GUI_tableR.show()
     GUI_tableL.updateModel(TableModel(GUIFrameL))
     GUI_tableR.updateModel(TableModel(GUIFrameR))
-    assay = tk.Label(root,text=('Assay Number: '+t+'_'+measurementName),bg="skyblue")
+    assay = tk.Label(root, text=('Assay Number: ' + t + '_' + measurementName), bg="skyblue")
     assay.grid(row=0,column=0,padx=5,pady=5)
-    run = tk.Label(root, text=('Run Number: '+str(nRun)),bg="skyblue")
-    run.grid(row=1, column=0, padx=5, pady=5)
-    start_button = tk.Button(root, text='Start Run',command=lambda:grabStart())
+    run = tk.Label(root, text=('Run Number: ' + str(nRun)), bg="skyblue")
+    run.grid(row=1,column=0,padx=5,pady=5)
+    start_button = tk.Button(root, text='Start Run', command=lambda: grabStart())
     start_button.grid(row=2,column=0,padx=5,pady=5)
-    grabNum = tk.Label(root, text=('Grab Number: '+str(nGrab+1)),bg="skyblue")
-    grabNum.grid(row=3, column=0, padx=5, pady=5)
-    grabTot = tk.Label(root, text=('of total grabs: '+str(ItersAR)),bg="skyblue")
-    grabTot.grid(row=4, column=0, padx=5, pady=5)
-    stop_button = tk.Button(root,text='Last Grab',command=lambda:stop())
+    grabNum = tk.Label(root, text=('Grab Number: ' + str(nGrab + 1)), bg="skyblue")
+    grabNum.grid(row=3,column=0,padx=5,pady=5)
+    grabTot = tk.Label(root, text=('of total grabs: ' + str(ItersAR)), bg="skyblue")
+    grabTot.grid(row=4,column=0,padx=5,pady=5)
+    stop_button = tk.Button(root, text='Last Grab', command=lambda: stop())
     stop_button.grid(row=5,column=0,padx=5,pady=5)
-    exit_button = tk.Button(root,text='End Program',command=lambda:[end(),root.quit()])
+    exit_button = tk.Button(root, text='End Program', command=lambda: [end(), root.quit()])
     exit_button.grid(row=6,column=0,padx=5,pady=5)
     root.mainloop()
