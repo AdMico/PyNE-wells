@@ -7,6 +7,7 @@
 *Developed and tested using Python 3.13.5*
 
 *Note: From v1.1.3 measurement has switched to conductance in microsiemens from resistance in ohms.*
+
 *Note: From v1.1.3a has added instrument Keithley 2401 to enable current monitoring of the Ag/AgCl electrode.*
 
 ## Structure
