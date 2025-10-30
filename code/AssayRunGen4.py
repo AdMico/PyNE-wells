@@ -29,7 +29,7 @@ import csv
 nRows = 26
 nDev = 2*nRows
 devices = np.zeros(nDev)
-DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four dataframes for resistance/uncertainty data
+DL = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float')) # Following four dataframes for conductance/uncertainty data
 DLerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DR = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
 DRerr = pd.DataFrame(np.zeros((nDev,ItersAR),dtype='float'))
@@ -137,14 +137,14 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         PBStart[i] = time.time()
         #---- Grab row data from NIDAQ
         Drain = daqin_Drain.get('inputLevel')
-        #---- Calculate resistance values and uncertainties
+        #---- Calculate conductance values and uncertainties
 #        print("input: ",Drain[0],Drain[1],Drain[2],Drain[3]) ## Keep for diagnostics; Off from 18SEP25 APM
         DL.iloc[i,nGrab] = ((Drain[0]/(VSource*P1Gain))/1e-6) ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
         DLerr.iloc[i,nGrab] = (Drain[1]/Drain[0])*DL.iloc[i,nGrab]
         DR.iloc[i,nGrab] = ((Drain[2]/(VSource*P2Gain))/1e-6) ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
         DRerr.iloc[i,nGrab] = (Drain[3]/Drain[2])*DR.iloc[i,nGrab]
 #        print('test: ',DL.iloc[i,nGrab],DR.iloc[i,nGrab]) ## Keep for diagnostics; Off from 18SEP25 APM
-        #---- Create the display version of resistances as separate dataframes and apply zeroThres -- New 11SEP25 APM
+        #---- Create the display version of conductances as separate dataframes and apply zeroThres -- New 11SEP25 APM
         if abs(DL.iloc[i,nGrab]) > zeroThres: # Fills the left-bank display dataframes and sets to zero if conductance < zeroThres, needs abs for fluctuations around zero current -- Updated 30Oct25 APM
             dDL.iloc[i,nGrab] = DL.iloc[i,nGrab]
             dDLerr.iloc[i,nGrab] = DLerr.iloc[i,nGrab]
@@ -157,17 +157,17 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         else:
             dDR.iloc[i,nGrab] = 0.0
             dDRerr.iloc[i,nGrab] = 0.0
-#        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
-#        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} ohms') ## Keep for diagnostics; Off from 15JAN24 APM
+#        print(f'DL = {DL.iloc[i,nGrab]:.2f} +/- {DLerr.iloc[i,nGrab]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
+#        print(f'DR = {DR.iloc[i,nGrab]:.2f} +/- {DRerr.iloc[i,nGrab]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
         RD[(2*nDevL-1)] = round(DL.iloc[i,nGrab],3)
         RD[(2*nDevL)] = round(DLerr.iloc[i,nGrab],3)
         RD[(2*nDevR-1)] = round(DR.iloc[i,nGrab],3)
         RD[(2*nDevR)] = round(DRerr.iloc[i,nGrab],3)
         #---- send data to file
-        with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(nDevL)+'.csv', 'a', newline='') as f:
+        with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+str(nDevL)+'.csv', 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([str(nGrab+1),str(DL.iloc[i,nGrab]),str(DLerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
-        with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'_Dev'+str(nDevR)+'.csv', 'a', newline='') as f:
+        with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+str(nDevR)+'.csv', 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([str(nGrab+1),str(DR.iloc[i,nGrab]),str(DRerr.iloc[i,nGrab]),str(datetime.now().strftime("%H:%M:%S"))])
         #---- Update data for the GUI, now uses the display dataframes 11SEP25 APM
@@ -184,7 +184,7 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         PBElapsed[nGrab] = PBEnd[nRows-1]-PBStart[0]
         PBAverage[nGrab] = PBTime.mean()
     #---- Drop all device data to megatable at end of grab
-    with open(runPath+'/'+t+'_'+measurementName+'_R'+str(nRun)+'.csv','a',newline='') as f:
+    with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
         writer = csv.writer(f)
         writer.writerow(RD[:])
     # ---- Run source voltage back to zero
@@ -246,7 +246,7 @@ def measLoop():
     print()
     print('measLoop completed successfully')
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
-        fLog.write('Measurement '+measurementName+'R'+str(nRun)+' finished at: '+str(datetime.now())+'\n'+
+        fLog.write('Measurement '+measurementName+'G'+str(nRun)+' finished at: '+str(datetime.now())+'\n'+
                    'with '+str(nGrab+1)+' of '+str(ItersAR)+' grabs completed.'+'\n \n'
                    )
     nRun += 1
