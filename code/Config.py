@@ -7,6 +7,8 @@ This informs various parts of the software about aspects of your bench setup. Ed
 """
 
 ## IMPORTANT -- YOU NEED TO SET PiBox CORRECTLY BEFORE YOU FIRST USE THE SOFTWARE to avoid controlling someone else's hardware by mistake -- see main README.md file
+## IMPORTANT -- If you are using a K2401 for the gate, you need to change the GateMode parameter under AssayRun settings below.
+
 # Information about which Raspberry Pi you are using (MeasureOne, MeasureTwo, etc)
 # Details for the various Pis are in Pi_control.py
 PiBox = 'MeasureThree'
@@ -46,5 +48,7 @@ VHold = float(0.5) #Sets the Hold voltage line for Gen5/6 only (not used in Gen4
 # AssayRun settings
 ItersAR = int(1) # Number of iterations of device sampling to run before program ends
 WaitAR = float(60) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
-zeroThres = float(1e-2) # If current is smaller, we consider current to be zero and resistance to be zero (i.e., open circuit) to help data handling
+zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- 30Oct25 APM
 basePath = '../data'
+GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
+GateMode = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl electrode on AO1 of USB6216) and 'K2401' for using the Keithley 2401 instead -- New 30Oct25 APM
