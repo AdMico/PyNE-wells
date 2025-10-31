@@ -59,13 +59,13 @@ class USB6216InSB(Instrument.Instrument):
     def _getInputLevel(self):
         with nmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(self.port)
-            task.ai_channels.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquistionType.CONTINUOUS, samps_per_chan=self.burstVolume)
+            task.timing.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquisitionType.CONTINUOUS, samps_per_chan=self.burstVolume)
             reader = stream_readers.AnalogSingleChannelReader(task.in_stream)
-            buffer = np.zeros((1, self.burstVolume), dtype=np.float64)
+            buffer = np.zeros((self.burstVolume), dtype=np.float64)
             reader.read_many_sample(buffer, self.burstVolume, timeout=constants.WAIT_INFINITELY)
             data = buffer.T.astype(np.float64)/self.scaleFactor
 #            measInput = data.mean() ## Current version only returns the average, we can add error return later if needed APM 19DEC23 -- Deactivated APM 16Oct25
-            D = data[:,0]
+            D = data[:]
             Dav = D.mean()
             Derr = D.std()
         return [Dav,Derr]

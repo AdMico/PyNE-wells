@@ -55,7 +55,7 @@ class USB6216InSS(Instrument.Instrument):
             task.ai_channels.add_ai_voltage_chan(self.port)
             tempData = task.read()
         measInput = float(tempData)/self.scaleFactor        
-        return measInput
+        return [measInput,0.0] ## Modded APM 30Oct25 for testing of Gen 5 set-up
 
     @Instrument.addOptionGetter("scaleFactor")
     def _getScaleFactor(self):

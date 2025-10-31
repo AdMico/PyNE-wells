@@ -34,7 +34,7 @@ Drain_Gen5 = 'Dev1/ai0'
 
 # Settings for NIDAQ PairBurst Mode operation
 SR = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
-SpC = int(1e5) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+SpC = int(1e1) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
 
 # Settings for Femto Preamplifiers -- Only P1Gain matters for Gen 5/6, both matter for Gen4.
 P1Gain = float(1e4)
@@ -46,9 +46,9 @@ VGate = float(0.0)
 VHold = float(0.5) #Sets the Hold voltage line for Gen5/6 only (not used in Gen4)
 
 # AssayRun settings
-ItersAR = int(1) # Number of iterations of device sampling to run before program ends
+ItersAR = int(3) # Number of iterations of device sampling to run before program ends
 WaitAR = float(60) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- 30Oct25 APM
 basePath = '../data'
-GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
+GuiUpdateMode = 'point' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
 GateMode = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl electrode on AO1 of USB6216) and 'K2401' for using the Keithley 2401 instead -- New 30Oct25 APM

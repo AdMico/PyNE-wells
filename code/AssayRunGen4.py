@@ -74,7 +74,8 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'NIDAQ Sample Rate: ' + str(SR) + ' Hz' + '\n' +
                'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
-               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n \n'
+               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
+               'Ag/AgCl electrode on: ' + GateMode + '\n \n'
                )
 
 #---- Initialization of instruments
