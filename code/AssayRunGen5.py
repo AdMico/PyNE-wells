@@ -8,10 +8,10 @@ Main software for running assays.
 
 from PiControlGen5 import PiMUX
 import GlobalMeasID as ID
-from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,zeroThres,basePath,SR,SpC,GuiUpdateMode,GateMode
+from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode
+from SeabornInit import dataInit
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
-#from USB6216InSS import USB6216InSS
 from Keithley2401 import Keithley2401
 import pandas as pd
 import numpy as np
@@ -25,7 +25,7 @@ import tkinter as tk
 import threading
 import os
 import csv
-import random
+global Dt,D0,dD
 
 #---- Initialization of data structures
 nWords = 27
@@ -34,17 +34,17 @@ nDev = nWords*nBits
 devices = np.zeros(nWords*nBits)
 WordList = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
 BitList = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27']
-Dt = pd.DataFrame(np.zeros((nWords,nBits),dtype='float'),columns=WordList,index=BitList)
-D0 = pd.DataFrame(np.zeros((nWords,nBits),dtype='float'),columns=WordList,index=BitList)
-dD = pd.DataFrame(np.zeros((nWords,nBits),dtype='float'),columns=WordList,index=BitList)
-Dterr = pd.DataFrame(np.zeros((nWords,nBits),dtype='float'),columns=WordList,index=BitList)
+Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
+D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
+dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
+Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
 if GateMode == 'K2401':
-    Ig = pd.DataFrame(np.zeros((nWords,nBits), dtype='float'),columns=WordList,index=BitList)
-    Vg = pd.DataFrame(np.zeros((nWords,nBits), dtype='float'),columns=WordList,index=BitList)
+    Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList,index=BitList)
+    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList,index=BitList)
 RD = np.zeros(1459)
-SBStart = np.zeros((nWords,nBits),dtype='float') # For use in determining time taken to obtain measurements from USB6216
-SBEnd = np.zeros((nWords,nBits),dtype='float') # For use in determining time taken to obtain measurements from USB6216
-SBTime = np.zeros((nWords,nBits),dtype='float') # For use in determining time taken to obtain measurements from USB6216
+SBStart = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
+SBEnd = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
+SBTime = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
 SBElapsed = np.zeros(ItersAR,dtype='float') # For use in determining time taken to obtain measurements from USB6216
 SBAverage = np.zeros(ItersAR,dtype='float') # For use in determining time taken to obtain measurements from USB6216
 GrabStart = np.zeros(ItersAR,dtype='float') # For use in determining time taken to run a grab
@@ -77,12 +77,6 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Ag/AgCl electrode on: ' + GateMode + '\n \n'
                )
 
-#---- Temporary: Preinitialise the dataframes for GUI testing
-for i in range(nWords):
-    for j in range(nBits):
-        Dt.iloc[i,j] = 1000.0 + 200.0*(random.uniform(-1,1))
-        dD.iloc[i,j] = 0.0 + 10*(random.uniform(-1,1))
-
 #---- Initialization of instruments
 print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
@@ -109,36 +103,48 @@ if GateMode == 'K2401':
         "scaleFactor": 1
     })
 
-def updateGUI(): # Updates the data in the GUI -- last edited APM 31Oct25
-    global nGrab
-#    SNS_plotL.close()
-#    SNS_plotR.close()
-    left_figure = Frame(root)
-    left_figure.grid(row=1, column=1, rowspan=6, padx=5, pady=5, sticky='nsew')
-    right_figure = Frame(root)
-    right_figure.grid(row=1, column=2, rowspan=6, padx=5, pady=5, sticky='nsew')
-#    SNS_plotL = plt.figure(figsize=(7, 7))
-    axL = SNS_plotL.subplots()
+def createFigL(): # Creates the left plot -- last edited APM 06Nov25
+    global Dt,figL
+    figL = plt.figure(figsize=(7, 7))
+    axL = figL.subplots()
     sns.heatmap(Dt, cmap='magma', linewidths=0.5, ax=axL)
     cbarL = axL.collections[0].colorbar
     cbarL.set_label('Conductance(uS)', labelpad=20)
     axL.xaxis.tick_top()
     axL.xaxis.set_label_position('top')
     axL.set_title('Current grab conductance', y=1.07)
-    canvasL = FigureCanvasTkAgg(SNS_plotL, master=left_figure)
-#    SNS_plotR = plt.figure(figsize=(7, 7))
-    axR = SNS_plotR.subplots()
+    axL.text(x=7.5,y=28,s="Plot updates after first grab")
+    return figL
+
+def createFigR(): # Creates the right plot -- last edited APM 06Nov25
+    global dD,figR
+    figR = plt.figure(figsize=(7, 7))
+    axR = figR.subplots()
     sns.heatmap(dD, cmap='coolwarm', linewidths=0.5, ax=axR)
     cbarR = axR.collections[0].colorbar
     cbarR.set_label('Conductance change (uS)', labelpad=20)
     axR.xaxis.tick_top()
     axR.xaxis.set_label_position('top')
     axR.set_title('Conductance change since first grab', y=1.07)
-    canvasR = FigureCanvasTkAgg(SNS_plotR, master=right_figure)
-#    canvasL.draw()
-    canvasL.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-#    canvasR.draw()
-    canvasR.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    axR.text(x=7.5,y=28,s="Plot updates after second grab")
+    return figR
+
+def redrawFigL(): # Redraws the left plot -- last edited APM 06Nov25
+    global figL
+    plt.close(figL)
+    figL = createFigL()
+    canvasL.figure = figL
+    canvasL.draw()
+
+def redrawFigR(): # Redraws the right plot -- last edited APM 06Nov25
+    global figR
+    plt.close(figR)
+    figR = createFigR()
+    canvasR.figure = figR
+    canvasR.draw()
+
+def updateGUI(): # Updates the data in the GUI -- last edited APM 31Oct25
+    global nGrab
     assay = tk.Label(root, text=('Assay Number: '+t+'_'+measurementName),bg="seagreen")
     assay.grid(row=0,column=0,padx=5,pady=5)
     run = tk.Label(root, text=('Run Number: ' + str(nRun)),bg="seagreen")
@@ -147,6 +153,8 @@ def updateGUI(): # Updates the data in the GUI -- last edited APM 31Oct25
     grabNum.grid(row=3,column=0,padx=5,pady=5)
     grabTot = tk.Label(root, text=('of total grabs: '+ str(ItersAR)),bg="seagreen")
     grabTot.grid(row=4,column=0,padx=5,pady=5)
+    redrawFigL()
+    redrawFigR()
     root.update()
 
 def grabStart(): # Operates the Grab Start button in the GUI
@@ -163,7 +171,7 @@ def end(): # Operates mechanism to end the program entirely
         fLog.write('End: ' + str(datetime.now()) + '\n')
     ID.increaseID()
 
-def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices on a chip -- last edited APM 31Oct25
+def grab(nGrab): # Code to implement a single grab of all the devices on a chip -- last edited APM 31Oct25
     global nRun,RD
     print('Grab: ',nGrab+1)
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
@@ -176,11 +184,11 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
         keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     time.sleep(0.5) # Give time for MUXes to properly run up.
     RD[0]=nGrab+1
-    for i in range(nWords):
-        for j in range(nBits):
-            nWord = i+1
-            nBit = j+1
-            print('Word = ',WordList[i],'Bit = ',BitList[j]) ## Keep for diagnostics; On from 16Oct25 APM
+    for i in range(nBits):
+        for j in range(nWords):
+            nBit = i+1
+            nWord = j+1
+            print('Word = ',WordList[j],'Bit = ',BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
             # ---- Set multiplexer to given device
             CtrlPi.SysDevOn(nWord,nBit)
             SBStart[i,j] = time.time()
@@ -217,13 +225,13 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
             # ---- Decision tree below implements GuiUpdateMode switching of GUI updating from config.py -- New 11Sep25 APM
             if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
                 updateGUI()
-            elif GuiUpdateMode == 'grab' and i == (nWords-1) and j == (nBits-1):  # Update the GUI only at the end of the grab
+            elif GuiUpdateMode == 'grab' and i == (nBits-1) and j == (nWords-1):  # Update the GUI only at the end of the grab
                 print('Update GUI')
                 updateGUI()
             #---- End of row timing
             SBEnd[i,j] = time.time()
             SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
-            SBElapsed[nGrab] = SBEnd[nWord-1,nBit-1]-SBStart[0,0]
+            SBElapsed[nGrab] = SBEnd[nBit-1,nWord-1]-SBStart[0,0]
             SBAverage[nGrab] = SBTime.mean()
     #---- Drop all device data to megatable at end of grab
     with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
@@ -253,14 +261,14 @@ def measLoop():
         writer=csv.writer(f)
         MegatableHeader=[]
         MegatableHeader.append('Grab')
-        for i in range(nWords):
-            for j in range(nBits):
-                MegatableHeader.append('G_'+WordList[i]+BitList[j])
-                MegatableHeader.append('dG_'+WordList[i]+BitList[j])
+        for i in range(nBits):
+            for j in range(nWords):
+                MegatableHeader.append('G_'+WordList[j]+BitList[i])
+                MegatableHeader.append('dG_'+WordList[j]+BitList[i])
         writer.writerow(MegatableHeader)
-    for i in range(nWords):
-        for j in range(nBits):
-            with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList[i]+BitList[j]+'.csv', 'w', newline='') as f:
+    for i in range(nBits):
+        for j in range(nWords):
+            with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList[j]+BitList[i]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
                 if GateMode == 'K2401':
                     writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])
@@ -269,12 +277,12 @@ def measLoop():
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
-        grab(nGrab,zeroThres)
+        grab(nGrab)
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
-#        print('WaitAR=',WaitAR) ## Keep for diagnostics; Off from 11Sep25 APM
-#        print('GrabTime=',GrabTime[i]) ## Keep for diagnostics; Off from 11Sep25 APM
-#        print('GT= ',GT) ## Keep for diagnostics; Off from 11Sep25 APM
+        print(f'WaitAR = {WaitAR:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
+        print(f'GrabTime = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
+        print(f'GT = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         #---- check for grab-stop signal
         with open('stop.txt', 'r') as fStop:
             r = fStop.read()
@@ -301,50 +309,44 @@ def measLoop():
     #root.quit() ## remove this line for the program to not quit at the end
 
 if __name__ == "__main__":
+    global figL,figR,canvasL,canvasR
     # GUI Code
     nGrab = 0
+    # Generates the GUI Window
     root = tk.Tk()
     root.title("Live Measurement GUI")
     root.geometry('1700x850')  # Values set to prevent GUI crash 16Sep25 APM
     root.config(bg="seagreen")
-    left_figure = Frame(root)
-    left_figure.grid(row=1,column=1,rowspan=6,padx=5,pady=5,sticky='nsew')
-    right_figure = Frame(root)
-    right_figure.grid(row=1,column=2,rowspan=6,padx=5,pady=5,sticky='nsew')
-    SNS_plotL = plt.figure(figsize=(7,7))
-    axL = SNS_plotL.subplots()
-    sns.heatmap(Dt,cmap='magma',linewidths=0.5,ax=axL)
-    cbarL = axL.collections[0].colorbar
-    cbarL.set_label('Conductance(uS)', labelpad=20)
-    axL.xaxis.tick_top()
-    axL.xaxis.set_label_position('top')
-    axL.set_title('Current grab conductance',y=1.07)
-    canvasL = FigureCanvasTkAgg(SNS_plotL,master=left_figure)
-    SNS_plotR = plt.figure(figsize=(7,7))
-    axR = SNS_plotR.subplots()
-    sns.heatmap(dD,cmap='coolwarm',linewidths=0.5,ax=axR)
-    cbarR = axR.collections[0].colorbar
-    cbarR.set_label('Conductance change (uS)',labelpad=20)
-    axR.xaxis.tick_top()
-    axR.xaxis.set_label_position('top')
-    axR.set_title('Conductance change since first grab',y=1.07)
-    canvasR = FigureCanvasTkAgg(SNS_plotR,master=right_figure)
-    canvasL.draw()
-    canvasL.get_tk_widget().pack(side=tk.TOP,fill=tk.BOTH,expand=1)
-    canvasR.draw()
-    canvasR.get_tk_widget().pack(side=tk.TOP,fill=tk.BOTH,expand=1)
+    #Populates the sidebar
     assay = tk.Label(root, text=('Assay Number: ' + t + '_' + measurementName), bg="seagreen")
-    assay.grid(row=0,column=0,padx=5,pady=5)
+    assay.grid(row=0, column=0, padx=5, pady=5)
     run = tk.Label(root, text=('Run Number: ' + str(nRun)), bg="seagreen")
-    run.grid(row=1,column=0,padx=5,pady=5)
+    run.grid(row=1, column=0, padx=5, pady=5)
     start_button = tk.Button(root, text='Start Run', command=lambda: grabStart())
-    start_button.grid(row=2,column=0,padx=5,pady=5)
+    start_button.grid(row=2, column=0, padx=5, pady=5)
     grabNum = tk.Label(root, text=('Grab Number: ' + str(nGrab + 1)), bg="seagreen")
-    grabNum.grid(row=3,column=0,padx=5,pady=5)
+    grabNum.grid(row=3, column=0, padx=5, pady=5)
     grabTot = tk.Label(root, text=('of total grabs: ' + str(ItersAR)), bg="seagreen")
-    grabTot.grid(row=4,column=0,padx=5,pady=5)
+    grabTot.grid(row=4, column=0, padx=5, pady=5)
     stop_button = tk.Button(root, text='Last Grab', command=lambda: stop())
-    stop_button.grid(row=5,column=0,padx=5,pady=5)
+    stop_button.grid(row=5, column=0, padx=5, pady=5)
     exit_button = tk.Button(root, text='End Program', command=lambda: [end(), root.quit()])
-    exit_button.grid(row=6,column=0,padx=5,pady=5)
+    exit_button.grid(row=6, column=0, padx=5, pady=5)
+    # Creates the two frames needed for the figures
+    left_figure = Frame(root)
+    left_figure.grid(row=1, column=1, rowspan=6, padx=5, pady=5, sticky='nsew')
+    right_figure = Frame(root)
+    right_figure.grid(row=1, column=2, rowspan=6, padx=5, pady=5, sticky='nsew')
+    # Initialise Seaborn plot data
+    Dt, dD = dataInit()
+    # Generates the starting figures and assigns them to their frames
+    figL = createFigL()
+    canvasL = FigureCanvasTkAgg(figL, master=left_figure)
+    figR = createFigR()
+    canvasR = FigureCanvasTkAgg(figR, master=right_figure)
+    # Draws the two plots into the GUI
+    canvasL.draw()
+    canvasL.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    canvasR.draw()
+    canvasR.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
     root.mainloop()

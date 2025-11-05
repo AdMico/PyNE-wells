@@ -9,12 +9,12 @@ be run on machines outside the lab to test aspects of the GUI code.
 
 import GlobalMeasID as ID
 from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,zeroThres,basePath,SR,SpC,GuiUpdateMode,GateMode
+from SeabornInit import dataInit
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.animation import FuncAnimation
 import time
 from datetime import datetime,date
 from tkinter import *
@@ -70,21 +70,6 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Ag/AgCl electrode on: ' + GateMode + '\n \n'
                )
 
-#---- Temporary: Preinitialise the dataframes for GUI testing
-for i in range(nBits):
-    for j in range(nWords):
-        D0.iloc[i,j] = 1000.0
-        Dt.iloc[i,j] = D0.iloc[i,j]
-        dD.iloc[i,j] = 0.0
-Dt.iloc[0,0] = 900.0
-Dt.iloc[0,26] = 950.0
-Dt.iloc[26,0] = 1050.0
-Dt.iloc[26,26] = 1100.0
-dD.iloc[0,0] = -10.0
-dD.iloc[0,26] = -5.0
-dD.iloc[26,0] = 5.0
-dD.iloc[26,26] = 10.0
-
 #---- Initialization of instruments
 print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
@@ -108,6 +93,7 @@ def createFigL(): # Creates the left plot
     axL.xaxis.tick_top()
     axL.xaxis.set_label_position('top')
     axL.set_title('Current grab conductance', y=1.07)
+    axL.text(x=7.5,y=28,s="Plot updates after first grab")
     return figL
 
 def createFigR(): # Creates the right plot
@@ -120,6 +106,7 @@ def createFigR(): # Creates the right plot
     axR.xaxis.tick_top()
     axR.xaxis.set_label_position('top')
     axR.set_title('Conductance change since first grab', y=1.07)
+    axR.text(x=7.5,y=28,s="Plot updates after second grab")
     return figR
 
 def redrawFigL():
@@ -319,6 +306,8 @@ if __name__ == "__main__":
     left_figure.grid(row=1,column=1,rowspan=6,padx=5,pady=5,sticky='nsew')
     right_figure = Frame(root)
     right_figure.grid(row=1,column=2,rowspan=6,padx=5,pady=5,sticky='nsew')
+    # Initialise Seaborn plot data
+    Dt, dD = dataInit()
     # Generates the starting figures and assigns them to their frames
     figL = createFigL()
     canvasL = FigureCanvasTkAgg(figL,master=left_figure)
