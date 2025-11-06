@@ -182,18 +182,15 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     daqout_H.goTo(VHold,delay=0.0)  # Run the source up to specified voltage
     if GateMode == 'K2401':
         keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
-    time.sleep(0.5) # Give time for MUXes to properly run up.
     RD[0]=nGrab+1
     for i in range(nBits):
         for j in range(nWords):
-            nBit = i+1
-            nWord = j+1
             print('Word = ',WordList[j],'Bit = ',BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
             # ---- Set multiplexer to given device
-            CtrlPi.SysDevOn(nWord,nBit)
+            CtrlPi.SysDevOn(j+1,i+1)
             SBStart[i,j] = time.time()
             #---- Grab device data from NIDAQ
-            time.sleep(3) ## Allows pause at where the current would be read for stability checking
+            time.sleep(0.1) ## Allows pause at where the current would be read for stability checking
             Drain = daqin_Drain.get('inputLevel')
             # ---- Grab Ag/AgCl electrode information if K2401 is being used
             if GateMode == 'K2401':
@@ -211,10 +208,10 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             if GateMode == 'K2401':
                 Ig.iloc[i,j] = AgCl[0]
                 Vg.iloc[i,j] = AgCl[1]
-            CtrlPi.SysDevOff(nWord,nBit)
+            CtrlPi.SysDevOff(j+1,i+1)
             # ---- Make the Megatable Information
-            RD[54*(nWord-1)+2*(nBit-1)+1] = round(Dt.iloc[i,j],3)
-            RD[54*(nWord-1)+2*(nBit-1)+2] = round(Dterr.iloc[i,j],3)
+            RD[54*(j)+2*(i)+1] = round(Dt.iloc[i,j],3)
+            RD[54*(j)+2*(i)+2] = round(Dterr.iloc[i,j],3)
             # ---- send data from this grab to file
             with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList[i]) + str(BitList[j]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
@@ -231,7 +228,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             #---- End of row timing
             SBEnd[i,j] = time.time()
             SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
-            SBElapsed[nGrab] = SBEnd[nBit-1,nWord-1]-SBStart[0,0]
+            SBElapsed[nGrab] = SBEnd[i,j]-SBStart[0,0]
             SBAverage[nGrab] = SBTime.mean()
     #---- Drop all device data to megatable at end of grab
     with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
@@ -280,6 +277,7 @@ def measLoop():
         grab(nGrab)
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
+        GT = WaitAR - GrabTime[i]
         print(f'WaitAR = {WaitAR:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         print(f'GrabTime = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         print(f'GT = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
@@ -289,7 +287,6 @@ def measLoop():
             if r == 'stop':
                 print('Stopped safely after completed grab: ',nGrab+1)
                 break
-        GT = WaitAR-GrabTime[i]
         #---- wait for the next scheduled grab
         if nGrab+1 < ItersAR:
             time.sleep(GT)

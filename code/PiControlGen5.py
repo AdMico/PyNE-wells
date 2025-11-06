@@ -26,7 +26,7 @@ class PiMUX:
                            '&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
         self.BitList = ['OFF','1','2','3','4','5','6','7','8','9','10','11','12','13','14',
                            '15','16','17','18','19','20','21','22','23','24','25','26','27']
-        self.RelayTime = 0.001
+        self.RelayTime = 0.01
 
         #WordTable format: Device: [W-A3,W-A2,W-A1,W-A0,W-EN1,W-EN2], #MUX <number> Pin <number> (Mx <number> out of 16)
         self.WordTable = {0: [0, 0, 0, 0, 0, 0],  # OFF state
@@ -122,18 +122,14 @@ class PiMUX:
         self.WMUXPins = [self.WA3_pin,self.WA2_pin,self.WA1_pin,self.WA0_pin,self.WEN1_pin,self.WEN2_pin]
         self.BMUXPins = [self.BA3_pin,self.BA2_pin,self.BA1_pin,self.BA0_pin,self.BEN1_pin,self.BEN2_pin]
 
-        #Uses truthtables to set GPIO pin voltages to activate desired output.
-
-    def setWMuxToOutput(self, desiredOutput): #Controls output to WMUXes
-
+    def setWMuxToOutput(self,desiredOutput): #Controls output to WMUXes
         for index, item in enumerate(self.WMUXPins):
             if self.WordTable[desiredOutput][index]:
                 item.on()
             else:
                 item.off()
 
-    def setBMuxToOutput(self, desiredOutput): #Controls output to BMUXes
-
+    def setBMuxToOutput(self,desiredOutput): #Controls output to BMUXes
         for index, item in enumerate(self.BMUXPins):
             if self.BitTable[desiredOutput][index]:
                 item.on()
@@ -336,24 +332,24 @@ class PiMUX:
             self.setWMuxToOutput(i+1)
             self.setWordToOff()
 
-    def SysDevOn(self,word,bit): # Switches a given device on for AssayRunGen5.py -- APM 16Oct25
-        self.setWMuxToOutput(word)
+    def SysDevOn(self,i,j): # Switches a given device on for AssayRunGen5.py -- APM 16Oct25
+        self.setWMuxToOutput(i)
         self.setWordToOn()
-        self.setBMuxToOutput(bit)
+        self.setBMuxToOutput(j)
         self.setBitToOn()
 
-    def SysDevOff(self,word,bit): # Switches a given device off for AssayRunGen5.py -- APM 16Oct25
-        self.setBMuxToOutput(bit)
+    def SysDevOff(self,i,j): # Switches a given device off for AssayRunGen5.py -- APM 16Oct25
+        self.setBMuxToOutput(j)
         self.setBitToOff()
-        self.setWMuxToOutput(word)
+        self.setWMuxToOutput(i)
         self.setWordToOff()
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
     my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
-#    my_pi.WordRelayTest('S', 1.5)
-#    my_pi.BitRelayTest('S',1.5)
-    my_pi.SysTestSingle(3,3,3) # Will connect to device A1 for 10 sec -- APM 10SEP25
+    my_pi.WordRelayTest('S',1.5)
+    my_pi.BitRelayTest('D',1.5)
+#    my_pi.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
 #    my_pi.SysTest4x4(20) # Runs a test using the 4x4 board -- APM 30SEP25
-#    my_pi.SysTestFull(1) # Will connect to each device for 0.1 sec -- APM 10SEP25
+ #   my_pi.SysTestFull(0.1) # Will connect to each device for 0.1 sec -- APM 10SEP25
     my_pi.SysReset() # Runs a reset -- APM 10SEP25
