@@ -33,14 +33,15 @@ nBits = 27
 nDev = nWords*nBits
 devices = np.zeros(nWords*nBits)
 WordList = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
+WordList2 = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','&']
 BitList = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27']
-Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
-D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
-dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
-Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
+Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
+D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
+dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
+Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 if GateMode == 'K2401':
-    Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList,index=BitList)
-    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList,index=BitList)
+    Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList)
+    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList)
 RD = np.zeros(1459)
 SBStart = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
 SBEnd = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
@@ -103,9 +104,14 @@ if GateMode == 'K2401':
         "scaleFactor": 1
     })
 
+def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
+    map = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,26,25,24,23,22,21,20,19,18,17,16,15,14])
+    k = map[j]
+    return k
+
 def createFigL(): # Creates the left plot -- last edited APM 06Nov25
     global Dt,figL
-    figL = plt.figure(figsize=(7, 7))
+    figL = plt.figure(figsize=(7.5, 7))
     axL = figL.subplots()
     sns.heatmap(Dt, cmap='magma', linewidths=0.5, ax=axL)
     cbarL = axL.collections[0].colorbar
@@ -118,7 +124,7 @@ def createFigL(): # Creates the left plot -- last edited APM 06Nov25
 
 def createFigR(): # Creates the right plot -- last edited APM 06Nov25
     global dD,figR
-    figR = plt.figure(figsize=(7, 7))
+    figR = plt.figure(figsize=(7.5, 7))
     axR = figR.subplots()
     sns.heatmap(dD, cmap='coolwarm', linewidths=0.5, ax=axR)
     cbarR = axR.collections[0].colorbar
@@ -158,6 +164,10 @@ def updateGUI(): # Updates the data in the GUI -- last edited APM 31Oct25
     root.update()
 
 def grabStart(): # Operates the Grab Start button in the GUI
+    global Dt,dD
+    Dt,dD = dataInit()
+    redrawFigL()
+    redrawFigR()
     updateThread = threading.Thread(target=measLoop)
     updateThread.daemon = True
     updateThread.start()
@@ -185,10 +195,11 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     RD[0]=nGrab+1
     for i in range(nBits):
         for j in range(nWords):
-            print('Word = ',WordList[j],'Bit = ',BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
+            k = mapper(j)
+            print('Measuring: Word = ',WordList[j],'Bit = ',BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
             # ---- Set multiplexer to given device
             CtrlPi.SysDevOn(j+1,i+1)
-            SBStart[i,j] = time.time()
+            SBStart[i,k] = time.time()
             #---- Grab device data from NIDAQ
             time.sleep(0.1) ## Allows pause at where the current would be read for stability checking
             Drain = daqin_Drain.get('inputLevel')
@@ -196,29 +207,29 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             if GateMode == 'K2401':
                 AgCl = keithley.get('senseLevel')
             # ---- Calculate conductance values and uncertainties
-            print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
-            Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
-            Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
+#            print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
+            Dt.iloc[i,k] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
+            Dterr.iloc[i,k] = (Drain[1]/Drain[0])*Dt.iloc[i,k]
             if nGrab == 0: # Populate the starting conductance dataframe on the first grab
-                D0.iloc[i,j] = Dt.iloc[i,j]
+                D0.iloc[i,k] = Dt.iloc[i,k]
             else: # Calculate the conductance difference dataframe on any subsequent grab
-                dD.iloc[i,j] = Dt.iloc[i,j] - D0.iloc[i,j]
-#            print(f'Dt = {Dt.iloc[i,j]:.2f} +/- {Dterr.iloc[i,j]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
+                dD.iloc[i,k] = Dt.iloc[i,k] - D0.iloc[i,k]
+#            print(f'Dt = {Dt.iloc[i,k]:.2f} +/- {Dterr.iloc[i,k]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
             # ---- Create the Ag/AgCl electrode data arrays if using K2401
             if GateMode == 'K2401':
-                Ig.iloc[i,j] = AgCl[0]
-                Vg.iloc[i,j] = AgCl[1]
+                Ig.iloc[i,k] = AgCl[0]
+                Vg.iloc[i,k] = AgCl[1]
             CtrlPi.SysDevOff(j+1,i+1)
             # ---- Make the Megatable Information
-            RD[54*(j)+2*(i)+1] = round(Dt.iloc[i,j],3)
-            RD[54*(j)+2*(i)+2] = round(Dterr.iloc[i,j],3)
+            RD[54*(i)+2*(k)+1] = round(Dt.iloc[i,k],3)
+            RD[54*(i)+2*(k)+2] = round(Dterr.iloc[i,k],3)
             # ---- send data from this grab to file
-            with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList[i]) + str(BitList[j]) + '.csv','a',newline='') as f:
+            with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList2[k]) + str(BitList[i]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
                 if GateMode == 'K2401':
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,k]),str(Dterr.iloc[i,k]),str(Ig.iloc[i,k]),str(Vg.iloc[i,k]),str(datetime.now().strftime("%H:%M:%S"))])
                 else:
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,k]),str(Dterr.iloc[i,k]),str(datetime.now().strftime("%H:%M:%S"))])
             # ---- Decision tree below implements GuiUpdateMode switching of GUI updating from config.py -- New 11Sep25 APM
             if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
                 updateGUI()
@@ -226,9 +237,9 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 print('Update GUI')
                 updateGUI()
             #---- End of row timing
-            SBEnd[i,j] = time.time()
-            SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
-            SBElapsed[nGrab] = SBEnd[i,j]-SBStart[0,0]
+            SBEnd[i,k] = time.time()
+            SBTime[i,k] = SBEnd[i,k]-SBStart[i,k]
+            SBElapsed[nGrab] = SBEnd[i,k]-SBStart[0,0]
             SBAverage[nGrab] = SBTime.mean()
     #---- Drop all device data to megatable at end of grab
     with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
@@ -260,12 +271,14 @@ def measLoop():
         MegatableHeader.append('Grab')
         for i in range(nBits):
             for j in range(nWords):
-                MegatableHeader.append('G_'+WordList[j]+BitList[i])
-                MegatableHeader.append('dG_'+WordList[j]+BitList[i])
+                k = mapper(j)
+                MegatableHeader.append('G_'+WordList2[k]+BitList[i])
+                MegatableHeader.append('dG_'+WordList2[k]+BitList[i])
         writer.writerow(MegatableHeader)
     for i in range(nBits):
         for j in range(nWords):
-            with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList[j]+BitList[i]+'.csv', 'w', newline='') as f:
+            k = mapper(j)
+            with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList2[k]+BitList[i]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
                 if GateMode == 'K2401':
                     writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])

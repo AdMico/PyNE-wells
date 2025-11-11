@@ -12,9 +12,10 @@ import pandas as pd
 nWords = 27
 nBits = 27
 WordList = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
+WordList2 = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','&']
 BitList = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27']
-Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
-dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
+Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
+dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 
 def dataInit(): # Generates the initialisation data for the two Seaborn plots
     global Dt,dD
@@ -24,8 +25,8 @@ def dataInit(): # Generates the initialisation data for the two Seaborn plots
     dDSpread = 10.0
     for i in range(nBits): # Generate central value for colour scale
         for j in range(nWords):
-            Dt.iloc[i, j] = DtCentre
-            dD.iloc[i, j] = dDCentre
+            Dt.iloc[i,j] = DtCentre
+            dD.iloc[i,j] = dDCentre
     # Dt Map-out, 4x cardinals then word 'hello'
     # Cardinals
     Dt.iloc[0,0] = DtCentre-DtSpread

@@ -33,7 +33,7 @@ Hold_Gen5 = 'Dev1/ao1'
 Drain_Gen5 = 'Dev1/ai0'
 
 # Settings for NIDAQ PairBurst Mode operation
-SR = float(2e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
+SR = float(4e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
 SpC = int(1e1) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
 
 # Settings for Femto Preamplifiers -- Only P1Gain matters for Gen 5/6, both matter for Gen4.
