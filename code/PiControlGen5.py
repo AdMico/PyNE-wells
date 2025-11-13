@@ -7,7 +7,7 @@ This class sets up the Pi to be controlled remotely. The truth table is that of 
 """
 from gpiozero import LED
 from gpiozero.pins.pigpio import PiGPIOFactory
-from Config import PiBox,MuxMode_Gen5,LineBias_Gen5
+from Config import PiBox,MuxMode_Gen5,ScanDir_Gen5
 import time
 
 class PiMUX:
@@ -193,9 +193,9 @@ class PiMUX:
         elif MuxMode_Gen5 == 'Pi-power':
             self.setPiPowerToOn() # Sets MUX power to Pi +5V line
             self.setBattLPRToOff() # Connects LPR circuit to ground
-        if LineBias_Gen5 == 'Words':
+        if ScanDir_Gen5 == 'Horizontal':
             self.setToBiasWords()
-        elif LineBias_Gen5 == 'Bits':
+        elif ScanDir_Gen5 == 'Vertical':
             self.setToBiasBits()
         for i in range(27): # Sets all word/bit lines to hold
             self.setWMuxToOutput(i+1)
@@ -347,9 +347,9 @@ class PiMUX:
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_pi = PiMUX()
     my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
-    my_pi.WordRelayTest('S',1.5)
-    my_pi.BitRelayTest('D',1.5)
+#    my_pi.WordRelayTest('S',1.5)
+#    my_pi.BitRelayTest('D',1.5)
 #    my_pi.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
 #    my_pi.SysTest4x4(20) # Runs a test using the 4x4 board -- APM 30SEP25
- #   my_pi.SysTestFull(0.1) # Will connect to each device for 0.1 sec -- APM 10SEP25
+#    my_pi.SysTestFull(0.1) # Will connect to each device for 0.1 sec -- APM 10SEP25
     my_pi.SysReset() # Runs a reset -- APM 10SEP25

@@ -8,7 +8,7 @@ Main software for running assays.
 
 from PiControlGen5 import PiMUX
 import GlobalMeasID as ID
-from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode
+from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode,ScanDir_Gen5,PlotTwoMode
 from SeabornInit import dataInit
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
@@ -75,6 +75,7 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
                'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
+               'Scan direction: ' + ScanDir_Gen5 + '\n' +
                'Ag/AgCl electrode on: ' + GateMode + '\n \n'
                )
 
@@ -82,7 +83,7 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
 print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
 CtrlPi = PiMUX()
-CtrlPi.SysInit()  # Initialises the multiplexer for running a measurement
+CtrlPi.SysInit()  # Initialises the multiplexer for running a measurement (including setting which line is connected to AO0 and preamp)
 #---- NIDAQ Output Port for Source --------------
 daqout_S = USB6216Out(0)
 daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
@@ -131,7 +132,10 @@ def createFigR(): # Creates the right plot -- last edited APM 06Nov25
     cbarR.set_label('Conductance change (uS)', labelpad=20)
     axR.xaxis.tick_top()
     axR.xaxis.set_label_position('top')
-    axR.set_title('Conductance change since first grab', y=1.07)
+    if PlotTwoMode == 'First':
+        axR.set_title('Conductance change since first grab', y=1.07)
+    elif PlotTwoMode == 'Last':
+        axR.set_title('Conductance change since last grab', y=1.07)
     axR.text(x=7.5,y=28,s="Plot updates after second grab")
     return figR
 
@@ -179,6 +183,11 @@ def stop(): # Operates mechanism to complete grab before ending program -- last 
 def end(): # Operates mechanism to end the program entirely
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
         fLog.write('End: ' + str(datetime.now()) + '\n')
+    daqout_S.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
+    daqout_H.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
+    if GateMode == 'K2401':
+        keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
+    CtrlPi.SysReset()
     ID.increaseID()
 
 def grab(nGrab): # Code to implement a single grab of all the devices on a chip -- last edited APM 31Oct25
@@ -193,53 +202,78 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     if GateMode == 'K2401':
         keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     RD[0]=nGrab+1
+    if ScanDir_Gen5 == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
+        for i in range(nBits):
+            for j in range(nWords):
+                k = mapper(j)
+                print('Measuring: ',WordList[k],BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
+                # ---- Set multiplexer to given device
+                CtrlPi.SysDevOn(k+1,i+1)
+#                time.sleep(10)
+                SBStart[i,j] = time.time()
+                #---- Grab device data from NIDAQ
+                Drain = daqin_Drain.get('inputLevel')
+                # ---- Calculate conductance values and uncertainties
+#               print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
+                Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
+                Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
+#               print(f'Dt = {Dt.iloc[i,j]:.2f} +/- {Dterr.iloc[i,j]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
+                # ---- Create the Ag/AgCl electrode data arrays if using K2401
+                if GateMode == 'K2401':
+                    AgCl = keithley.get('senseLevel')
+                    Ig.iloc[i,j] = AgCl[0]
+                    Vg.iloc[i,j] = AgCl[1]
+                CtrlPi.SysDevOff(k+1,i+1)
+                if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
+                    updateGUI()
+    elif ScanDir_Gen5 == 'Vertical': # implements scan along wordlines starting from A
+        for j in range(nWords):
+            for i in range(nBits):
+                k = mapper(j)
+                print('Measuring: ',WordList[k],BitList[i])  ## Keep for diagnostics; On from 16Oct25 APM
+                # ---- Set multiplexer to given device
+                CtrlPi.SysDevOn(k+1,i+1)
+                SBStart[i,j] = time.time()
+                # ---- Grab device data from NIDAQ
+                Drain = daqin_Drain.get('inputLevel')
+                # ---- Calculate conductance values and uncertainties
+#               print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
+                Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
+                Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
+#               print(f'Dt = {Dt.iloc[i,j]:.2f} +/- {Dterr.iloc[i,j]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
+                # ---- Create the Ag/AgCl electrode data arrays if using K2401
+                if GateMode == 'K2401':
+                    AgCl = keithley.get('senseLevel')
+                    Ig.iloc[i,j] = AgCl[0]
+                    Vg.iloc[i,j] = AgCl[1]
+                CtrlPi.SysDevOff(k+1,i+1)
+                if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
+                    updateGUI()
+    # ---- Run a loop just to handle all the data management at the end of the grab
     for i in range(nBits):
         for j in range(nWords):
-            k = mapper(j)
-            print('Measuring: Word = ',WordList[j],'Bit = ',BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
-            # ---- Set multiplexer to given device
-            CtrlPi.SysDevOn(j+1,i+1)
-            SBStart[i,k] = time.time()
-            #---- Grab device data from NIDAQ
-            time.sleep(0.1) ## Allows pause at where the current would be read for stability checking
-            Drain = daqin_Drain.get('inputLevel')
-            # ---- Grab Ag/AgCl electrode information if K2401 is being used
-            if GateMode == 'K2401':
-                AgCl = keithley.get('senseLevel')
-            # ---- Calculate conductance values and uncertainties
-#            print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
-            Dt.iloc[i,k] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
-            Dterr.iloc[i,k] = (Drain[1]/Drain[0])*Dt.iloc[i,k]
-            if nGrab == 0: # Populate the starting conductance dataframe on the first grab
-                D0.iloc[i,k] = Dt.iloc[i,k]
-            else: # Calculate the conductance difference dataframe on any subsequent grab
-                dD.iloc[i,k] = Dt.iloc[i,k] - D0.iloc[i,k]
-#            print(f'Dt = {Dt.iloc[i,k]:.2f} +/- {Dterr.iloc[i,k]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
-            # ---- Create the Ag/AgCl electrode data arrays if using K2401
-            if GateMode == 'K2401':
-                Ig.iloc[i,k] = AgCl[0]
-                Vg.iloc[i,k] = AgCl[1]
-            CtrlPi.SysDevOff(j+1,i+1)
+            # ---- Display GUI data management
+            if nGrab >= 1: #Delay to second grab so all the dataframes below have data in them
+                dD.iloc[i,j] = Dt.iloc[i,j] - D0.iloc[i,j]
+            if PlotTwoMode == 'First': # Option for second Seaborn plot to be difference from first grab
+                if nGrab == 0:  # Populate the starting conductance dataframe on the first grab
+                    D0.iloc[i,j] = Dt.iloc[i,j]
+            elif PlotTwoMode == 'Last': # Option for second Seaborn plot to be difference from preceding grab
+                D0.iloc[i,j] = Dt.iloc[i,j]
             # ---- Make the Megatable Information
-            RD[54*(i)+2*(k)+1] = round(Dt.iloc[i,k],3)
-            RD[54*(i)+2*(k)+2] = round(Dterr.iloc[i,k],3)
+            RD[54*(i)+2*(j)+1] = round(Dt.iloc[i,j],3)
+            RD[54*(i)+2*(j)+2] = round(Dterr.iloc[i,j],3)
             # ---- send data from this grab to file
-            with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList2[k]) + str(BitList[i]) + '.csv','a',newline='') as f:
+            with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList2[j]) + str(BitList[i]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
                 if GateMode == 'K2401':
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,k]),str(Dterr.iloc[i,k]),str(Ig.iloc[i,k]),str(Vg.iloc[i,k]),str(datetime.now().strftime("%H:%M:%S"))])
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
                 else:
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,k]),str(Dterr.iloc[i,k]),str(datetime.now().strftime("%H:%M:%S"))])
-            # ---- Decision tree below implements GuiUpdateMode switching of GUI updating from config.py -- New 11Sep25 APM
-            if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
-                updateGUI()
-            elif GuiUpdateMode == 'grab' and i == (nBits-1) and j == (nWords-1):  # Update the GUI only at the end of the grab
-                print('Update GUI')
-                updateGUI()
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
             #---- End of row timing
-            SBEnd[i,k] = time.time()
-            SBTime[i,k] = SBEnd[i,k]-SBStart[i,k]
-            SBElapsed[nGrab] = SBEnd[i,k]-SBStart[0,0]
+            SBEnd[i,j] = time.time()
+            SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
+            SBElapsed[nGrab] = SBEnd[i,j]-SBStart[0,0]
             SBAverage[nGrab] = SBTime.mean()
     #---- Drop all device data to megatable at end of grab
     with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
@@ -254,6 +288,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
         keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
     # ---- Switch Multiplexer to off state.
     CtrlPi.SysReset()
+    print('Update GUI')
+    updateGUI()
 #    print('End of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
     return SBElapsed,SBAverage
 
@@ -292,8 +328,8 @@ def measLoop():
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
         GT = WaitAR - GrabTime[i]
         print(f'WaitAR = {WaitAR:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
-        print(f'GrabTime = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
-        print(f'GT = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
+        print(f'Grab Time = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
+        print(f'Pause = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         #---- check for grab-stop signal
         with open('stop.txt', 'r') as fStop:
             r = fStop.read()

@@ -18,8 +18,8 @@ PiBox = 'MeasureThree'
 MuxMode_Gen4 = 'Run'
 # Details are in PiControlGen5.py but 'Pi-power' is for powering the MUXes off the RPi, 'Battery' is for powering the MUXes off the batteries on Gen 5 MuxBoards
 MuxMode_Gen5 = 'Pi-power'
-# Details are in PiControlGen5.py but 'Words' will connect wordlines to source voltage (AO0), 'Bits' will connect bitlines to source voltage (AO0) on Gen 5 MuxBoards
-LineBias_Gen5 = 'Words'
+# Details are in PiControlGen5.py but 'Horizontal' scan along bitlines, which are connected to preamp; 'Vertical' will scan along wordlines, which are connected to preamp on Gen 5 MuxBoards
+ScanDir_Gen5 = 'Horizontal'
 
 # Information about which NIDAQ ports you are using for your NI USB6216BNC instance -- For AssayRunGen4.py
 Source_Gen4 = 'Dev1/ao0'
@@ -41,14 +41,15 @@ P1Gain = float(1e4)
 P2Gain = float(1e4)
 
 # Settings for Measurement Biases
-VSource = float(1.023)
+VSource = float(1.0)
 VGate = float(0.0)
 VHold = float(0.0) #Sets the Hold voltage line for Gen5/6 only (not used in Gen4)
 
 # AssayRun settings
 ItersAR = int(5) # Number of iterations of device sampling to run before program ends
-WaitAR = float(200) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+WaitAR = float(120) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- 30Oct25 APM
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
 GateMode = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl electrode on AO1 of USB6216) and 'K2401' for using the Keithley 2401 instead -- New 30Oct25 APM
+PlotTwoMode = 'Last' # Two options 'First' makes second Seaborn panel in Gen 5 difference to start, 'Last'makes difference to last grab.
