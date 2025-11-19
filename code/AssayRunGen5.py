@@ -9,7 +9,7 @@ Main software for running assays.
 from PiControlGen5 import PiMUX
 import GlobalMeasID as ID
 from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode,ScanDir_Gen5,PlotTwoMode
-from SeabornInit import dataInit
+from SeabornInit import dataInit,dataReset
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
 from Keithley2401 import Keithley2401
@@ -169,7 +169,7 @@ def updateGUI(): # Updates the data in the GUI -- last edited APM 31Oct25
 
 def grabStart(): # Operates the Grab Start button in the GUI
     global Dt,dD
-    Dt,dD = dataInit()
+    Dt,dD = dataReset()
     redrawFigL()
     redrawFigR()
     updateThread = threading.Thread(target=measLoop)

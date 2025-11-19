@@ -142,3 +142,141 @@ def dataInit(): # Generates the initialisation data for the two Seaborn plots
     dD.iloc[13,21] = dDCentre-dDSpread
     dD.iloc[15,21] = dDCentre-dDSpread
     return Dt,dD
+
+def dataReset(): # Generates the reset data for the two Seaborn plots
+    global Dt,dD
+    DtCentre = 1000.0
+    DtSpread = 100.0
+    dDCentre = 0.0
+    dDSpread = 10.0
+    for i in range(nBits): # Generate central value for colour scale
+        for j in range(nWords):
+            Dt.iloc[i,j] = DtCentre
+            dD.iloc[i,j] = dDCentre
+    # Dt Map-out, 4x cardinals then word 'hello'
+    # Cardinals
+    Dt.iloc[0,0] = DtCentre-DtSpread
+    Dt.iloc[0,26] = DtCentre-(DtSpread/2.0)
+    Dt.iloc[26,0] = DtCentre+(DtSpread/2.0)
+    Dt.iloc[26,26] = DtCentre+DtSpread
+    # R
+    Dt.iloc[11,3] = DtCentre-DtSpread
+    Dt.iloc[12,3] = DtCentre-DtSpread
+    Dt.iloc[13,3] = DtCentre-DtSpread
+    Dt.iloc[14,3] = DtCentre-DtSpread
+    Dt.iloc[15,3] = DtCentre-DtSpread
+    Dt.iloc[11,4] = DtCentre-DtSpread
+    Dt.iloc[13,4] = DtCentre-DtSpread
+    Dt.iloc[11,5] = DtCentre-DtSpread
+    Dt.iloc[13,5] = DtCentre-DtSpread
+    Dt.iloc[14,5] = DtCentre-DtSpread
+    Dt.iloc[11,6] = DtCentre-DtSpread
+    Dt.iloc[12,6] = DtCentre-DtSpread
+    Dt.iloc[13,6] = DtCentre-DtSpread
+    Dt.iloc[15,6] = DtCentre-DtSpread
+    # E
+    Dt.iloc[11,8] = DtCentre-DtSpread
+    Dt.iloc[12,8] = DtCentre-DtSpread
+    Dt.iloc[13,8] = DtCentre-DtSpread
+    Dt.iloc[14,8] = DtCentre-DtSpread
+    Dt.iloc[15,8] = DtCentre-DtSpread
+    Dt.iloc[11,9] = DtCentre-DtSpread
+    Dt.iloc[13,9] = DtCentre-DtSpread
+    Dt.iloc[15,9] = DtCentre-DtSpread
+    Dt.iloc[11,10] = DtCentre-DtSpread
+    Dt.iloc[15,10] = DtCentre-DtSpread
+    # S
+    Dt.iloc[11,12] = DtCentre-DtSpread
+    Dt.iloc[12,12] = DtCentre-DtSpread
+    Dt.iloc[13,12] = DtCentre-DtSpread
+    Dt.iloc[15,12] = DtCentre-DtSpread
+    Dt.iloc[11,13] = DtCentre-DtSpread
+    Dt.iloc[13,13] = DtCentre-DtSpread
+    Dt.iloc[15,13] = DtCentre-DtSpread
+    Dt.iloc[11,14] = DtCentre-DtSpread
+    Dt.iloc[13,14] = DtCentre-DtSpread
+    Dt.iloc[14,14] = DtCentre-DtSpread
+    Dt.iloc[15,14] = DtCentre-DtSpread
+    # E
+    Dt.iloc[11,16] = DtCentre-DtSpread
+    Dt.iloc[12,16] = DtCentre-DtSpread
+    Dt.iloc[13,16] = DtCentre-DtSpread
+    Dt.iloc[14,16] = DtCentre-DtSpread
+    Dt.iloc[15,16] = DtCentre-DtSpread
+    Dt.iloc[11,17] = DtCentre-DtSpread
+    Dt.iloc[13,17] = DtCentre-DtSpread
+    Dt.iloc[15,17] = DtCentre-DtSpread
+    Dt.iloc[11,18] = DtCentre-DtSpread
+    Dt.iloc[15,18] = DtCentre-DtSpread
+    # T
+    Dt.iloc[11,20] = DtCentre-DtSpread
+    Dt.iloc[11,21] = DtCentre-DtSpread
+    Dt.iloc[12,21] = DtCentre-DtSpread
+    Dt.iloc[13,21] = DtCentre-DtSpread
+    Dt.iloc[14,21] = DtCentre-DtSpread
+    Dt.iloc[15,21] = DtCentre-DtSpread
+    Dt.iloc[11,22] = DtCentre-DtSpread
+    # dD Map-out, 4x cardinals then word 'user'
+    # Cardinals
+    dD.iloc[0,0] = dDCentre-dDSpread
+    dD.iloc[0,26] = dDCentre-(dDSpread/2.0)
+    dD.iloc[26,0] = dDCentre+(dDSpread/2.0)
+    dD.iloc[26,26] = dDCentre+dDSpread
+    # R
+    dD.iloc[11,3] = dDCentre-dDSpread
+    dD.iloc[12,3] = dDCentre-dDSpread
+    dD.iloc[13,3] = dDCentre-dDSpread
+    dD.iloc[14,3] = dDCentre-dDSpread
+    dD.iloc[15,3] = dDCentre-dDSpread
+    dD.iloc[11,4] = dDCentre-dDSpread
+    dD.iloc[13,4] = dDCentre-dDSpread
+    dD.iloc[11,5] = dDCentre-dDSpread
+    dD.iloc[13,5] = dDCentre-dDSpread
+    dD.iloc[14,5] = dDCentre-dDSpread
+    dD.iloc[11,6] = dDCentre-dDSpread
+    dD.iloc[12,6] = dDCentre-dDSpread
+    dD.iloc[13,6] = dDCentre-dDSpread
+    dD.iloc[15,6] = dDCentre-dDSpread
+    # E
+    dD.iloc[11,8] = dDCentre-dDSpread
+    dD.iloc[12,8] = dDCentre-dDSpread
+    dD.iloc[13,8] = dDCentre-dDSpread
+    dD.iloc[14,8] = dDCentre-dDSpread
+    dD.iloc[15,8] = dDCentre-dDSpread
+    dD.iloc[11,9] = dDCentre-dDSpread
+    dD.iloc[13,9] = dDCentre-dDSpread
+    dD.iloc[15,9] = dDCentre-dDSpread
+    dD.iloc[11,10] = dDCentre-dDSpread
+    dD.iloc[15,10] = dDCentre-dDSpread
+    # S
+    dD.iloc[11,12] = dDCentre-dDSpread
+    dD.iloc[12,12] = dDCentre-dDSpread
+    dD.iloc[13,12] = dDCentre-dDSpread
+    dD.iloc[15,12] = dDCentre-dDSpread
+    dD.iloc[11,13] = dDCentre-dDSpread
+    dD.iloc[13,13] = dDCentre-dDSpread
+    dD.iloc[15,13] = dDCentre-dDSpread
+    dD.iloc[11,14] = dDCentre-dDSpread
+    dD.iloc[13,14] = dDCentre-dDSpread
+    dD.iloc[14,14] = dDCentre-dDSpread
+    dD.iloc[15,14] = dDCentre-dDSpread
+    # E
+    dD.iloc[11,16] = dDCentre-dDSpread
+    dD.iloc[12,16] = dDCentre-dDSpread
+    dD.iloc[13,16] = dDCentre-dDSpread
+    dD.iloc[14,16] = dDCentre-dDSpread
+    dD.iloc[15,16] = dDCentre-dDSpread
+    dD.iloc[11,17] = dDCentre-dDSpread
+    dD.iloc[13,17] = dDCentre-dDSpread
+    dD.iloc[15,17] = dDCentre-dDSpread
+    dD.iloc[11,18] = dDCentre-dDSpread
+    dD.iloc[15,18] = dDCentre-dDSpread
+    # T
+    dD.iloc[11,20] = dDCentre-dDSpread
+    dD.iloc[11,21] = dDCentre-dDSpread
+    dD.iloc[12,21] = dDCentre-dDSpread
+    dD.iloc[13,21] = dDCentre-dDSpread
+    dD.iloc[14,21] = dDCentre-dDSpread
+    dD.iloc[15,21] = dDCentre-dDSpread
+    dD.iloc[11,22] = dDCentre-dDSpread
+    return Dt,dD
