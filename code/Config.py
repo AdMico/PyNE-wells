@@ -34,7 +34,7 @@ Drain_Gen5 = 'Dev1/ai0'
 
 # Settings for NIDAQ PairBurst Mode operation
 SR = float(4e5) # Sample Rate in samples/second. 2e5 appears to be maximum for pairburst (400kS/s per channel single channel)
-SpC = int(1e1) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
+SpC = int(1e3) # Samples per Channel per measurement -- strongly influences speed (200000 at 200kS/s takes about 1 second)
 
 # Settings for Femto Preamplifiers -- Only P1Gain matters for Gen 5/6, both matter for Gen4.
 P1Gain = float(1e4)
@@ -52,4 +52,4 @@ zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for 
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- New 11Sep25 APM
 GateMode = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl electrode on AO1 of USB6216) and 'K2401' for using the Keithley 2401 instead -- New 30Oct25 APM
-PlotTwoMode = 'Last' # Two options 'First' makes second Seaborn panel in Gen 5 difference to start, 'Last'makes difference to last grab.
+PlotTwoMode = 'First' # Two options 'First' makes second Seaborn panel in Gen 5 difference to start, 'Last'makes difference to last grab.

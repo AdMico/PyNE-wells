@@ -114,7 +114,7 @@ def createFigL(): # Creates the left plot -- last edited APM 06Nov25
     global Dt,figL
     figL = plt.figure(figsize=(7.5, 7))
     axL = figL.subplots()
-    sns.heatmap(Dt, cmap='magma', linewidths=0.5, ax=axL)
+    sns.heatmap(Dt, cmap='Spectral', linewidths=0.5, ax=axL)
     cbarL = axL.collections[0].colorbar
     cbarL.set_label('Conductance(uS)', labelpad=20)
     axL.xaxis.tick_top()
@@ -157,21 +157,25 @@ def updateGUI(): # Updates the data in the GUI -- last edited APM 31Oct25
     global nGrab
     assay = tk.Label(root, text=('Assay Number: '+t+'_'+measurementName),bg="seagreen")
     assay.grid(row=0,column=0,padx=5,pady=5)
-    run = tk.Label(root, text=('Run Number: ' + str(nRun)),bg="seagreen")
+    run = tk.Label(root, text=('Run Number: '+str(nRun)),bg="seagreen")
     run.grid(row=1,column=0,padx=5,pady=5)
     grabNum = tk.Label(root, text=('Grab Number: '+str(nGrab+1)),bg="seagreen")
     grabNum.grid(row=3,column=0,padx=5,pady=5)
-    grabTot = tk.Label(root, text=('of total grabs: '+ str(ItersAR)),bg="seagreen")
+    grabTot = tk.Label(root, text=('of total grabs: '+str(ItersAR)),bg="seagreen")
     grabTot.grid(row=4,column=0,padx=5,pady=5)
     redrawFigL()
     redrawFigR()
     root.update()
 
 def grabStart(): # Operates the Grab Start button in the GUI
-    global Dt,dD
+    global Dt,dD,nGrab
+    nGrab = 0
     Dt,dD = dataReset()
-    redrawFigL()
-    redrawFigR()
+    updateGUI()
+    # Resets the code used to end a grab before quitting program -- added APM 25Nov25
+    stopText = """If you want to stop the program, simply replace this text with 'stop' and save it."""  # Resets the code used to end a grab before quitting program
+    with open('stop.txt', 'w') as fStop:  # Initialise stop button
+        fStop.write(stopText)
     updateThread = threading.Thread(target=measLoop)
     updateThread.daemon = True
     updateThread.start()
@@ -193,6 +197,7 @@ def end(): # Operates mechanism to end the program entirely
 def grab(nGrab): # Code to implement a single grab of all the devices on a chip -- last edited APM 31Oct25
     global nRun,RD
     print('Grab: ',nGrab+1)
+    updateGUI()
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
         fLog.write('Grab: '+str(nGrab+1)+' started: '+str(datetime.now())+'\n')
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
@@ -202,11 +207,12 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     if GateMode == 'K2401':
         keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     RD[0]=nGrab+1
+    print('Measuring...')
     if ScanDir_Gen5 == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
         for i in range(nBits):
             for j in range(nWords):
                 k = mapper(j)
-                print('Measuring: ',WordList[k],BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
+#                print('Measuring: ',WordList[k],BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
                 # ---- Set multiplexer to given device
                 CtrlPi.SysDevOn(k+1,i+1)
 #                time.sleep(10)
