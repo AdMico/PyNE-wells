@@ -121,6 +121,10 @@ def updateGUI(): # Updates the data in the GUI -- last edited APM 19Jan24
     root.update_idletasks()
 
 def grabStart(): # Operates the Grab Start button in the GUI
+    # Resets the code used to end a grab before quitting program -- added APM 25Nov25
+    stopText = """If you want to stop the program, simply replace this text with 'stop' and save it."""  # Resets the code used to end a grab before quitting program
+    with open('stop.txt', 'w') as fStop:  # Initialise stop button
+        fStop.write(stopText)
     updateThread = threading.Thread(target=measLoop)
     updateThread.daemon = True
     updateThread.start()
