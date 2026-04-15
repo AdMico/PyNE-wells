@@ -19,6 +19,7 @@ idna==3.10
 kiwisolver==1.4.9
 matplotlib==3.10.5
 nidaqmx==1.2.0
+nitypes==1.0.1
 numexpr==2.11.0
 numpy==2.3.2
 odfpy==1.4.1
@@ -34,9 +35,11 @@ python-calamine==0.4.0
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 pytz==2025.2
+pyvisa==1.16.2
 pyxlsb==1.0.10
 requests==2.32.4
 scipy==1.16.1
+seaborn==0.13.2
 setuptools==80.9.0
 six==1.17.0
 tzdata==2025.2
