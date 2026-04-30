@@ -1,7 +1,7 @@
 """
-Brought to PyNE-wells v1.2.0 on Thu Aug 07 2025 by APM
+Brought to PyNE-wells v2.0.0 on Thu Apr 30 2026 by APM
 
-@developers: Adam Micolich, Jan Gluschke & Shuji Kojima
+@developers: Adam Micolich, Jan Gluschke
 @author: Jakob Seidl
 
 Utility code for the instrument setting/getting capabilities in the various instruments.
