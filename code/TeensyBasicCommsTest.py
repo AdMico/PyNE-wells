@@ -20,7 +20,8 @@ while flag == True:
     val = input() # take user input
     if val=='exit':
         flag = False
-    tell(val) # send it to arduino
-    var = hear() # listen to arduino
-    print(var) #print what arduino sent
+    else:
+        tell(val) # send it to arduino
+        var = hear() # listen to arduino
+        print(var) #print what arduino sent
 
