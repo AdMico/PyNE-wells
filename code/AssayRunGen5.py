@@ -6,7 +6,7 @@ Brought to PyNE-wells v2.0.0 on Thu Apr 30 2026 by APM
 Main software for running assays.
 """
 
-from PiControlGen5 import PiMUX
+from code.purgatory.PiControlGen5 import PiMUX
 import GlobalMeasID as ID
 from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode,ScanDir_Gen5,PlotTwoMode
 from SeabornInit import dataInit,dataReset
