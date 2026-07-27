@@ -187,6 +187,18 @@ class TeensyMUX:
         Err = self.receive()
         return Err
 
+    def nodeToMeasure(self,word,bit): # Sets a given node to the Measure state -- APM 27JUL26
+        cmd = 'M' + self.TeensyWordList[word] + self.TeensyBitList[bit]
+        self.send(cmd)
+        Err = self.receive()
+        return Err
+
+    def nodeToHold(self,word,bit): # Sets a given node to the Hold state -- APM 27JUL26
+        cmd = 'H' + self.TeensyWordList[word] + self.TeensyBitList[bit]
+        self.send(cmd)
+        Err = self.receive()
+        return Err
+
     def SysInit(self):  # Runs a sequence to initialise all the relays at start -- APM 23JUL26
         self.setRelaysToOn()
         self.setSourceInt()
@@ -237,26 +249,17 @@ class TeensyMUX:
         print('Prepare to test Word:',self.ChipWordList[1],' in 1 seconds.')
         time.sleep(1)
         for i in chain(range(1, 15), range(27, 14, -1)):
-
-# Adam pausing here for the day 23JUL26 APM
-
-        for i in range(27):
-            if i == 14:
-                time.sleep(3) # Added to allow for realising you need to jump to & from N -- APM 30Sep25
-            print ('Wordline: ',self.WordList[i+1],' to Hold for ',HoldTime,' seconds.')
-            self.setWMuxToOutput(i+1)
-            self.setWordToOff()
+            print('Wordline: ', self.ChipWordList[i], ' to Hold for ', HoldTime, ' seconds.')
+            self.nodeToHold(i,1)
             time.sleep(HoldTime)
-            print('Wordline: ',self.WordList[i+1],' to ',bias,' for ',HoldTime,' seconds.')
-            self.setWMuxToOutput(i+1)
-            self.setWordToOn()
+            print('Wordline: ',self.ChipWordList[i],' to ',bias,' for ',HoldTime,' seconds.')
+            self.nodeToMeasure(i,1)
             time.sleep(HoldTime)
-            print('Wordline: ',self.WordList[i+1],' to Hold for ',HoldTime,' seconds.')
-            self.setWMuxToOutput(i+1)
-            self.setWordToOff()
+            print('Wordline: ', self.ChipWordList[i], ' to Hold for ', HoldTime, ' seconds.')
+            self.nodeToHold(i,1)
             time.sleep(HoldTime)
-            if i < 26:
-                print('Prepare to test Word:',self.WordList[i+2],' in 1 second.')
+            if i < 27:
+                print('Prepare to test Word:',self.WordList[i+1],' in 1 second.')
                 time.sleep(1)
             else:
                 print('Finished Test.')
@@ -265,26 +268,23 @@ class TeensyMUX:
 
     def BitRelayTest(self,bias,HoldTime):
         if bias == 'S':
-            self.setToBiasBits()
+            self.setBitsAsSource()
         elif bias == 'D':
-            self.setToBiasWords()
-        print('Prepare to test Bit:',self.BitList[1],' in 1 seconds')
+            self.setWordsAsSource()
+        print('Prepare to test Bit:',self.ChipBitList[1],' in 1 seconds')
         time.sleep(1)
-        for i in range(27):
-            print ('Bitline: ',self.BitList[i+1],' to Hold for ',HoldTime,' seconds.')
-            self.setBMuxToOutput(i+1)
-            self.setBitToOff()
+        for i in range(1,28):
+            print ('Bitline: ',self.ChipBitList[i],' to Hold for ',HoldTime,' seconds.')
+            self.nodeToHold(1,i)
             time.sleep(HoldTime)
-            print('Bitline: ',self.BitList[i+1],' to ',bias,' for ',HoldTime,' seconds.')
-            self.setBMuxToOutput(i+1)
-            self.setBitToOn()
+            print('Bitline: ',self.ChipBitList[i],' to ',bias,' for ',HoldTime,' seconds.')
+            self.nodeToMeasure(1,i)
             time.sleep(HoldTime)
-            print('Bitline: ',self.BitList[i+1],' to Hold for ',HoldTime,' seconds.')
-            self.setBMuxToOutput(i+1)
-            self.setBitToOff()
+            print('Bitline: ',self.ChipBitList[i],' to Hold for ',HoldTime,' seconds.')
+            self.nodeToHold(1,i)
             time.sleep(HoldTime)
-            if i < 26:
-                print('Prepare to test Bit:',self.BitList[i+2],' in 1 second.')
+            if i < 27:
+                print('Prepare to test Bit:',self.ChipBitList[i+1],' in 1 second.')
                 time.sleep(1)
             else:
                 print('Finished Test.')
@@ -292,63 +292,33 @@ class TeensyMUX:
                 time.sleep(3)
 
     def SysTestSingle(self,word,bit,wait): # Switches a given device over to connection for a specified time -- APM 10SEP25
-        self.setWMuxToOutput(word)
-        self.setWordToOn()
-        self.setBMuxToOutput(bit)
-        self.setBitToOn()
-        print('Testing: ', self.WordList[word], self.BitList[bit])
+        self.nodeToMeasure(word,bit)
+        print('Testing: ', self.ChipWordList[word], self.ChipBitList[bit])
         time.sleep(wait)
-        self.setBMuxToOutput(bit)
-        self.setBitToOff()
-        self.setWMuxToOutput(word)
-        self.setWordToOff()
+        self.nodeToMeasure(word,bit)
 
     def SysTestFull(self,wait): # Switches each node on for a specified time in sequence -- APM 10SEP25
-        for i in range(27):
-            self.setWMuxToOutput(i+1)
-            self.setWordToOn()
-            for j in range(27):
-                self.setBMuxToOutput(j+1)
-                self.setBitToOn()
-                print('Testing: ',self.WordList[i+1],self.BitList[j+1])
+        for i in chain(range(1, 15), range(27, 14, -1)):
+            for j in range(1, 28):
+                self.nodeToMeasure(i,j)
+                print('Testing: ',self.ChipWordList[i],self.ChipBitList[j])
                 time.sleep(wait)
-                self.setBMuxToOutput(j+1)
-                self.setBitToOff()
-            self.setWMuxToOutput(i+1)
-            self.setWordToOff()
+                self.nodeToMeasure(i,j)
 
     def SysTest4x4(self,wait): # Switches each node on for a specified time in sequence -- APM 10SEP25
-        for i in range(4):
-            self.setWMuxToOutput(i+1)
-            self.setWordToOn()
-            for j in range(4):
-                self.setBMuxToOutput(j+1)
-                self.setBitToOn()
-                print('Testing: ',self.WordList[i+1],self.BitList[j+1])
+        for i in range(1,5):
+            for j in range(1,5):
+                self.nodeToMeasure(i,j)
+                print('Testing: ',self.ChipWordList[i],self.ChipBitList[j])
                 time.sleep(wait)
-                self.setBMuxToOutput(j+1)
-                self.setBitToOff()
-            self.setWMuxToOutput(i+1)
-            self.setWordToOff()
-
-    def SysDevOn(self,i,j): # Switches a given device on for AssayRunGen5.py -- APM 16Oct25
-        self.setWMuxToOutput(i)
-        self.setWordToOn()
-        self.setBMuxToOutput(j)
-        self.setBitToOn()
-
-    def SysDevOff(self,i,j): # Switches a given device off for AssayRunGen5.py -- APM 16Oct25
-        self.setBMuxToOutput(j)
-        self.setBitToOff()
-        self.setWMuxToOutput(i)
-        self.setWordToOff()
+                self.nodeToHold(i,j)
 
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
-    my_pi = PiMUX()
-    my_pi.SysInit() # Running as main will initialise system -- APM 09SEP25
-#    my_pi.WordRelayTest('S',1.5)
-#    my_pi.BitRelayTest('D',1.5)
-#    my_pi.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
-#    my_pi.SysTest4x4(20) # Runs a test using the 4x4 board -- APM 30SEP25
-#    my_pi.SysTestFull(0.1) # Will connect to each device for 0.1 sec -- APM 10SEP25
-    my_pi.SysReset() # Runs a reset -- APM 10SEP25
+    my_teensy = TeensyMUX()
+    my_teensy.SysInit() # Running as main will initialise system -- APM 09SEP25
+#    my_teensy.WordRelayTest('S',1.5)
+#    my_teensy.BitRelayTest('D',1.5)
+#    my_teensy.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
+#    my_teensy.SysTest4x4(20) # Runs a test using the 4x4 board -- APM 30SEP25
+#    my_teensy.SysTestFull(0.1) # Will connect to each device for 0.1 sec -- APM 10SEP25
+    my_teensy.SysReset() # Runs a reset -- APM 10SEP25
