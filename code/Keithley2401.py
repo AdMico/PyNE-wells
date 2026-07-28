@@ -23,14 +23,12 @@ class Keithley2401(Instrument.Instrument):
         super(Keithley2401, self).__init__()
         self.dev = visa.ResourceManager().open_resource("GPIB0::"+str(address)+"::INSTR")
         print((self.dev.query("*IDN?"))) # Probably should query and check we have the right device        
-        #self.dev.write("*RST")
-        # self.dev.write("*CLS")
-        self.type ="Keithley2401"  #We can check each instrument for its type and react accordingly
+        self.type ="Keithley2401"  # We can check each instrument for its type and react accordingly
         self.scaleFactor = 1.0
         self.currentSourceSetpoint = float('nan')
         self.hitCompliance = []
         self.sourceMode = self._getSourceMode()
-        self.sourceLimits = 100 #Dummy number to be replaced by setSourceRange function
+        self.sourceLimits = 100 # Dummy number to be replaced by setSourceRange function
 
     @Instrument.addOptionSetter("beepEnable")
     def _setBeepEnable(self, enable):
@@ -54,7 +52,7 @@ class Keithley2401(Instrument.Instrument):
             self.sourceMode = 'current'
         else:
             raise ValueError(
-                "\"{}\" is not a valid source mode for the Keithley2401.".format(mode) +
+                "\"{}\" is not a valid source mode for the Keithley 2401.".format(mode) +
                 " The mode must either be \"voltage\" or \"current\""
             )
 
@@ -78,7 +76,7 @@ class Keithley2401(Instrument.Instrument):
                 self.sourceLimits = 1.3*float(sourceRange)
             else:
                 raise ValueError(
-                    "\"{}\" is not a valid voltage source range for the Keithley2401.".format(sourceRange) +
+                    "\"{}\" is not a valid voltage source range for the Keithley 2401.".format(sourceRange) +
                     " Valid voltage ranges are: 20, 10, 1, 0.1, 0.01 and 0.001 Volts and equivalent exponential representations."
                 )
         elif (mode == "current"):   
@@ -87,7 +85,7 @@ class Keithley2401(Instrument.Instrument):
                 self.sourceLimits = 1.3*float(sourceRange)
             else:
                 raise ValueError(
-                    "\"{}\" is not a valid current source range for the Keithley2401.".format(sourceRange) +
+                    "\"{}\" is not a valid current source range for the Keithley 2401.".format(sourceRange) +
                     " Valid voltage ranges are: 1, 0.1, 0.01, 0.001, 1E-5 and 1E-6 Amps and equivalent exponential representations."
                 )
 
@@ -127,7 +125,7 @@ class Keithley2401(Instrument.Instrument):
                 self.dev.write("SENS:CURR:RANG "+str(senseRange))
             else:
                 raise ValueError(
-                    "\"{}\" is not a valid current measurement range for the Keithley2401.".format(senseRange) +
+                    "\"{}\" is not a valid current measurement range for the Keithley 2401.".format(senseRange) +
                     " Valid current sensing ranges are: 1.05E-4, 1.05E-5 and 1.05E-6 Amps and equivalent representations."
                 )
         elif (mode == "current"): # when sourcing a current we sense voltage 
@@ -135,7 +133,7 @@ class Keithley2401(Instrument.Instrument):
                 self.dev.write("SENS:VOLT:RANG "+str(senseRange))
             else:
                 raise ValueError(
-                    "\"{}\" is not a valid voltage measurement range for the Keithley2401.".format(senseRange) +
+                    "\"{}\" is not a valid voltage measurement range for the Keithley 2401.".format(senseRange) +
                     " Valid voltage sensing ranges are: 21.00, 2.10 and 0.21 Volts and equivalent representations."
                 )
 
@@ -147,7 +145,7 @@ class Keithley2401(Instrument.Instrument):
         return measCurrent,measVoltage
         
     @Instrument.addOptionSetter("compliance")
-    def _setCompliance(self,compliance,currOrVolt=None): #currOrVolt is an optional parameter. you can use it to specify whether you want to set the current or voltage protection. If not give, the function will change the current compliance when in voltage sourcing mode and vice versa.
+    def _setCompliance(self,compliance,currOrVolt=None): # currOrVolt is an optional parameter. you can use it to specify whether you want to set the current or voltage protection. If not give, the function will change the current compliance when in voltage sourcing mode and vice versa.
         mode = currOrVolt
         if mode == None:
             mode = self.get("sourceMode", forceCached = False)            
@@ -157,7 +155,7 @@ class Keithley2401(Instrument.Instrument):
             self.dev.write("SENS:VOLT:PROT "+str(compliance))
         else:
             raise ValueError(
-                "\"{}\" is not a valid current/voltage protection value (compliance) for the Keithley2401.".format(compliance) +
+                "\"{}\" is not a valid current/voltage protection value (compliance) for the Keithley 2401.".format(compliance) +
                 " Current compliance must be between 1.05 Amps - 0.001E-6 Amps (including bounds). /n Voltage protection values must be between 21 V and 0.2mV."
             )
             
@@ -176,7 +174,7 @@ class Keithley2401(Instrument.Instrument):
         for point in sweepArray:
             self.set('sourceLevel',point)
             time.sleep(delay)
-        self.set('sourceLevel',target)     #This set the unit to the final value, even if the target value does not fit together with the stepsize.
+        self.set('sourceLevel',target) # This set the unit to the final value, even if the target value does not fit together with the stepsize.
        
     def close(self):
         self.dev.close()

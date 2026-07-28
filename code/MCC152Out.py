@@ -6,6 +6,8 @@ Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
 This module does the output voltage handling for the Pi-HAT MCC152, which has a pair of analog outputs.
 The input handling is done by a separate .py. Unlike the USB-6216, there is no voltage feedback.
 Accuracy relies on having a very good ground reference to the Raspberry Pi ground.
+
+APM 28JUL26: Currently not trying to catch sign-error issues here. May consider later if not caught elsewhere.
 """
 
 import Instrument
@@ -27,7 +29,7 @@ class MCC152Out(Instrument.Instrument):
         self.name = "MCC152"
         self.address = select_hat_device(HatIDs.MCC_152)
         self.hat = mcc152(self.address)
-        self.hat.a_out_write(self.port, 0.0) # Initialises voltage to zero if it's not -- consider improved set-up in full Gen 6 dev APM 15AUG25
+        self.hat.a_out_write(self.port, 0.0) # Initialises voltage to zero if it's not
         self.currentOutput = 0.0 # Possibly make a read from MCC128 at init in future -- consider at full Gen 6 dev APM 15AUG25
         
     @Instrument.addOptionSetter("name")
@@ -40,12 +42,12 @@ class MCC152Out(Instrument.Instrument):
 
     @Instrument.addOptionSetter("outputLevel")
     def _setOutputLevel(self,outputLevel):
-        if (5.0 >= outputLevel and outputLevel >= 0.0):
+        if (5.0 >= outputLevel and outputLevel >= -5.0): # Updated to allow for dual-sign in Gen 6 MUXBox APM 28JUL26
             self.output = outputLevel
             self.currentOutput = self.output
             self.hat.a_out_write(self.port,outputLevel)
         else:
-            raise ValueError("Output outside 0-5V range available".format(outputLevel))
+            raise ValueError("Output outside +/-5V range available".format(outputLevel))
                 
     @Instrument.addOptionGetter("outputLevel")
     def _getOutputLevel(self):

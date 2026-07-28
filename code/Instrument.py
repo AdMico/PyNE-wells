@@ -9,10 +9,9 @@ Used currently in all of the USB6216 components
 """
 
 import collections.abc
-collections.Iterable = collections.abc.Iterable # Quick and dirty fix for V4.0, implement properly later.
-# Checks if val is iterable, but not a string
+collections.Iterable = collections.abc.Iterable # Quick and dirty fix for PyNE-Probe V4.0, implement properly later.
 
-def isIterable(val):
+def isIterable(val): # Checks if val is iterable, but not a string
      return hasattr(val,'__iter__') and not isinstance(val, str)
 
 def flatten(iterable):

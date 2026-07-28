@@ -54,7 +54,7 @@ GrabTime = np.zeros(ItersAR,dtype='float') # for use in determining time taken t
 GrabTime[:] = np.nan
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
-with open('stop.txt', 'w') as fStop: # Initialise stop button
+with open('../stop.txt', 'w') as fStop: # Initialise stop button
     fStop.write(stopText)
 nRun=1
 measurementName = str(ID.readCurrentSetup()) + str(ID.readCurrentID())
@@ -174,14 +174,14 @@ def grabStart(): # Operates the Grab Start button in the GUI
     updateGUI()
     # Resets the code used to end a grab before quitting program -- added APM 25Nov25
     stopText = """If you want to stop the program, simply replace this text with 'stop' and save it."""  # Resets the code used to end a grab before quitting program
-    with open('stop.txt', 'w') as fStop:  # Initialise stop button
+    with open('../stop.txt', 'w') as fStop:  # Initialise stop button
         fStop.write(stopText)
     updateThread = threading.Thread(target=measLoop)
     updateThread.daemon = True
     updateThread.start()
 
 def stop(): # Operates mechanism to complete grab before ending program -- last edited APM 17Jan24
-    with open('stop.txt', 'w') as fStop:
+    with open('../stop.txt', 'w') as fStop:
         fStop.write('stop')
 
 def end(): # Operates mechanism to end the program entirely
@@ -337,7 +337,7 @@ def measLoop():
         print(f'Grab Time = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         print(f'Pause = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         #---- check for grab-stop signal
-        with open('stop.txt', 'r') as fStop:
+        with open('../stop.txt', 'r') as fStop:
             r = fStop.read()
             if r == 'stop':
                 print('Stopped safely after completed grab: ',nGrab+1)

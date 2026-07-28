@@ -4,15 +4,22 @@ Brought to PyNE-wells v2.0.0 on Thu Apr 30 2026 by APM
 @developers: Adam Micolich & Jan Gluschke
 
 Main software for running assays.
+
+Adam's to do list follows -- Updated APM 28JUL26
+* Code up gate voltage and current monitoring properly.
+* Consider ability to functionally switch the gate and hold setup if VHold is always zero.
+* Fix the Ag/AgCl electrode information line in the log file.
 """
 
-from code.purgatory.PiControlGen5 import PiMUX
+from TeensyInterface_Gen6 import TeensyMUX
 import GlobalMeasID as ID
-from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode,ScanDir_Gen5,PlotTwoMode
+from Config_Gen6 import Instruments,VSource,VGate,VHold,P1Gain,P2Gain,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode,ScanDir,PlotTwoMode
 from SeabornInit import dataInit,dataReset
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
 from Keithley2401 import Keithley2401
+from MCC152Out import MCC152Out
+from MCC128InSB import MCC128InSB
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -39,15 +46,15 @@ Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index
 D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
-if GateMode == 'K2401':
+if (Instruments == 'Internal' or (Instruments == 'External' and GateMode == 'K2401')):
     Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList)
-    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList)
+    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) ## How to I use this if GateMode == 'USB6216'? APM 28JUL26
 RD = np.zeros(1459)
-SBStart = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
-SBEnd = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
-SBTime = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216
-SBElapsed = np.zeros(ItersAR,dtype='float') # For use in determining time taken to obtain measurements from USB6216
-SBAverage = np.zeros(ItersAR,dtype='float') # For use in determining time taken to obtain measurements from USB6216
+SBStart = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
+SBEnd = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
+SBTime = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
+SBElapsed = np.zeros(ItersAR,dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
+SBAverage = np.zeros(ItersAR,dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
 GrabStart = np.zeros(ItersAR,dtype='float') # For use in determining time taken to run a grab
 GrabEnd = np.zeros(ItersAR,dtype='float') # For use in determining time taken to run a grab
 GrabTime = np.zeros(ItersAR,dtype='float') # for use in determining time taken to run a grab
@@ -66,42 +73,67 @@ if not os.path.exists(dataPath):
 with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
     fLog.write('Start: '+str(datetime.now()) + '\n' +
                'Assay Number: ' + measurementName + '\n' +
-               'Pi Box: ' + PiBox + '\n' +
                'Preamp 1 gain: ' + str(P1Gain) + '\n' +
+               'Preamp 2 gain: ' + str(P2Gain) + '\n' +
                'Source Voltage: ' + str(VSource) + ' V' + '\n' +
                'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
                'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
-               'NIDAQ Sample Rate: ' + str(SR) + ' Hz' + '\n' +
-               'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
+               'ADC Sample Rate: ' + str(SR) + ' Hz' + '\n' +
+               'ADC Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
                'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
                'Scan direction: ' + ScanDir_Gen5 + '\n' +
-               'Ag/AgCl electrode on: ' + GateMode + '\n \n'
+               'Ag/AgCl electrode on: ' + GateMode + '\n \n' ## Need to fix this line! APM 28JUL26
                )
 
 #---- Initialization of instruments
 print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
-CtrlPi = PiMUX()
-CtrlPi.SysInit()  # Initialises the multiplexer for running a measurement (including setting which line is connected to AO0 and preamp)
-#---- NIDAQ Output Port for Source --------------
-daqout_S = USB6216Out(0)
-daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
-#---- NIDAQ Output Port for Source --------------
-daqout_H = USB6216Out(1)
-daqout_H.setOptions({"feedBack":"Int","scaleFactor":1})
-#---- NIDAQ Input Port for Drain running PairBurst on USB6216 --------------
-daqin_Drain = USB6216InSB()
-daqin_Drain.setOptions({"scaleFactor":1})
-#---- Code for instrument initialisation for Ag/AgCL electrode control -- New 30Oct25 APM
-if GateMode == 'K2401':
-    keithley = Keithley2401(27)
-    keithley.setOptions({
-        "beepEnable": False,
-        "sourceMode": "voltage",
-        "sourceRange": 10,
-        "senseRange": 1.05e-4,
-        "compliance": 1.0e-4,
+CtrlTy = TeensyMUX()
+CtrlTy.SysInit()  # Initialises the multiplexer for running a measurement (including setting which line is connected to AO0 and preamp)
+if Instruments == 'External':
+    #---- NIDAQ Output Port for Source --------------
+    daqout_S = USB6216Out(0)
+    daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
+    #---- NIDAQ Output Port for Source --------------
+    daqout_H = USB6216Out(1)
+    daqout_H.setOptions({"feedBack":"Int","scaleFactor":1})
+    #---- NIDAQ Input Port for Drain running PairBurst on USB6216 --------------
+    daqin_D = USB6216InSB()
+    daqin_D.setOptions({"scaleFactor":1})
+    #---- Code for instrument initialisation for Ag/AgCL electrode control -- New 30Oct25 APM
+    if GateMode == 'K2401':
+        keithley = Keithley2401(27)
+        keithley.setOptions({
+            "beepEnable": False,
+            "sourceMode": "voltage",
+            "sourceRange": 10,
+            "senseRange": 1.05e-4,
+            "compliance": 1.0e-4,
+            "scaleFactor": 1
+        })
+elif Instruments == 'Internal':
+    # ---- MCC152 Output Port for Source --------------
+    daqout_S = MCC152Out(0)
+    daqout_S.setOptions({
+        "scaleFactor": 1
+    })
+
+    # ---- MCC152 Output Port for Hold --------------
+    daqout_H = MCC152Out(1)
+    daqout_H.setOptions({
+        "scaleFactor": 1
+    })
+
+    # ---- MCC128 Input Port for Drain --------------
+    daqin_D = MCC128InSS(0)
+    daqin_D.setOptions({
+        "scaleFactor": 1
+    })
+
+    # ---- MCC128 Input Port for Gate -------------- Need to work out how to implement this in the code APM 28JUL26
+    daqin_G = MCC128InSS(1)
+    daqin_G.setOptions({
         "scaleFactor": 1
     })
 
@@ -191,7 +223,7 @@ def end(): # Operates mechanism to end the program entirely
     daqout_H.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
     if GateMode == 'K2401':
         keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
-    CtrlPi.SysReset()
+    CtrlTy.SysReset()
     ID.increaseID()
 
 def grab(nGrab): # Code to implement a single grab of all the devices on a chip -- last edited APM 31Oct25
@@ -201,24 +233,24 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
         fLog.write('Grab: '+str(nGrab+1)+' started: '+str(datetime.now())+'\n')
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
-#    print('Set NIDAQ Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
+#    print('Set DAC Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(VSource,delay=0.0)  # Run the source up to specified voltage
     daqout_H.goTo(VHold,delay=0.0)  # Run the source up to specified voltage
     if GateMode == 'K2401':
         keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
     RD[0]=nGrab+1
     print('Measuring...')
-    if ScanDir_Gen5 == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
+    if ScanDir == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
         for i in range(nBits):
             for j in range(nWords):
                 k = mapper(j)
 #                print('Measuring: ',WordList[k],BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
                 # ---- Set multiplexer to given device
-                CtrlPi.SysDevOn(k+1,i+1)
+                CtrlTy.nodeToMeasure(k+1,i+1)
 #                time.sleep(10)
                 SBStart[i,j] = time.time()
                 #---- Grab device data from NIDAQ
-                Drain = daqin_Drain.get('inputLevel')
+                Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
 #               print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
                 Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
@@ -229,19 +261,19 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     AgCl = keithley.get('senseLevel')
                     Ig.iloc[i,j] = AgCl[0]
                     Vg.iloc[i,j] = AgCl[1]
-                CtrlPi.SysDevOff(k+1,i+1)
+                CtrlTy.nodeToHold(k+1,i+1)
                 if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
                     updateGUI()
-    elif ScanDir_Gen5 == 'Vertical': # implements scan along wordlines starting from A
+    elif ScanDir == 'Vertical': # implements scan along wordlines starting from A
         for j in range(nWords):
             for i in range(nBits):
                 k = mapper(j)
                 print('Measuring: ',WordList[k],BitList[i])  ## Keep for diagnostics; On from 16Oct25 APM
                 # ---- Set multiplexer to given device
-                CtrlPi.SysDevOn(k+1,i+1)
+                CtrlTy.nodeToMeasure(k+1,i+1)
                 SBStart[i,j] = time.time()
                 # ---- Grab device data from NIDAQ
-                Drain = daqin_Drain.get('inputLevel')
+                Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
 #               print("input: ",Drain[0],Drain[1]) ## Keep for diagnostics; Off from 18SEP25 APM
                 Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
@@ -252,7 +284,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     AgCl = keithley.get('senseLevel')
                     Ig.iloc[i,j] = AgCl[0]
                     Vg.iloc[i,j] = AgCl[1]
-                CtrlPi.SysDevOff(k+1,i+1)
+                CtrlTy.nodeToHold(k+1,i+1)
                 if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
                     updateGUI()
     # ---- Run a loop just to handle all the data management at the end of the grab
@@ -293,7 +325,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     if GateMode == 'K2401':
         keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
     # ---- Switch Multiplexer to off state.
-    CtrlPi.SysReset()
+    CtrlTy.SysReset()
     print('Update GUI')
     updateGUI()
 #    print('End of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
@@ -357,7 +389,7 @@ def measLoop():
     nRun += 1
     print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
     # ---- Switch Multiplexer to off state.
-    CtrlPi.SysReset()
+    CtrlTy.SysReset()
     #root.quit() ## remove this line for the program to not quit at the end
 
 if __name__ == "__main__":

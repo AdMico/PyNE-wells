@@ -7,7 +7,7 @@ This class sets up the Teensy to be controlled remotely. The truth table is now 
 This code mostly just handles the serial interface from the Raspberry Pi to the Teensy in the Gen 6 boxes.
 """
 
-from Config import ScanDir,Polarity,DrainGain,GateGain,DrainCirc,GateCirc
+from Config_Gen6 import Instruments,ScanDir,SourcePol,HoldPol,DrainGain,GateGain,DrainCirc,GateCirc,TeensyPort
 import serial
 import time
 from itertools import chain
@@ -15,7 +15,7 @@ from itertools import chain
 class TeensyMUX:
 
     def __init__(self):
-        self.port = "/dev/ttyACM0" #Insert the Raspberry Pi port where your Teensy 4.1 is connected here
+        self.port = TeensyPort
         self.teensy = serial.Serial(port,9600)
         self.ChipWordList = ['OFF','A','B','C','D','E','F','G','H','I','J','K','L','M','N',
                            '&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
@@ -110,26 +110,24 @@ class TeensyMUX:
         Err = self.receive()
         return Err
 
-    def setPosOutput(self): # Sets Source and Hold to positive voltage range -- APM 23JUL26
+    def setPosSource(self): # Sets Source to positive voltage range -- APM 28JUL26
         self.send(A07)
-        Err1 = self.receive()
-        self.send(A08)
-        Err2 = self.receive()
-        if Err1 == Err2:
-            Err = Err1
-        else:
-            Err = 'Error 4: Complex Issue'
+        Err = self.receive()
         return Err
 
-    def setNegOutput(self): # Sets Source and Hold to negative voltage range -- APM 23JUL26
+    def setPosHold(self): # Sets Hold to positive voltage range -- APM 28JUL26
+        self.send(A08)
+        Err = self.receive()
+        return Err
+
+    def setNegSource(self): # Sets Source to negative voltage range -- APM 28JUL26
         self.send(B07)
-        Err1 = self.receive()
+        Err = self.receive()
+        return Err
+
+    def setNegHold(self): # Sets Hold to negative voltage range -- APM 28JUL26
         self.send(B08)
-        Err2 = self.receive()
-        if Err1 == Err2:
-            Err = Err1
-        else:
-            Err = 'Error 4: Complex Issue'
+        Err = self.receive()
         return Err
 
     def setDrainLowGain(self): # Sets drain to 10^3 V/A gain -- APM 23JUL26
@@ -201,14 +199,24 @@ class TeensyMUX:
 
     def SysInit(self):  # Runs a sequence to initialise all the relays at start -- APM 23JUL26
         self.setRelaysToOn()
-        self.setSourceInt()
-        self.setDrainInt()
-        self.setHoldInt()
-        self.setGateInt()
-        if Polarity == 'Positive':
-            self.setPosOutput()
-        elif Polarity == 'Negative':
-            self.setNegOutput()
+        if Instruments == 'Internal':
+            self.setSourceInt()
+            self.setDrainInt()
+            self.setHoldInt()
+            self.setGateInt()
+        elif Instruments == 'External':
+            self.setSourceExt()
+            self.setDrainExt()
+            self.setHoldExt()
+            self.setGateExt()
+        if SourcePol == 'Positive':
+            self.setPosSource()
+        elif SourcePol == 'Negative':
+            self.setNegSource()
+        if HoldPol == 'Positive':
+            self.setPosHold()
+        elif HoldPol == 'Negative':
+            self.setNegHold()
         if DrainGain == 'low':
             self.setDrainLowGain()
         elif DrainGain == 'high':

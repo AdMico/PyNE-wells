@@ -10,7 +10,7 @@ The output handling is done by a separate .py.
 import Instrument
 from daqhats import mcc128,HatIDs,AnalogInputMode,AnalogInputRange,OptionFlags
 from daqhats_utils import select_hat_device,chan_list_to_mask
-from Config import SR_Gen6,SpC_Gen6
+from Config_Gen6 import SR,SpC
 
 @Instrument.enableOptions
 class MCC128InPB(Instrument.Instrument):
@@ -45,8 +45,8 @@ class MCC128InPB(Instrument.Instrument):
         
     @Instrument.addOptionGetter("inputLevel")
     def _getInputLevel(self):
-        self.hat.a_in_scan_start(self.channel_mask,SpC_Gen6,SR_Gen6,self.options)
-        buffer=self.hat.a_in_scan_read_numpy(SpC_Gen6,-1)
+        self.hat.a_in_scan_start(self.channel_mask,SpC,SR,self.options)
+        buffer=self.hat.a_in_scan_read_numpy(SpC,-1)
         tempData=buffer.data
         split = int(len(tempData)/2)
         DL, DR = tempData[0:split],tempData[split+1:2*split]
