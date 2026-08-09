@@ -22,7 +22,7 @@ class MCC128InPB(Instrument.Instrument):
         super(MCC128InPB, self).__init__()
         self.port1 = address1
         self.port2 = address2
-        self.type ="MCC128"  #We can check each instrument for its type and react accordingly
+        self.type ="MCC128"  # We can check each instrument for its type and react accordingly
         self.name = "MCC128"
         self.address = select_hat_device(HatIDs.MCC_128)
         self.hat = mcc128(self.address)

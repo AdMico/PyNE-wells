@@ -12,8 +12,9 @@ Adam's to do list follows -- Updated APM 28JUL26
 """
 
 from TeensyInterface_Gen6 import TeensyMUX
+from ConfigInterpreter_Gen6 import ConfigInterp
 import GlobalMeasID as ID
-from Config_Gen6 import Instruments,VSource,VGate,VHold,P1Gain,P2Gain,ItersAR,WaitAR,basePath,SR,SpC,GuiUpdateMode,GateMode,ScanDir,PlotTwoMode
+from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode
 from SeabornInit import dataInit,dataReset
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
@@ -46,9 +47,8 @@ Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index
 D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
-if (Instruments == 'Internal' or (Instruments == 'External' and GateMode == 'K2401')):
-    Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList)
-    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) ## How to I use this if GateMode == 'USB6216'? APM 28JUL26
+Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # Made a default for Gen 6 -- 09Aug26 APM
+Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # Made a default for Gen 6 -- 09Aug26 APM
 RD = np.zeros(1459)
 SBStart = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
 SBEnd = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
@@ -59,6 +59,16 @@ GrabStart = np.zeros(ItersAR,dtype='float') # For use in determining time taken 
 GrabEnd = np.zeros(ItersAR,dtype='float') # For use in determining time taken to run a grab
 GrabTime = np.zeros(ItersAR,dtype='float') # for use in determining time taken to run a grab
 GrabTime[:] = np.nan
+#---- Run Configuration Interpreter to get missing configuration parameters -- Added 09Aug26 APM
+SourcePol,HoldPol = ConfigInterp.Polarities()
+Source = ConfigInterp.Source()
+Hold = ConfigInterp.Hold()
+Drain = ConfigInterp.Drain()
+Gate = ConfigInterp.Gate()
+SR = ConfigInterp.SR()
+SpC = ConfigInterp.SPC()
+P1Gain = ConfigInterp.P1Gain()
+P2Gain = ConfigInterp.P2Gain()
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
 with open('stop.txt', 'w') as fStop: # Initialise stop button
@@ -82,8 +92,9 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'ADC Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
                'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
-               'Scan direction: ' + ScanDir_Gen5 + '\n' +
-               'Ag/AgCl electrode on: ' + GateMode + '\n \n' ## Need to fix this line! APM 28JUL26
+               'Scan direction: ' + ScanDir + '\n' +
+               'Instrument set: ' + Instruments + '\n' +
+               'Ag/AgCl electrode on: ' + Gate + '\n \n'
                )
 
 #---- Initialization of instruments
@@ -91,6 +102,7 @@ print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
 # ---- Raspberry Pi --------------
 CtrlTy = TeensyMUX()
 CtrlTy.SysInit()  # Initialises the multiplexer for running a measurement (including setting which line is connected to AO0 and preamp)
+#---- External Instrument Initialisation
 if Instruments == 'External':
     #---- NIDAQ Output Port for Source --------------
     daqout_S = USB6216Out(0)
@@ -99,43 +111,29 @@ if Instruments == 'External':
     daqout_H = USB6216Out(1)
     daqout_H.setOptions({"feedBack":"Int","scaleFactor":1})
     #---- NIDAQ Input Port for Drain running PairBurst on USB6216 --------------
-    daqin_D = USB6216InSB()
+    daqin_D = USB6216InSB(0)
     daqin_D.setOptions({"scaleFactor":1})
-    #---- Code for instrument initialisation for Ag/AgCL electrode control -- New 30Oct25 APM
-    if GateMode == 'K2401':
-        keithley = Keithley2401(27)
-        keithley.setOptions({
-            "beepEnable": False,
-            "sourceMode": "voltage",
-            "sourceRange": 10,
-            "senseRange": 1.05e-4,
-            "compliance": 1.0e-4,
-            "scaleFactor": 1
-        })
+    #---- Code for Keithley 2401 initialisation for Ag/AgCl electrode control -- Added 30Oct25 APM
+    if GateModeExt == 'K2401':
+        daqin_G = Keithley2401(27)
+        daqin_G.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    elif GateModeExt == 'USB6216':
+        daqin_G = USB6216InSB(1)
+        daqin_G.setOptions({"scaleFactor": 1})
+#---- Internal Instrument Initialisation
 elif Instruments == 'Internal':
     # ---- MCC152 Output Port for Source --------------
     daqout_S = MCC152Out(0)
-    daqout_S.setOptions({
-        "scaleFactor": 1
-    })
-
+    daqout_S.setOptions({"scaleFactor": 1})
     # ---- MCC152 Output Port for Hold --------------
     daqout_H = MCC152Out(1)
-    daqout_H.setOptions({
-        "scaleFactor": 1
-    })
-
+    daqout_H.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Drain --------------
     daqin_D = MCC128InSS(0)
-    daqin_D.setOptions({
-        "scaleFactor": 1
-    })
-
-    # ---- MCC128 Input Port for Gate -------------- Need to work out how to implement this in the code APM 28JUL26
+    daqin_D.setOptions({"scaleFactor": 1})
+    # ---- MCC128 Input Port for Gate --------------
     daqin_G = MCC128InSS(1)
-    daqin_G.setOptions({
-        "scaleFactor": 1
-    })
+    daqin_G.setOptions({"scaleFactor": 1})
 
 def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
     map = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,26,25,24,23,22,21,20,19,18,17,16,15,14])
@@ -221,8 +219,8 @@ def end(): # Operates mechanism to end the program entirely
         fLog.write('End: ' + str(datetime.now()) + '\n')
     daqout_S.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
     daqout_H.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
-    if GateMode == 'K2401':
-        keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
+    if GateModeExt == 'K2401':
+        daqin_G.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
     CtrlTy.SysReset()
     ID.increaseID()
 
@@ -236,8 +234,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
 #    print('Set DAC Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(VSource,delay=0.0)  # Run the source up to specified voltage
     daqout_H.goTo(VHold,delay=0.0)  # Run the source up to specified voltage
-    if GateMode == 'K2401':
-        keithley.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage
+    if (GateModeExt == 'K2401' and VGate != 0.0):
+        daqin_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage if it's a Keithley and VGate is non-zero -- edited 09AUG26 APM
     RD[0]=nGrab+1
     print('Measuring...')
     if ScanDir == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
@@ -256,11 +254,14 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
                 Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
 #               print(f'Dt = {Dt.iloc[i,j]:.2f} +/- {Dterr.iloc[i,j]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
-                # ---- Create the Ag/AgCl electrode data arrays if using K2401
-                if GateMode == 'K2401':
-                    AgCl = keithley.get('senseLevel')
+                # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
+                if GateModeExt == 'K2401':
+                    AgCl = daqin_G.get('senseLevel')
                     Ig.iloc[i,j] = AgCl[0]
                     Vg.iloc[i,j] = AgCl[1]
+                else: # Whether USB6216 or MCC128 it should still work
+                    Ig.iloc[i,j] = daqin_G.get('inputLevel')
+                    Vg.iloc[i,j] = 0.0
                 CtrlTy.nodeToHold(k+1,i+1)
                 if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
                     updateGUI()
@@ -279,11 +280,14 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
                 Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
 #               print(f'Dt = {Dt.iloc[i,j]:.2f} +/- {Dterr.iloc[i,j]:.2f} uS') ## Keep for diagnostics; Off from 15JAN24 APM
-                # ---- Create the Ag/AgCl electrode data arrays if using K2401
-                if GateMode == 'K2401':
-                    AgCl = keithley.get('senseLevel')
+                # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
+                if GateModeExt == 'K2401':
+                    AgCl = daqin_G.get('senseLevel')
                     Ig.iloc[i,j] = AgCl[0]
                     Vg.iloc[i,j] = AgCl[1]
+                else: # Whether USB6216 or MCC128 it should still work
+                    Ig.iloc[i,j] = daqin_G.get('inputLevel')
+                    Vg.iloc[i,j] = 0.0
                 CtrlTy.nodeToHold(k+1,i+1)
                 if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ
                     updateGUI()
@@ -304,10 +308,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             # ---- send data from this grab to file
             with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList2[j]) + str(BitList[i]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
-                if GateMode == 'K2401':
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
-                else:
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
             #---- End of row timing
             SBEnd[i,j] = time.time()
             SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
@@ -322,8 +323,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     # ---- Run hold voltage back to zero
     daqout_H.goTo(0.0,delay=0.0)
     # ---- Run Ag/AgCl electrode back to zero
-    if GateMode == 'K2401':
-        keithley.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
+    if (GateModeExt == 'K2401' and VGate != 0.0):
+        daqin_G.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
     # ---- Switch Multiplexer to off state.
     CtrlTy.SysReset()
     print('Update GUI')
@@ -354,10 +355,7 @@ def measLoop():
             k = mapper(j)
             with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList2[k]+BitList[i]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
-                if GateMode == 'K2401':
-                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])
-                else:
-                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
+                writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
