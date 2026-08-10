@@ -17,7 +17,7 @@ class TeensyMUX:
 
     def __init__(self):
         self.port = TeensyPort
-        self.teensy = serial.Serial(port,9600)
+        self.teensy = serial.Serial(self.port,9600)
         self.ChipWordList = ['OFF','A','B','C','D','E','F','G','H','I','J','K','L','M','N',
                            '&','Z','Y','X','W','V','U','T','S','R','Q','P','O']
         self.ChipBitList = ['OFF','1','2','3','4','5','6','7','8','9','10','11','12','13','14',
@@ -41,148 +41,148 @@ class TeensyMUX:
         # 07 = K-V1, K-X1, K-I5; 08 = K-V2, K-X2, K-I6; 09 = K-I1; 10 = K-I2, 11 = K-I3, 12 = K-I4
         # A command sets to relay default, B command sets to relay non-default.
 
-    def send(msg):
+    def send(self,msg):
         msg = msg + '\n' #add newline to string
         command = msg.encode('ascii')  #encode to ascii
-        teensy.write(command)
+        self.teensy.write(command)
 
-    def receive():
-        msg = teensy.read_until()  #read until newline
+    def receive(self):
+        msg = self.teensy.read_until()  #read until newline
         response = msg.decode('ascii')  #decode from ascii
         return response
 
     def setWordsAsSource(self): # Sets words as source and bits as drain -- APM 23JUL26
-        self.send(A01)
+        self.send('A01')
         Err = self.receive()
         return Err
 
     def setBitsAsSource(self): # Sets bits as source and words as drain -- APM 23JUL26
-        self.send(B01)
+        self.send('B01')
         Err = self.receive()
         return Err
 
     def setRelaysToOff(self): # Connects +5V power line to ground, disables all relays -- APM 23JUL26
-        self.send(A02)
+        self.send('A02')
         Err = self.receive()
         return Err
 
     def setRelaysToOn(self): # Activates +5V power line, enables all relays -- APM 23JUL26
-        self.send(B02)
+        self.send('B02')
         Err = self.receive()
         return Err
 
     def setSourceInt(self): # Connects source to MCC152 AO0 -- APM 23JUL26
-        self.send(A03)
+        self.send('A03')
         Err = self.receive()
         return Err
 
     def setSourceExt(self): # Connects source to BNC -- APM 23JUL26
-        self.send(B03)
+        self.send('B03')
         Err = self.receive()
         return Err
 
     def setDrainInt(self): # Connects drain to MCC128 CH0H -- APM 23JUL26
-        self.send(A04)
+        self.send('A04')
         Err = self.receive()
         return Err
 
     def setDrainExt(self): # Connects drain to BNC -- APM 23JUL26
-        self.send(B04)
+        self.send('B04')
         Err = self.receive()
         return Err
 
     def setHoldInt(self): # Connects hold to MCC152 AO1 -- APM 23JUL26
-        self.send(A05)
+        self.send('A05')
         Err = self.receive()
         return Err
 
     def setHoldExt(self): # Connects hold to BNC -- APM 23JUL26
-        self.send(B05)
+        self.send('B05')
         Err = self.receive()
         return Err
 
     def setGateInt(self): # Connects gate to MCC128 CH1H -- APM 23JUL26
-        self.send(A06)
+        self.send('A06')
         Err = self.receive()
         return Err
 
     def setGateExt(self): # Connects gate to BNC -- APM 23JUL26
-        self.send(B06)
+        self.send('B06')
         Err = self.receive()
         return Err
 
     def setPosSource(self): # Sets Source to positive voltage range -- APM 28JUL26
-        self.send(A07)
+        self.send('A07')
         Err = self.receive()
         return Err
 
     def setPosHold(self): # Sets Hold to positive voltage range -- APM 28JUL26
-        self.send(A08)
+        self.send('A08')
         Err = self.receive()
         return Err
 
     def setNegSource(self): # Sets Source to negative voltage range -- APM 28JUL26
-        self.send(B07)
+        self.send('B07')
         Err = self.receive()
         return Err
 
     def setNegHold(self): # Sets Hold to negative voltage range -- APM 28JUL26
-        self.send(B08)
+        self.send('B08')
         Err = self.receive()
         return Err
 
     def setDrainLowGain(self): # Sets drain to 10^3 V/A gain -- APM 23JUL26
-        self.send(A09)
+        self.send('A09')
         Err = self.receive()
         return Err
 
     def setDrainHighGain(self): # Sets drain to 10^4 V/A gain -- APM 23JUL26
-        self.send(B09)
+        self.send('B09')
         Err = self.receive()
         return Err
 
     def setGateLowGain(self): # Sets gate to 10^3 V/A gain -- APM 23JUL26
-        self.send(A10)
+        self.send('A10')
         Err = self.receive()
         return Err
 
     def setGateHighGain(self): # Sets gate to 10^4 V/A gain -- APM 23JUL26
-        self.send(B10)
+        self.send('B10')
         Err = self.receive()
         return Err
 
     def setDrainToTIA(self): # Routes the drain through the TIA circuit -- APM 23JUL26
-        self.send(A11)
+        self.send('A11')
         Err = self.receive()
         return Err
 
     def setDrainToCSA(self): # Routes the drain through the CSA circuit -- APM 23JUL26
-        self.send(B11)
+        self.send('B11')
         Err = self.receive()
         return Err
 
     def setGateToTIA(self): # Routes the gate through the TIA circuit -- APM 23JUL26
-        self.send(A12)
+        self.send('A12')
         Err = self.receive()
         return Err
 
     def setGateToCSA(self): # Routes the gate through the CSA circuit -- APM 23JUL26
-        self.send(B12)
+        self.send('B12')
         Err = self.receive()
         return Err
 
     def testRelaysFast(self): # Runs fast hardware test of all 54 device relays -- APM 23JUL26
-        self.send(TFX)
+        self.send('TFX')
         Err = self.receive()
         return Err
 
     def testRelaysSlow(self): # Runs slow hardware test of all 54 device relays -- APM 23JUL26
-        self.send(TSX)
+        self.send('TSX')
         Err = self.receive()
         return Err
 
     def resetAllToHold(self): # Resets all 54 device relays to hold state -- APM 23JUL26
-        self.send(RXX)
+        self.send('RXX')
         Err = self.receive()
         return Err
 
@@ -326,6 +326,7 @@ class TeensyMUX:
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_teensy = TeensyMUX()
     my_teensy.SysInit() # Running as main will initialise system -- APM 09SEP25
+#    my_teensy.testRelaysFast()
 #    my_teensy.WordRelayTest('S',1.5)
 #    my_teensy.BitRelayTest('D',1.5)
 #    my_teensy.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25

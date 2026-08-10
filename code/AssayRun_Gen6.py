@@ -21,6 +21,7 @@ from USB6216InSB import USB6216InSB
 from Keithley2401 import Keithley2401
 from MCC152Out import MCC152Out
 from MCC128InSB import MCC128InSB
+from MCC128InSS import MCC128InSS
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -129,10 +130,10 @@ elif Instruments == 'Internal':
     daqout_H = MCC152Out(1)
     daqout_H.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Drain --------------
-    daqin_D = MCC128InSS(0)
+    daqin_D = MCC128InSB(0)
     daqin_D.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Gate --------------
-    daqin_G = MCC128InSS(1)
+    daqin_G = MCC128InSB(1)
     daqin_G.setOptions({"scaleFactor": 1})
 
 def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
@@ -260,7 +261,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     Ig.iloc[i,j] = AgCl[0]
                     Vg.iloc[i,j] = AgCl[1]
                 else: # Whether USB6216 or MCC128 it should still work
-                    Ig.iloc[i,j] = daqin_G.get('inputLevel')
+                    AgCl = daqin_G.get('inputLevel')
+                    Ig.iloc[i,j] = AgCl[0]
                     Vg.iloc[i,j] = 0.0
                 CtrlTy.nodeToHold(k+1,i+1)
                 if GuiUpdateMode == 'point':  # Update the GUI every datapair from the NIDAQ

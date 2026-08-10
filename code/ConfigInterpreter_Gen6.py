@@ -6,11 +6,11 @@ Brought to PyNE-wells v2.0.0 on Sun Aug 09 2026 by APM
 This acts as an interpreter of the Config_Gen6.py file to supply additional parameters to AssayRun_Gen6.py
 """
 
-from Config_Gen6 import Instruments,DrainGain,GateGain,VSource,VHold,GateModeExt
+from Config_Gen6 import Instruments,DrainGain,GateGain,VSource,VHold,GateModeExt,SR_Int,SR_Ext,SpC_Int,SpC_Ext
 
 class ConfigInterp:
 
-    def __init__(self):
+#    def __init__(self):
         # Nothing to go in here yet.
 
     def Polarities():
@@ -58,16 +58,16 @@ class ConfigInterp:
 
     def SR():
         if Instruments == 'External':  # External Instrument Settings
-            SR = float(4e5)  # Sample Rate in samples/second. 4e5 is maximum for single channel, 2e5 is maximum for pairburst
+            SR = SR_Ext
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            SR = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel, 5e4 is maximum for pairburst.
+            SR = SR_Int
         return SR
 
     def SpC():
         if Instruments == 'External':  # External Instrument Settings
-            SpC = int(1e3)  # Samples per Channel per measurement -- strongly influences speed
+            SpC = SpC_Ext
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            SpC = int(1e5)  # Samples per Channel per measurement -- strongly influences speed
+            SpC = SpC_Int
         return SpC
 
     def P1Gain():

@@ -9,8 +9,6 @@ The output handling is done by a separate .py.
 
 import Instrument
 from daqhats import mcc128,HatIDs,AnalogInputMode,AnalogInputRange,OptionFlags
-
-from code.ConfigInterpreter_Gen6 import ConfigInterp
 from daqhats_utils import select_hat_device,chan_list_to_mask
 from ConfigInterpreter_Gen6 import ConfigInterp
 
