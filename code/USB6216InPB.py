@@ -17,7 +17,7 @@ import pandas as pd
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
-from Config import DrainLeft, DrainRight, SR, SpC
+from ConfigInterp_Gen6 import ConfigInterp
 
 pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
 
@@ -31,9 +31,11 @@ class USB6216InPB(Instrument.Instrument):
         super(USB6216InPB, self).__init__()
         self.type ="USB6216"  #We can check each instrument for its type and react accordingly
         self.name = "USB6216"
-        self.burstVolume = SpC #initialise burstVolume to the Samples per Chanel - Sample rate still fixed!!!!
-        self.port1 = DrainLeft
-        self.port2 = DrainRight
+        self.port1 = ConfigInterp.Drain()
+        self.port2 = ConfigInterp.Gate()
+        self.SR = ConfigInterp.SR()
+        self.SpC = ConfigInterp.SpC()
+        self.burstVolume = self.SpC  # initialise burstVolume to the Samples per Chanel - Sample rate still fixed!
         
     @Instrument.addOptionSetter("name")
     def _setName(self,instrumentName):
@@ -56,7 +58,7 @@ class USB6216InPB(Instrument.Instrument):
         with nmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(self.port1)
             task.ai_channels.add_ai_voltage_chan(self.port2)
-            task.timing.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquisitionType.CONTINUOUS, samps_per_chan=self.burstVolume)
+            task.timing.cfg_samp_clk_timing(rate=self.SR, sample_mode=constants.AcquisitionType.CONTINUOUS, samps_per_chan=self.burstVolume)
             reader = stream_readers.AnalogMultiChannelReader(task.in_stream)
             buffer = np.zeros((2, self.burstVolume), dtype = np.float64)
             reader.read_many_sample(buffer, self.burstVolume, timeout=constants.WAIT_INFINITELY)
@@ -82,7 +84,7 @@ class USB6216InPB(Instrument.Instrument):
 
     @Instrument.addOptionSetter("SpC")
     def _setSpC(self, SpC):
-        self.SpC = SpC
+        self.SpC = ConfigInterp.SpC(SpC)
 
     def goTo(self,target,stepsize=0.01,delay=0.0):
         pass

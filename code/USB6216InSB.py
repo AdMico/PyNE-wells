@@ -15,7 +15,7 @@ import Instrument
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
-from Config import SR, SpC
+from ConfigInterpreter_Gen6 import ConfigInterp
 
 #pd.set_option('future.no_silent_downcasting',True) ## Uncomment and run if getting downcasting error, then recomment when fixed.
 
@@ -46,6 +46,8 @@ class USB6216InSB(Instrument.Instrument):
             self.port = "Dev1/ai6"
         elif self.dev == 7:
             self.port = "Dev1/ai7"
+        self.SR = ConfigInterp.SR()
+        self.SpC = ConfigInterp.SpC()
         
     @Instrument.addOptionSetter("name")
     def _setName(self,instrumentName):
@@ -59,10 +61,10 @@ class USB6216InSB(Instrument.Instrument):
     def _getInputLevel(self):
         with nmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(self.port)
-            task.ai_channels.cfg_samp_clk_timing(rate=SR, sample_mode=constants.AcquistionType.CONTINUOUS, samps_per_chan=SpC)
+            task.ai_channels.cfg_samp_clk_timing(rate=self.SR, sample_mode=constants.AcquistionType.CONTINUOUS, samps_per_chan=self.SpC)
             reader = stream_readers.AnalogSingleChannelReader(task.in_stream)
-            buffer = np.zeros((1,SpC), dtype=np.float64)
-            reader.read_many_sample(buffer, SpC, timeout=constants.WAIT_INFINITELY)
+            buffer = np.zeros((1,self.SpC), dtype=np.float64)
+            reader.read_many_sample(buffer, self.SpC, timeout=constants.WAIT_INFINITELY)
             data = buffer.T.astype(np.float64)/self.scaleFactor
             measInput = data.mean() ## Current version only returns the average, we can add error return later if needed APM 19DEC23
         return measInput

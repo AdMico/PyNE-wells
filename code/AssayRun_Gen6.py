@@ -66,7 +66,7 @@ Hold = ConfigInterp.Hold()
 Drain = ConfigInterp.Drain()
 Gate = ConfigInterp.Gate()
 SR = ConfigInterp.SR()
-SpC = ConfigInterp.SPC()
+SpC = ConfigInterp.SpC()
 P1Gain = ConfigInterp.P1Gain()
 P2Gain = ConfigInterp.P2Gain()
 #---- Initialization of files for data and control
