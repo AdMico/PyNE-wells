@@ -7,7 +7,8 @@ This class sets up the Teensy to be controlled remotely. The truth table is now 
 This code mostly just handles the serial interface from the Raspberry Pi to the Teensy in the Gen 6 boxes.
 """
 
-from Config_Gen6 import Instruments,ScanDir,SourcePol,HoldPol,DrainGain,GateGain,DrainCirc,GateCirc,TeensyPort
+from Config_Gen6 import Instruments,ScanDir,DrainGain,GateGain,DrainCirc,GateCirc,TeensyPort
+from ConfigInterpreter_Gen6 import ConfigInterp
 import serial
 import time
 from itertools import chain
@@ -209,6 +210,7 @@ class TeensyMUX:
             self.setDrainExt()
             self.setHoldExt()
             self.setGateExt()
+        SourcePol, HoldPol = ConfigInterp.Polarities()
         if SourcePol == 'Positive':
             self.setPosSource()
         elif SourcePol == 'Negative':
