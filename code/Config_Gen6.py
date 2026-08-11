@@ -19,13 +19,13 @@ TeensyPort = '/dev/ttyACM0' #Insert the Raspberry Pi port where your Teensy 4.1 
 ScanDir = 'Horizontal'
 
 # Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
-VSource = float(1.0) # Cannot exceed +/- 5V if using internal DAC
+VSource = float(0.1) # Cannot exceed +/- 5V if using internal DAC
 VGate = float(0.0) # Must be zero if set to internal
 VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
 # AssayRun Settings
 ItersAR = int(5) # Number of iterations of device sampling to run before program ends
-WaitAR = float(20) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+WaitAR = float(30) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- Added 30Oct25 APM
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- Added 11Sep25 APM
@@ -39,7 +39,7 @@ GateModeExt = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl elect
 # Internal Instrument Settings
 SR_Int = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel, 5e4 is maximum for pairburst.
 SpC_Int = int(1e2)  # Samples per Channel per measurement -- strongly influences speed
-DrainGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
-GateGain = 'Low' # 'Low is 10^3 V/A and 'High' is 10^4 V/A
-DrainCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
-GateCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
+DrainGain = 'High' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
+GateGain = 'High' # 'Low is 10^3 V/A and 'High' is 10^4 V/A
+DrainCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
+GateCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit

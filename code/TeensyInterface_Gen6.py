@@ -52,12 +52,12 @@ class TeensyMUX:
         return response
 
     def setWordsAsSource(self): # Sets words as source and bits as drain -- APM 23JUL26
-        self.send('A01')
+        self.send('B01')
         Err = self.receive()
         return Err
 
     def setBitsAsSource(self): # Sets bits as source and words as drain -- APM 23JUL26
-        self.send('B01')
+        self.send('A01')
         Err = self.receive()
         return Err
 
@@ -326,7 +326,15 @@ class TeensyMUX:
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_teensy = TeensyMUX()
     my_teensy.SysInit() # Running as main will initialise system -- APM 09SEP25
-#    my_teensy.testRelaysFast()
+    my_teensy.testRelaysFast()
+#    my_teensy.setWordsAsSource()
+#    my_teensy.setDrainToCSA()
+#    my_teensy.setGateToCSA()
+#    my_teensy.setDrainHighGain()
+#    my_teensy.setGateHighGain()
+#    my_teensy.setNegSource()
+#    my_teensy.setPosHold()
+#    my_teensy.nodeToMeasure(2,2)
 #    my_teensy.WordRelayTest('S',1.5)
 #    my_teensy.BitRelayTest('D',1.5)
 #    my_teensy.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
