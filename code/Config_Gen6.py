@@ -39,6 +39,7 @@ GateModeExt = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl elect
 # Internal Instrument Settings
 SR_Int = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel, 5e4 is maximum for pairburst.
 SpC_Int = int(1e2)  # Samples per Channel per measurement -- strongly influences speed
+SourceHoldCurrent = 'Active' # 'Active' will measure source and hold currents, set to 'Inactive' to not do this.
 DrainGain = 'High' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
 GateGain = 'High' # 'Low is 10^3 V/A and 'High' is 10^4 V/A
 DrainCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit

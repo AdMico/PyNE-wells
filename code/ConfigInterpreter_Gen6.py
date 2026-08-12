@@ -10,9 +10,6 @@ from Config_Gen6 import Instruments,DrainGain,GateGain,VSource,VHold,GateModeExt
 
 class ConfigInterp:
 
-#    def __init__(self):
-        # Nothing to go in here yet.
-
     def Polarities():
         # Use source and hold voltages to set the DAC polarities
         if VSource >= 0.0:
@@ -27,34 +24,46 @@ class ConfigInterp:
             HoldPol = SourcePol
         return SourcePol,HoldPol
 
-    def Source():
+    def SourceVoltage():
         if Instruments == 'External':  # External Instrument Settings
-            Source = 'Dev1/ao0'
+            SourceOutput = 'USB6216/ao0'
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            Source = 'MCC152/ao0'
-        return Source
+            SourceOutput = 'MCC152/ao0'
+        return SourceOutput
 
-    def Hold():
+    def HoldVoltage():
         if Instruments == 'External':  # External Instrument Settings
-            Hold = 'Dev1/ao1'
+            HoldOutput = 'USB6216/ao1'
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            Hold = 'MCC152/ao1'
-        return Hold
+            HoldOutput = 'MCC152/ao1'
+        return HoldOutput
 
-    def Drain():
+    def DrainCurrent():
         if Instruments == 'External':  # External Instrument Settings
-            Drain = 'Dev1/ai0'
+            DrainCurrent = 'USB6216/ai0'
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            Drain = 'MCC128/ai0'
-        return Drain
+            DrainCurrent = 'MCC128/Ch0'
+        return DrainCurrent
 
-    def Gate():
+    def GateCurrent():
         if Instruments == 'External':  # External Instrument Settings
             if GateModeExt == 'USB6216':
-                Gate = 'Dev1/ai1'
+                GateCurrent = 'USB6216/ai1'
+            elif GateModeExt == 'K2401':
+                GateCurrent = 'K2401'
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            Gate = 'MCC128/ai1'
-        return Gate
+            GateCurrent = 'MCC128/Ch1'
+        return GateCurrent
+
+    def SourceCurrent():
+        if Instruments == 'Internal':  # Internal Instrument Settings
+            SourceCurrent = 'MCC128/Ch4'
+        return SourceCurrent
+
+    def HoldCurrent():
+        if Instruments == 'Internal':  # Internal Instrument Settings
+            HoldCurrent = 'MCC128/Ch5'
+        return HoldCurrent
 
     def SR():
         if Instruments == 'External':  # External Instrument Settings
@@ -70,17 +79,18 @@ class ConfigInterp:
             SpC = SpC_Int
         return SpC
 
-    def P1Gain():
-        # Settings for Current Preamplifiers - P1Gain will be on the drain.
+    def PDGain():
+        # Settings for Drain Current Preamplifier.
         if Instruments == 'External':  # External Instrument Settings
-            P1Gain = float(1e4)
+            PDGain = float(1e4)
         elif Instruments == 'Internal':  # Internal Instrument Settings
             if DrainGain == 'Low':
-                P1Gain = float(1e3)
+                PDGain = float(1e3)
             elif DrainGain == 'High':
-                P1Gain = float(1e4)
-        return P1Gain
+                PDGain = float(1e4)
+        return PDGain
 
+####### End of work 12AUG26 APM --- Need to finish updating instrument gain handling code.
     def P2Gain():
         # Settings for Current Preamplifiers - P2Gain will be the gate (if used).
         if Instruments == 'External':  # External Instrument Settings
