@@ -6,7 +6,7 @@ Brought to PyNE-wells v2.0.0 on Sun Aug 09 2026 by APM
 This acts as an interpreter of the Config_Gen6.py file to supply additional parameters to AssayRun_Gen6.py
 """
 
-from Config_Gen6 import Instruments,DrainGain,GateGain,VSource,VHold,GateModeExt,SR_Int,SR_Ext,SpC_Int,SpC_Ext
+from Config_Gen6 import Instruments,DrainGain,GateGain,DrainCirc,GateCirc,VSource,VHold,GateModeExt,SR_Int,SR_Ext,SpC_Int,SpC_Ext,FemtoGateGain,FemtoDrainGain
 
 class ConfigInterp:
 
@@ -82,22 +82,43 @@ class ConfigInterp:
     def PDGain():
         # Settings for Drain Current Preamplifier.
         if Instruments == 'External':  # External Instrument Settings
-            PDGain = float(1e4)
+            PDGain = FemtoDrainGain
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            if DrainGain == 'Low':
-                PDGain = float(1e3)
-            elif DrainGain == 'High':
-                PDGain = float(1e4)
+            if DrainCirc == "TIA":
+                if DrainGain == 'Low':
+                    PDGain = -float(1e3) # Negative to correct for TIA op-amp behaviour
+                elif DrainGain == 'High':
+                    PDGain = -float(1e4) # Negative to correct for TIA op-amp behaviour
+            elif DrainCirc == "CSA":
+                PDGain = float(1e2) # Gain from INA240A3
         return PDGain
 
-####### End of work 12AUG26 APM --- Need to finish updating instrument gain handling code.
-    def P2Gain():
-        # Settings for Current Preamplifiers - P2Gain will be the gate (if used).
+    def PGGain():
+        # Settings for Gate Current Preamplifier.
         if Instruments == 'External':  # External Instrument Settings
-            P2Gain = float(1e4)
+            PGGain = FemtoGateGain
         elif Instruments == 'Internal':  # Internal Instrument Settings
-            if GateGain == 'Low':
-                P2Gain = float(1e3)
-            elif GateGain == 'High':
-                P2Gain = float(1e4)
-        return P2Gain
+            if GateCirc == "TIA":
+                if GateGain == 'Low':
+                    PGGain = -float(1e3) # Negative to correct for TIA op-amp behaviour
+                elif GateGain == 'High':
+                    PGGain = -float(1e4) # Negative to correct for TIA op-amp behaviour
+            elif GateCirc == "CSA":
+                PGGain = float(1e2) # Gain from INA240A3
+        return PGGain
+
+    def PSGain():
+        # Settings for Source Current Preamplifier.
+        if Instruments == 'External':  # External Instrument Settings
+            PSGain = float(1e4) # Serves no real function as not part of standard external hardware set -- APM 13Aug26
+        elif Instruments == 'Internal':  # Internal Instrument Settings
+            PSGain = float(1e2) # Default gain as it is an upstream CSA circuit using INA240A3
+        return PSGain
+
+    def PHGain():
+        # Settings for Hold Current Preamplifier.
+        if Instruments == 'External':  # External Instrument Settings
+            PHGain = float(1e4) # Serves no real function as not part of standard external hardware set -- APM 13Aug26
+        elif Instruments == 'Internal':  # Internal Instrument Settings
+            PHGain = float(1e2) # Default gain as it is an upstream CSA circuit using INA240A3
+        return PHGain

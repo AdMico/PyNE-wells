@@ -35,6 +35,8 @@ PlotTwoMode = 'First' # Two options 'First' makes second Seaborn panel in Gen 5 
 SR_Ext = float(4e5)  # Sample Rate in samples/second. 4e5 is maximum for single channel, 2e5 is maximum for pairburst.
 SpC_Ext = int(1e3)  # Samples per Channel per measurement -- strongly influences speed
 GateModeExt = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl electrode on AO1 of USB6216) and 'K2401' for using the Keithley 2401 instead -- 09Aug26 APM
+FemtoDrainGain = float(1e4) # Gain setting on Preamp 1 for the drain circuit to USB6216/ai0.
+FemtoGateGain = float(1e4) # Gain setting on Preamp 2 for the gate circuit to USB6216/ai1 (virtual ground).
 
 # Internal Instrument Settings
 SR_Int = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel, 5e4 is maximum for pairburst.
