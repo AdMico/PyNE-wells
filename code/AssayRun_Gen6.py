@@ -10,11 +10,12 @@ Adam's to do list follows -- Updated APM 28JUL26
 * Consider ability to functionally switch the gate and hold setup if VHold is always zero.
 * Fix the Ag/AgCl electrode information line in the log file.
 """
+from pigpio import PI_NOT_HCLK_GPIO
 
 from TeensyInterface_Gen6 import TeensyMUX
 from ConfigInterpreter_Gen6 import ConfigInterp
 import GlobalMeasID as ID
-from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent
+from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent,DrainMode,GateMode,SourceMode,HoldMode
 from SeabornInit import dataInit,dataReset
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
@@ -64,14 +65,22 @@ GrabTime = np.zeros(ItersAR,dtype='float') # for use in determining time taken t
 GrabTime[:] = np.nan
 #---- Run Configuration Interpreter to get missing configuration parameters -- Added 09Aug26 APM
 SourcePol,HoldPol = ConfigInterp.Polarities()
-Source = ConfigInterp.Source()
-Hold = ConfigInterp.Hold()
-Drain = ConfigInterp.Drain()
-Gate = ConfigInterp.Gate()
+SourceOut = ConfigInterp.SourceVoltage()
+HoldOut = ConfigInterp.HoldVoltage()
+DrainIn = ConfigInterp.DrainCurrent()
+GateIn = ConfigInterp.GateCurrent()
+SourceIn = ConfigInterp.SourceCurrent()
+HoldIn = ConfigInterp.HoldCurrent()
 SR = ConfigInterp.SR()
 SpC = ConfigInterp.SpC()
-P1Gain = ConfigInterp.P1Gain()
-P2Gain = ConfigInterp.P2Gain()
+PDGain = ConfigInterp.PDGain()
+PGGain = ConfigInterp.PGGain()
+PSGain = ConfigInterp.PSGain()
+PHGain = ConfigInterp.PHGain()
+DrainRange = ConfigInterp.PDRange()
+GateRange = ConfigInterp.PGRange()
+SourceRange = ConfigInterp.PSRange()
+HoldRange = ConfigInterp.PHRange()
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
 with open('stop.txt', 'w') as fStop: # Initialise stop button
@@ -86,8 +95,10 @@ if not os.path.exists(dataPath):
 with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
     fLog.write('Start: '+str(datetime.now()) + '\n' +
                'Assay Number: ' + measurementName + '\n' +
-               'Preamp 1 gain: ' + str(P1Gain) + '\n' +
-               'Preamp 2 gain: ' + str(P2Gain) + '\n' +
+               'Drain Preamp gain: ' + str(PDGain) + '\n' +
+               'Gate Preamp gain: ' + str(PGGain) + '\n' +
+               'Source Preamp gain: ' + str(PSGain) + '\n' +
+               'Hold Preamp gain: ' + str(PHGain) + '\n' +
                'Source Voltage: ' + str(VSource) + ' V' + '\n' +
                'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
                'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
@@ -97,7 +108,12 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
                'Scan direction: ' + ScanDir + '\n' +
                'Instrument set: ' + Instruments + '\n' +
-               'Ag/AgCl electrode on: ' + Gate + '\n \n'
+               'Source Voltage on: ' + SourceOut + '\n' +
+               'Hold Voltage on: ' + HoldOut + '\n' +
+               'Drain Current on: ' + Drain + '\n' +
+               'Ag/AgCl electrode on: ' + Gate + '\n' +
+               'Source Current on: ' + SourceCurrent + '\n' +
+               'Hold Current on: ' + HoldCurrent + '\n\n'
                )
 
 #---- Initialization of instruments
@@ -132,17 +148,18 @@ elif Instruments == 'Internal':
     daqout_H = MCC152Out(1)
     daqout_H.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Drain Current Measurement --------------
-    daqin_D = MCC128InSB(0)
+    daqin_D = MCC128InSB(0,DrainMode,DrainRange)
     daqin_D.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Gate Current Measurement --------------
-    daqin_G = MCC128InSS(1)
+    daqin_G = MCC128InSS(1,GateMode,GateRange)
     daqin_G.setOptions({"scaleFactor": 1})
-    # ---- MCC128 Input Port for Source Current Measurement --------------
-    daqin_S = MCC128InSS(4)
-    daqin_S.setOptions({"scaleFactor": 1})
-    # ---- MCC128 Input Port for Hold Current Measurement --------------
-    daqin_H = MCC128InSS(5)
-    daqin_H.setOptions({"scaleFactor": 1})
+    if SourceHoldCurrent == 'Active':
+        # ---- MCC128 Input Port for Source Current Measurement --------------
+        daqin_S = MCC128InSS(4,SourceMode,SourceRange)
+        daqin_S.setOptions({"scaleFactor": 1})
+        # ---- MCC128 Input Port for Hold Current Measurement --------------
+        daqin_H = MCC128InSS(5,HoldMode,HoldRange)
+        daqin_H.setOptions({"scaleFactor": 1})
 
 def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
     map = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,26,25,24,23,22,21,20,19,18,17,16,15,14])

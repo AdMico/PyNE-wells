@@ -19,7 +19,7 @@ TeensyPort = '/dev/ttyACM0' #Insert the Raspberry Pi port where your Teensy 4.1 
 ScanDir = 'Horizontal'
 
 # Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
-VSource = float(0.1) # Cannot exceed +/- 5V if using internal DAC
+VSource = float(1.0) # Cannot exceed +/- 5V if using internal DAC
 VGate = float(0.0) # Must be zero if set to internal
 VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
@@ -46,3 +46,7 @@ DrainGain = 'High' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
 GateGain = 'High' # 'Low is 10^3 V/A and 'High' is 10^4 V/A
 DrainCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
 GateCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
+DrainMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
+GateMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
+SourceMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
+HoldMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
