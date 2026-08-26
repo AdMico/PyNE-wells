@@ -135,7 +135,9 @@ class ConfigInterp:
 
     def PDRange():
         # Range Setting for Drain Current Preamplifier.
-        if Instruments == "Internal":  # Internal Instrument Only
+        if Instruments == "External":  # External Instrument Settings
+            PDRange = "BIP_10V"
+        elif Instruments == "Internal":  # Internal Instrument Only
             if DrainCirc == "TIA":
                 PDRange = "BIP_5V" # 5V range for TIA
             elif DrainCirc == "CSA":
@@ -144,7 +146,9 @@ class ConfigInterp:
 
     def PGRange():
         # Range Setting for Gate Current Preamplifier.
-        if Instruments == "Internal":  # Internal Instrument Only
+        if Instruments == "External":  # External Instrument Settings
+            PGRange = "BIP_10V"
+        elif Instruments == "Internal":  # Internal Instrument Only
             if GateCirc == "TIA":
                 PGRange = "BIP_5V" # 5V range for TIA
             elif GateCirc == "CSA":
@@ -153,12 +157,16 @@ class ConfigInterp:
 
     def PSRange():
         # Range Setting for Source Current Preamplifier.
-        if Instruments == "Internal":  # Internal Instrument Only
+        if Instruments == "External":  # External Instrument Settings
+            PSRange = "BIP_10V"
+        elif Instruments == "Internal":  # Internal Instrument Only
             PSRange = "BIP_1V" # 1V range for CSA
         return PSRange
 
     def PHRange():
         # Range Setting for Hold Current Preamplifier.
-        if Instruments == "Internal":  # Internal Instrument Only
+        if Instruments == "External":  # External Instrument Settings
+            PHRange = "BIP_10V"
+        elif Instruments == "Internal":  # Internal Instrument Only
             PHRange = "BIP_1V" # 1V range for CSA
         return PHRange

@@ -17,17 +17,14 @@ class MCC128InSS(Instrument.Instrument):
     defaultInput = "inputLevel"
     defaultOutput = "None"
 
-    def __init__(self,address,mode,range):
+    def __init__(self,address,range):
         super(MCC128InSS, self).__init__()
         self.port = address
         self.type ="MCC128"  #We can check each instrument for its type and react accordingly
         self.name = "MCC128"
         self.address=select_hat_device(HatIDs.MCC_128)
         self.hat=mcc128(self.address)
-        if mode == "SE":
-            input_mode = AnalogInputMode.SE
-        elif mode == "DIFF":
-            input_mode = AnalogInputMode.DIFF
+        input_mode = AnalogInputMode.SE
         if range == 'BIP_1V':
             input_range = AnalogInputRange.BIP_1V
         elif range == 'BIP_2V':

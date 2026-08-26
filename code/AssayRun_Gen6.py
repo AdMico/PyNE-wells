@@ -5,17 +5,14 @@ Brought to PyNE-wells v2.0.0 on Thu Apr 30 2026 by APM
 
 Main software for running assays.
 
-Adam's to do list follows -- Updated APM 28JUL26
-* Code up gate voltage and current monitoring properly.
+Adam's to do list follows -- Updated APM 26Aug26
 * Consider ability to functionally switch the gate and hold setup if VHold is always zero.
-* Fix the Ag/AgCl electrode information line in the log file.
 """
-from pigpio import PI_NOT_HCLK_GPIO
 
 from TeensyInterface_Gen6 import TeensyMUX
 from ConfigInterpreter_Gen6 import ConfigInterp
 import GlobalMeasID as ID
-from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent,DrainMode,GateMode,SourceMode,HoldMode
+from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent
 from SeabornInit import dataInit,dataReset
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
@@ -51,8 +48,8 @@ D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index
 dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList2,index=BitList)
 Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # Made a default for Gen 6 -- 09Aug26 APM
-Is = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # New for source current measurement for Gen 6 -- 12Aug26 APMVg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # Made a default for Gen 6 -- 09Aug26 APM
-Ih = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # Made a hold current measurement for Gen 6 -- 12Aug26 APM
+Is = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # New for source current measurement for Gen 6 -- 12Aug26 APM
+Ih = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList2,index=BitList) # New for hold current measurement for Gen 6 -- 12Aug26 APM
 RD = np.zeros(1459)
 SBStart = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
 SBEnd = np.zeros((nBits,nWords),dtype='float') # For use in determining time taken to obtain measurements from USB6216/MCC128
@@ -95,13 +92,6 @@ if not os.path.exists(dataPath):
 with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
     fLog.write('Start: '+str(datetime.now()) + '\n' +
                'Assay Number: ' + measurementName + '\n' +
-               'Drain Preamp gain: ' + str(PDGain) + '\n' +
-               'Gate Preamp gain: ' + str(PGGain) + '\n' +
-               'Source Preamp gain: ' + str(PSGain) + '\n' +
-               'Hold Preamp gain: ' + str(PHGain) + '\n' +
-               'Source Voltage: ' + str(VSource) + ' V' + '\n' +
-               'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
-               'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
                'ADC Sample Rate: ' + str(SR) + ' Hz' + '\n' +
                'ADC Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
@@ -109,18 +99,29 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Scan direction: ' + ScanDir + '\n' +
                'Instrument set: ' + Instruments + '\n' +
                'Source Voltage on: ' + SourceOut + '\n' +
+               'Source Voltage: ' + str(VSource) + ' V' + '\n' +
                'Hold Voltage on: ' + HoldOut + '\n' +
+               'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
                'Drain Current on: ' + Drain + '\n' +
                'Ag/AgCl electrode on: ' + Gate + '\n' +
+               'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
                'Source Current on: ' + SourceCurrent + '\n' +
-               'Hold Current on: ' + HoldCurrent + '\n\n'
+               'Hold Current on: ' + HoldCurrent + '\n' +
+               'Drain Preamp gain: ' + str(PDGain) + '\n' +
+               'Gate Preamp gain: ' + str(PGGain) + '\n' +
+               'Source Preamp gain: ' + str(PSGain) + '\n' +
+               'Hold Preamp gain: ' + str(PHGain) + '\n' +
+               'Drain Preamp range: ' + PDRange + '\n' +
+               'Gate Preamp range: ' + PGRange + '\n' +
+               'Source Preamp range: ' + PSRange + '\n' +
+               'Hold Preamp range: ' + PHRange + '\n\n'
                )
 
 #---- Initialization of instruments
-print ('Initialise instruments') ## Keep for diagnostics; Off from 17JAN24 APM
+print ('Initialise instruments') ## Keep for diagnostics
 # ---- Raspberry Pi --------------
 CtrlTy = TeensyMUX()
-CtrlTy.SysInit()  # Initialises the multiplexer for running a measurement (including setting which line is connected to AO0 and preamp)
+CtrlTy.SysInit()  # Initialises the multiplexer system for running a measurement
 #---- External Instrument Initialisation
 if Instruments == 'External':
     #---- NIDAQ Output Port for Source Voltage --------------
@@ -129,7 +130,7 @@ if Instruments == 'External':
     #---- NIDAQ Output Port for Hold Voltage --------------
     daqout_H = USB6216Out(1)
     daqout_H.setOptions({"feedBack":"Int","scaleFactor":1})
-    #---- NIDAQ Input Port for Drain Current running PairBurst on USB6216 --------------
+    #---- NIDAQ Input Port for Drain Current --------------
     daqin_D = USB6216InSB(0)
     daqin_D.setOptions({"scaleFactor":1})
     #---- Keithley 2401 or NIDAQ Input Port for Ag/AgCl electrode current measurement --------------
@@ -148,17 +149,17 @@ elif Instruments == 'Internal':
     daqout_H = MCC152Out(1)
     daqout_H.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Drain Current Measurement --------------
-    daqin_D = MCC128InSB(0,DrainMode,DrainRange)
+    daqin_D = MCC128InSB(0,DrainRange)
     daqin_D.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Gate Current Measurement --------------
-    daqin_G = MCC128InSS(1,GateMode,GateRange)
+    daqin_G = MCC128InSS(1,GateRange)
     daqin_G.setOptions({"scaleFactor": 1})
     if SourceHoldCurrent == 'Active':
         # ---- MCC128 Input Port for Source Current Measurement --------------
-        daqin_S = MCC128InSS(4,SourceMode,SourceRange)
+        daqin_S = MCC128InSS(4,SourceRange)
         daqin_S.setOptions({"scaleFactor": 1})
         # ---- MCC128 Input Port for Hold Current Measurement --------------
-        daqin_H = MCC128InSS(5,HoldMode,HoldRange)
+        daqin_H = MCC128InSS(5,HoldRange)
         daqin_H.setOptions({"scaleFactor": 1})
 
 def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
@@ -243,10 +244,10 @@ def stop(): # Operates mechanism to complete grab before ending program -- last 
 def end(): # Operates mechanism to end the program entirely
     with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'a') as fLog:
         fLog.write('End: ' + str(datetime.now()) + '\n')
-    daqout_S.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
-    daqout_H.goTo(0.0,delay=0.0)  # Run the source up to specified voltage
+    daqout_S.goTo(0.0,delay=0.0)  # Run the source line back to zero
+    daqout_H.goTo(0.0,delay=0.0)  # Run the hold line back to zero
     if GateModeExt == 'K2401':
-        daqin_G.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
+        daqin_G.goTo(0.0,delay=0.0)  # Run the gate line back to zero if using a K2401
     CtrlTy.SysReset()
     ID.increaseID()
 
@@ -258,8 +259,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
         fLog.write('Grab: '+str(nGrab+1)+' started: '+str(datetime.now())+'\n')
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set DAC Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
-    daqout_S.goTo(VSource,delay=0.0)  # Run the source up to specified voltage
-    daqout_H.goTo(VHold,delay=0.0)  # Run the source up to specified voltage
+    daqout_S.goTo(VSource,delay=0.0)  # Run the source line up to specified voltage
+    daqout_H.goTo(VHold,delay=0.0)  # Run the hold line up to specified voltage
     if (GateModeExt == 'K2401' and VGate != 0.0):
         daqin_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage if it's a Keithley and VGate is non-zero -- edited 09AUG26 APM
     RD[0]=nGrab+1
@@ -275,17 +276,14 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 #---- Grab device data
                 Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
-                Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens for V1.1.3 30Oct25 APM
+                Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                 Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
                 if GateModeExt == 'K2401':
                     AgCl = daqin_G.get('senseLevel')
                     Ig.iloc[i,j] = AgCl[0]
-                    Vg.iloc[i,j] = AgCl[1]
                 else: # Whether USB6216 or MCC128 it should still work
-                    AgCl = daqin_G.get('inputLevel')
-                    Ig.iloc[i,j] = AgCl[0]
-                    Vg.iloc[i,j] = 0.0
+                    Ig.iloc[i,j] = daqin_G.get('inputLevel')
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
                 if (Instruments == 'Internal' and SourceHoldCurrent = 'Active'):
                     Is.iloc[i,j] = daqin_S.get('inputLevel')
@@ -311,10 +309,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 if GateModeExt == 'K2401':
                     AgCl = daqin_G.get('senseLevel')
                     Ig.iloc[i,j] = AgCl[0]
-                    Vg.iloc[i,j] = AgCl[1]
                 else: # Whether USB6216 or MCC128 it should still work
                     Ig.iloc[i,j] = daqin_G.get('inputLevel')
-                    Vg.iloc[i,j] = 0.0
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
                 if (Instruments == 'Internal' and SourceHoldCurrent = 'Active'):
                     Is.iloc[i,j] = daqin_S.get('inputLevel')
@@ -341,9 +337,9 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList2[j]) + str(BitList[i]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
                 if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'): # Include Source and Hold Current measurements with Drain and Gate information.
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(Is.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Is.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
                 else: # Include Drain and Gate information only.
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
             #---- End of row timing
             SBEnd[i,j] = time.time()
             SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
@@ -359,7 +355,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     daqout_H.goTo(0.0,delay=0.0)
     # ---- Run Ag/AgCl electrode back to zero
     if (GateModeExt == 'K2401' and VGate != 0.0):
-        daqin_G.goTo(0.0,delay=0.0)  # Run the gate up to specified voltage
+        daqin_G.goTo(0.0,delay=0.0)
     # ---- Switch Multiplexer to off state.
     CtrlTy.SysReset()
     print('Update GUI')
@@ -391,9 +387,9 @@ def measLoop():
             with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList2[k]+BitList[i]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
                 if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
-                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])
+                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Is (A)','Ih (A)','timestamp'])
                 else:
-                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','Is (A)','Ih (A)','timestamp'])
+                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','timestamp'])
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
@@ -401,9 +397,9 @@ def measLoop():
         GrabEnd[i] = time.time()
         GrabTime[i] = GrabEnd[i] - GrabStart[i]
         GT = WaitAR - GrabTime[i]
-        print(f'WaitAR = {WaitAR:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
-        print(f'Grab Time = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
-        print(f'Pause = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
+        print(f'WaitAR = {WaitAR:.2f} s') ## Keep for diagnostics
+        print(f'Grab Time = {GrabTime[i]:.2f} s') ## Keep for diagnostics
+        print(f'Pause = {GT:.2f} s') ## Keep for diagnostics
         #---- check for grab-stop signal
         with open('stop.txt', 'r') as fStop:
             r = fStop.read()
@@ -423,10 +419,9 @@ def measLoop():
                    'with '+str(nGrab+1)+' of '+str(ItersAR)+' grabs completed.'+'\n \n'
                    )
     nRun += 1
-    print('Finish Set-up')  ## Keep for diagnostics; Off from 17JAN24 APM
+    print('Finish Set-up')  ## Keep for diagnostics
     # ---- Reset the switch box to defaults.
     CtrlTy.SysReset()
-    #root.quit() ## remove this line for the program to not quit at the end
 
 if __name__ == "__main__":
     global figL,figR,canvasL,canvasR
