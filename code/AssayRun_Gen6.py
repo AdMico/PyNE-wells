@@ -74,10 +74,10 @@ PDGain = ConfigInterp.PDGain()
 PGGain = ConfigInterp.PGGain()
 PSGain = ConfigInterp.PSGain()
 PHGain = ConfigInterp.PHGain()
-DrainRange = ConfigInterp.PDRange()
-GateRange = ConfigInterp.PGRange()
-SourceRange = ConfigInterp.PSRange()
-HoldRange = ConfigInterp.PHRange()
+PDRange = ConfigInterp.PDRange()
+PGRange = ConfigInterp.PGRange()
+PSRange = ConfigInterp.PSRange()
+PHRange = ConfigInterp.PHRange()
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
 with open('stop.txt', 'w') as fStop: # Initialise stop button
@@ -102,11 +102,11 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Source Voltage: ' + str(VSource) + ' V' + '\n' +
                'Hold Voltage on: ' + HoldOut + '\n' +
                'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
-               'Drain Current on: ' + Drain + '\n' +
-               'Ag/AgCl electrode on: ' + Gate + '\n' +
+               'Drain Current on: ' + DrainIn + '\n' +
+               'Ag/AgCl electrode on: ' + GateIn + '\n' +
                'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
-               'Source Current on: ' + SourceCurrent + '\n' +
-               'Hold Current on: ' + HoldCurrent + '\n' +
+               'Source Current on: ' + SourceIn + '\n' +
+               'Hold Current on: ' + HoldIn + '\n' +
                'Drain Preamp gain: ' + str(PDGain) + '\n' +
                'Gate Preamp gain: ' + str(PGGain) + '\n' +
                'Source Preamp gain: ' + str(PSGain) + '\n' +
@@ -149,17 +149,17 @@ elif Instruments == 'Internal':
     daqout_H = MCC152Out(1)
     daqout_H.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Drain Current Measurement --------------
-    daqin_D = MCC128InSB(0,DrainRange)
+    daqin_D = MCC128InSB(0,PDRange)
     daqin_D.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Gate Current Measurement --------------
-    daqin_G = MCC128InSS(1,GateRange)
+    daqin_G = MCC128InSS(1,PGRange)
     daqin_G.setOptions({"scaleFactor": 1})
     if SourceHoldCurrent == 'Active':
         # ---- MCC128 Input Port for Source Current Measurement --------------
-        daqin_S = MCC128InSS(4,SourceRange)
+        daqin_S = MCC128InSS(4,PSRange)
         daqin_S.setOptions({"scaleFactor": 1})
         # ---- MCC128 Input Port for Hold Current Measurement --------------
-        daqin_H = MCC128InSS(5,HoldRange)
+        daqin_H = MCC128InSS(5,PHRange)
         daqin_H.setOptions({"scaleFactor": 1})
 
 def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
@@ -276,7 +276,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 #---- Grab device data
                 Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
-                Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                Dt.iloc[i,j] = ((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                 Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
                 if GateModeExt == 'K2401':
@@ -285,7 +285,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 else: # Whether USB6216 or MCC128 it should still work
                     Ig.iloc[i,j] = daqin_G.get('inputLevel')
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
-                if (Instruments == 'Internal' and SourceHoldCurrent = 'Active'):
+                if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
                     Is.iloc[i,j] = daqin_S.get('inputLevel')
                     Ih.iloc[i,j] = daqin_H.get('inputLevel')
                 # ---- Set given device back to hold
@@ -303,7 +303,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 # ---- Grab device data
                 Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
-                Dt.iloc[i,j] = ((Drain[0]/(VSource*P1Gain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
+                Dt.iloc[i,j] = ((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
                 Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
                 if GateModeExt == 'K2401':
@@ -312,7 +312,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 else: # Whether USB6216 or MCC128 it should still work
                     Ig.iloc[i,j] = daqin_G.get('inputLevel')
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
-                if (Instruments == 'Internal' and SourceHoldCurrent = 'Active'):
+                if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
                     Is.iloc[i,j] = daqin_S.get('inputLevel')
                     Ih.iloc[i,j] = daqin_H.get('inputLevel')
                 # ---- Set given device back to hold

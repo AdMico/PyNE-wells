@@ -181,8 +181,8 @@ class TeensyMUX:
         Err = self.receive()
         return Err
 
-    def resetAllToHold(self): # Resets all 54 device relays to hold state -- APM 23JUL26
-        self.send('RXX')
+    def resetAllNodesToHold(self): # Resets all 54 device relays to hold state -- APM 23JUL26
+        self.send('RDX')
         Err = self.receive()
         return Err
 
@@ -239,16 +239,16 @@ class TeensyMUX:
             self.setWordsAsSource()
         elif ScanDir == 'Vertical':
             self.setBitsAsSource()
-        self.resetAllToHold()
+        self.resetAllNodesToHold()
 
     def SysReset(self):  # Runs a sequence to reset all the relays for next run -- APM 09SEP25
-        self.resetAllToHold()
+        self.resetAllNodesToHold()
 
     def SysSoftShutdown(self):  # Runs a sequence to setup for shutdown but leave MUXes powered -- APM 09SEP25
-        self.resetAllToHold()
+        self.resetAllNodesToHold()
 
     def SysHardShutdown(self):  # Runs a sequence to setup for shutdown including depowering the MUXes -- APM 09SEP25
-        self.resetAllToHold()
+        self.resetAllNodesToHold()
         self.setRelaysToOff()
 
     def WordRelayTest(self,bias,HoldTime):

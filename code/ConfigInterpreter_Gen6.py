@@ -6,7 +6,7 @@ Brought to PyNE-wells v2.0.0 on Sun Aug 09 2026 by APM
 This acts as an interpreter of the Config_Gen6.py file to supply additional parameters to AssayRun_Gen6.py
 """
 
-from Config_Gen6 import Instruments,DrainGain,GateGain,DrainCirc,GateCirc,VSource,VHold,GateModeExt,SR_Int,SR_Ext,SpC_Int,SpC_Ext,FemtoGateGain,FemtoDrainGain
+from Config_Gen6 import Instruments,DrainGain,GateGain,DrainCirc,GateCirc,VSource,VHold,GateModeExt,SR_Int,SR_Ext,SpC_Int,SpC_Ext,FemtoGateGain,FemtoDrainGain,SourceHoldCurrent
 
 class ConfigInterp:
 
