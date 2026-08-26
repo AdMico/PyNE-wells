@@ -39,7 +39,7 @@ class TeensyMUX:
         #
         # Control Relay Commands: 01 = K-O; 02 = K-P; 03 = K-S; 04 = K-D; 05 = K-H; 06 = K-G;
         # 07 = K-V1, K-X1, K-I5; 08 = K-V2, K-X2, K-I6; 09 = K-I1; 10 = K-I2, 11 = K-I3, 12 = K-I4
-        # A command sets to relay default, B command sets to relay non-default.
+        # D command sets to relay default, N command sets to relay non-default.
 
     def send(self,msg):
         msg = msg + '\n' #add newline to string
@@ -52,122 +52,122 @@ class TeensyMUX:
         return response
 
     def setWordsAsSource(self): # Sets words as source and bits as drain -- APM 23JUL26
-        self.send('B01')
+        self.send('N01')
         Err = self.receive()
         return Err
 
     def setBitsAsSource(self): # Sets bits as source and words as drain -- APM 23JUL26
-        self.send('A01')
+        self.send('D01')
         Err = self.receive()
         return Err
 
     def setRelaysToOff(self): # Connects +5V power line to ground, disables all relays -- APM 23JUL26
-        self.send('A02')
+        self.send('D02')
         Err = self.receive()
         return Err
 
     def setRelaysToOn(self): # Activates +5V power line, enables all relays -- APM 23JUL26
-        self.send('B02')
+        self.send('N02')
         Err = self.receive()
         return Err
 
     def setSourceInt(self): # Connects source to MCC152 AO0 -- APM 23JUL26
-        self.send('A03')
+        self.send('D03')
         Err = self.receive()
         return Err
 
     def setSourceExt(self): # Connects source to BNC -- APM 23JUL26
-        self.send('B03')
+        self.send('N03')
         Err = self.receive()
         return Err
 
     def setDrainInt(self): # Connects drain to MCC128 CH0H -- APM 23JUL26
-        self.send('A04')
+        self.send('D04')
         Err = self.receive()
         return Err
 
     def setDrainExt(self): # Connects drain to BNC -- APM 23JUL26
-        self.send('B04')
+        self.send('N04')
         Err = self.receive()
         return Err
 
     def setHoldInt(self): # Connects hold to MCC152 AO1 -- APM 23JUL26
-        self.send('A05')
+        self.send('D05')
         Err = self.receive()
         return Err
 
     def setHoldExt(self): # Connects hold to BNC -- APM 23JUL26
-        self.send('B05')
+        self.send('N05')
         Err = self.receive()
         return Err
 
     def setGateInt(self): # Connects gate to MCC128 CH1H -- APM 23JUL26
-        self.send('A06')
+        self.send('D06')
         Err = self.receive()
         return Err
 
     def setGateExt(self): # Connects gate to BNC -- APM 23JUL26
-        self.send('B06')
+        self.send('N06')
         Err = self.receive()
         return Err
 
     def setPosSource(self): # Sets Source to positive voltage range -- APM 28JUL26
-        self.send('A07')
+        self.send('D07')
         Err = self.receive()
         return Err
 
     def setPosHold(self): # Sets Hold to positive voltage range -- APM 28JUL26
-        self.send('A08')
+        self.send('D08')
         Err = self.receive()
         return Err
 
     def setNegSource(self): # Sets Source to negative voltage range -- APM 28JUL26
-        self.send('B07')
+        self.send('N07')
         Err = self.receive()
         return Err
 
     def setNegHold(self): # Sets Hold to negative voltage range -- APM 28JUL26
-        self.send('B08')
+        self.send('N08')
         Err = self.receive()
         return Err
 
     def setDrainLowGain(self): # Sets drain to 10^3 V/A gain -- APM 23JUL26
-        self.send('A09')
+        self.send('D09')
         Err = self.receive()
         return Err
 
     def setDrainHighGain(self): # Sets drain to 10^4 V/A gain -- APM 23JUL26
-        self.send('B09')
+        self.send('N09')
         Err = self.receive()
         return Err
 
     def setGateLowGain(self): # Sets gate to 10^3 V/A gain -- APM 23JUL26
-        self.send('A10')
+        self.send('D10')
         Err = self.receive()
         return Err
 
     def setGateHighGain(self): # Sets gate to 10^4 V/A gain -- APM 23JUL26
-        self.send('B10')
+        self.send('N10')
         Err = self.receive()
         return Err
 
     def setDrainToTIA(self): # Routes the drain through the TIA circuit -- APM 23JUL26
-        self.send('A11')
+        self.send('D11')
         Err = self.receive()
         return Err
 
     def setDrainToCSA(self): # Routes the drain through the CSA circuit -- APM 23JUL26
-        self.send('B11')
+        self.send('N11')
         Err = self.receive()
         return Err
 
     def setGateToTIA(self): # Routes the gate through the TIA circuit -- APM 23JUL26
-        self.send('A12')
+        self.send('D12')
         Err = self.receive()
         return Err
 
     def setGateToCSA(self): # Routes the gate through the CSA circuit -- APM 23JUL26
-        self.send('B12')
+        self.send('N12')
         Err = self.receive()
         return Err
 
@@ -181,8 +181,13 @@ class TeensyMUX:
         Err = self.receive()
         return Err
 
-    def resetAllNodesToHold(self): # Resets all 54 device relays to hold state -- APM 23JUL26
+    def resetAllNodesToHold(self): # Resets all 54 device relays to hold state -- APM 26AUG26
         self.send('RDX')
+        Err = self.receive()
+        return Err
+
+    def resetAllControlsToDefault(self): # Resets all control relays to their default state -- APM 26AUG26
+        self.send('RCX')
         Err = self.receive()
         return Err
 
@@ -194,6 +199,18 @@ class TeensyMUX:
 
     def nodeToHold(self,word,bit): # Sets a given node to the Hold state -- APM 27JUL26
         cmd = 'H' + self.TeensyWordList[word] + self.TeensyBitList[bit]
+        self.send(cmd)
+        Err = self.receive()
+        return Err
+
+    def wordShift(self,hold,meas): # Shifts measure from one word line to another -- APM 26AUG26
+        cmd = 'W' + self.TeensyWordList[hold] + self.TeensyWordList[meas]
+        self.send(cmd)
+        Err = self.receive()
+        return Err
+
+    def bitShift(self,hold,meas): # Shifts measure from one bit line to another -- APM 26AUG26
+        cmd = 'B' + self.TeensyBitList[hold] + self.TeensyBitList[meas]
         self.send(cmd)
         Err = self.receive()
         return Err
