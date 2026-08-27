@@ -14,11 +14,12 @@ This informs various parts of the software about aspects of your bench setup. Ed
 Instruments = 'External'
 
 # Information about which Raspberry Pi USB port you are using for the Teensy Serial Connection for switching relays
-TeensyPort = '/dev/ttyACM0' #Insert the Raspberry Pi port where your Teensy 4.1 is connected here
+#TeensyPort = '/dev/ttyACM0' # Insert the Raspberry Pi port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
+TeensyPort = 'COM8' # Insert the PC port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
 
 # Scan Direction for the array: 'Horizontal' scans along bitlines, which are connected to drain; 'Vertical' scans along wordlines, which are connected to drain
-#ScanDir = 'Horizontal'
-ScanDir = 'Vertical'
+ScanDir = 'Horizontal'
+#ScanDir = 'Vertical'
 
 # Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
 VSource = float(1.0) # Cannot exceed +/- 5V if using internal DAC
@@ -27,7 +28,7 @@ VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
 # AssayRun Settings
 ItersAR = int(5) # Number of iterations of device sampling to run before program ends
-WaitAR = float(30) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+WaitAR = float(90) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- Added 30Oct25 APM
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- Added 11Sep25 APM

@@ -47,7 +47,7 @@ class MCC128InSS(Instrument.Instrument):
     @Instrument.addOptionGetter("inputLevel")  ## This is the old single channel singleshot read routine (preserved)
     def _getInputLevel(self):
         tempData = self.hat.a_in_read(self.port)
-        measInput = float(tempData)/self.scaleFactor        
+        measInput = float(tempData)/self.scaleFactor
         return measInput
 
     @Instrument.addOptionGetter("scaleFactor")

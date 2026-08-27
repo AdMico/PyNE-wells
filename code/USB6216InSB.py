@@ -12,6 +12,8 @@ Pulls NIDAQ information (e.g., sample rate and samples per channel) from Config.
 """
 
 import Instrument
+import numpy as np
+import pandas as pd
 import nidaqmx as nmx
 from nidaqmx import constants
 from nidaqmx import stream_readers
@@ -56,18 +58,20 @@ class USB6216InSB(Instrument.Instrument):
     @Instrument.addOptionGetter("name")
     def _getName(self):
         return self.name
-        
-    @Instrument.addOptionGetter("inputLevel")  ## This is the new burst read routine but single channel
+
+    @Instrument.addOptionGetter("inputLevel")  ## This is the new burst read routine but single channel - Updated for Gen 5 APM 16Oct25
     def _getInputLevel(self):
         with nmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(self.port)
-            task.ai_channels.cfg_samp_clk_timing(rate=self.SR, sample_mode=constants.AcquistionType.CONTINUOUS, samps_per_chan=self.SpC)
+            task.timing.cfg_samp_clk_timing(rate=self.SR,sample_mode=constants.AcquisitionType.CONTINUOUS,samps_per_chan=self.SpC)
             reader = stream_readers.AnalogSingleChannelReader(task.in_stream)
-            buffer = np.zeros((1,self.SpC), dtype=np.float64)
-            reader.read_many_sample(buffer, self.SpC, timeout=constants.WAIT_INFINITELY)
+            buffer = np.zeros((self.SpC),dtype=np.float64)
+            reader.read_many_sample(buffer,self.SpC,timeout=constants.WAIT_INFINITELY)
             data = buffer.T.astype(np.float64)/self.scaleFactor
-            measInput = data.mean() ## Current version only returns the average, we can add error return later if needed APM 19DEC23
-        return measInput
+            D = data[:]
+            Dav = D.mean()
+            Derr = D.std()
+        return [Dav, Derr]
 
     @Instrument.addOptionGetter("scaleFactor")
     def _getScaleFactor(self):
@@ -76,7 +80,15 @@ class USB6216InSB(Instrument.Instrument):
     @Instrument.addOptionSetter("scaleFactor")
     def _setScaleFactor(self,scaleFactor):
         self.scaleFactor = scaleFactor
-            
+
+    @Instrument.addOptionGetter("SpC")
+    def _getSpC(self):
+        return self.SpC
+
+    @Instrument.addOptionSetter("SpC")
+    def _setSpC(self, SpC):
+        self.SpC = SpC
+
     def goTo(self,target,stepsize=0.01,delay=0.0):
         pass
             

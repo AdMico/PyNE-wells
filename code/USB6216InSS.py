@@ -54,7 +54,7 @@ class USB6216InSS(Instrument.Instrument):
         with nmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(self.port)
             tempData = task.read()
-        measInput = float(tempData)/self.scaleFactor        
+        measInput = float(tempData)/self.scaleFactor
         return measInput
 
     @Instrument.addOptionGetter("scaleFactor")
