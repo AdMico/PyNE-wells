@@ -96,9 +96,9 @@ class ConfigInterp:
         elif Instruments == "Internal":  # Internal Instrument Settings
             if DrainCirc == "TIA":
                 if DrainGain == "Low":
-                    PDGain = -float(1e3) # Negative to correct for TIA op-amp behaviour
+                    PDGain = float(1e3) # Negative to correct for TIA op-amp behaviour
                 elif DrainGain == "High":
-                    PDGain = -float(1e4) # Negative to correct for TIA op-amp behaviour
+                    PDGain = float(1e4) # Negative to correct for TIA op-amp behaviour
             elif DrainCirc == "CSA":
                 PDGain = float(1e2) # Gain from INA240A3
         return PDGain
@@ -110,9 +110,9 @@ class ConfigInterp:
         elif Instruments == "Internal":  # Internal Instrument Settings
             if GateCirc == "TIA":
                 if GateGain == "Low":
-                    PGGain = -float(1e3) # Negative to correct for TIA op-amp behaviour
+                    PGGain = float(1e3) # Negative to correct for TIA op-amp behaviour
                 elif GateGain == "High":
-                    PGGain = -float(1e4) # Negative to correct for TIA op-amp behaviour
+                    PGGain = float(1e4) # Negative to correct for TIA op-amp behaviour
             elif GateCirc == "CSA":
                 PGGain = float(1e2) # Gain from INA240A3
         return PGGain

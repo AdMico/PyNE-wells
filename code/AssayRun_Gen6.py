@@ -277,6 +277,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 #---- Grab device data
                 Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
+                print (i,j,Drain[0],Drain[1],VSource,PDGain)
+                time.sleep(5)
                 Dt.iloc[i,j] = ((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                 Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM

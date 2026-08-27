@@ -8,14 +8,14 @@ This informs various parts of the software about aspects of your bench setup. Ed
 
 ## IMPORTANT -- YOU NEED TO SET TeensyPort CORRECTLY BEFORE YOU FIRST USE THE SOFTWARE to avoid having the relay switching fail -- see main README.md file
 ## IMPORTANT -- I've designed the software for two different instrument configurations: External and Internal
-## 'External' runs with the Gen 5 instrument pack (K2401 in source, hold and gate, preamp to NIDAQ on drain)
-## 'Internal' runs with the Gen 6 instrument pack (everything via the MCC128/152 DAQHAT system)
-#Instruments = 'Internal'
-Instruments = 'External'
+## 'External' runs with the Gen 5 instrument pack (K2401 in source, hold and gate, preamp to NIDAQ on drain) -- Needs to be run on a Windows PC with both the teensy and the NI-DAQ connected to that PC.
+## 'Internal' runs with the Gen 6 instrument pack (everything via the MCC128/152 DAQHAT system) -- Needs to be run on a Raspberry Pi with the teensy connected to the Raspberry Pi
+Instruments = 'Internal'
+#Instruments = 'External'
 
 # Information about which Raspberry Pi USB port you are using for the Teensy Serial Connection for switching relays
-#TeensyPort = '/dev/ttyACM0' # Insert the Raspberry Pi port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
-TeensyPort = 'COM8' # Insert the PC port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
+TeensyPort = '/dev/ttyACM0' # Internal only -- Insert the Raspberry Pi port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
+#TeensyPort = 'COM8' # External only -- Insert the PC port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
 
 # Scan Direction for the array: 'Horizontal' scans along bitlines, which are connected to drain; 'Vertical' scans along wordlines, which are connected to drain
 ScanDir = 'Horizontal'
@@ -28,24 +28,24 @@ VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
 # AssayRun Settings
 ItersAR = int(5) # Number of iterations of device sampling to run before program ends
-WaitAR = float(90) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+WaitAR = float(30) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- Added 30Oct25 APM
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- Added 11Sep25 APM
 PlotTwoMode = 'First' # Two options 'First' makes second Seaborn panel in Gen 5 difference to start, 'Last'makes difference to last grab.
 
 # External Instrument Settings
-SR_Ext = float(4e5)  # Sample Rate in samples/second. 4e5 is maximum for single channel, 2e5 is maximum for pairburst.
+SR_Ext = float(4e5)  # Sample Rate in samples/second. 4e5 is maximum for single channel.
 SpC_Ext = int(1e3)  # Samples per Channel per measurement -- strongly influences speed
 GateModeExt = 'USB6216' # Two options 'USB6216' for default setup (Ag/AgCl electrode on AO1 of USB6216) and 'K2401' for using the Keithley 2401 instead -- 09Aug26 APM
 FemtoDrainGain = float(1e4) # Gain setting on Preamp 1 for the drain circuit to USB6216/ai0.
 FemtoGateGain = float(1e4) # Gain setting on Preamp 2 for the gate circuit to USB6216/ai1 (virtual ground).
 
 # Internal Instrument Settings
-SR_Int = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel, 5e4 is maximum for pairburst.
-SpC_Int = int(1e2)  # Samples per Channel per measurement -- strongly influences speed
+SR_Int = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel.
+SpC_Int = int(1e3)  # Samples per Channel per measurement -- strongly influences speed
 SourceHoldCurrent = 'Active' # 'Active' will measure source and hold currents, set to 'Inactive' to not do this.
-DrainGain = 'High' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
-GateGain = 'High' # 'Low is 10^3 V/A and 'High' is 10^4 V/A
-DrainCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
-GateCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
+DrainGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
+GateGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
+DrainCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
+GateCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
