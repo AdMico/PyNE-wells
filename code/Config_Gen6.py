@@ -10,13 +10,15 @@ This informs various parts of the software about aspects of your bench setup. Ed
 ## IMPORTANT -- I've designed the software for two different instrument configurations: External and Internal
 ## 'External' runs with the Gen 5 instrument pack (K2401 in source, hold and gate, preamp to NIDAQ on drain)
 ## 'Internal' runs with the Gen 6 instrument pack (everything via the MCC128/152 DAQHAT system)
-Instruments = 'Internal'
+#Instruments = 'Internal'
+Instruments = 'External'
 
 # Information about which Raspberry Pi USB port you are using for the Teensy Serial Connection for switching relays
 TeensyPort = '/dev/ttyACM0' #Insert the Raspberry Pi port where your Teensy 4.1 is connected here
 
 # Scan Direction for the array: 'Horizontal' scans along bitlines, which are connected to drain; 'Vertical' scans along wordlines, which are connected to drain
-ScanDir = 'Horizontal'
+#ScanDir = 'Horizontal'
+ScanDir = 'Vertical'
 
 # Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
 VSource = float(1.0) # Cannot exceed +/- 5V if using internal DAC
@@ -46,7 +48,3 @@ DrainGain = 'High' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
 GateGain = 'High' # 'Low is 10^3 V/A and 'High' is 10^4 V/A
 DrainCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
 GateCirc = 'CSA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
-DrainMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
-GateMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
-SourceMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128
-HoldMode = 'SE' # 'SE' uses single-ended mode on MCC128; 'DIFF' uses differential mode on MCC128

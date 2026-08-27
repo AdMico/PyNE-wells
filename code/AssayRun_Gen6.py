@@ -266,13 +266,17 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     RD[0]=nGrab+1
     print('Measuring...')
     if ScanDir == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
+        Err = CtrlTy.askForActiveNode()
+        print (Err)
         for i in range(nBits):
             for j in range(nWords):
                 k = mapper(j)
+                print('Measuring: ',WordList[k],BitList[i]) ## Keep for diagnostics; On from 26AUG26 APM
                 if (i == 0 and j == 0): # If this is the first node, then switch that node to measure
+                    print('turn on',k+1,i+1)
                     Err = CtrlTy.nodeToMeasure(k+1,i+1)
                     print (Err)
-#                print('Measuring: ',WordList[k],BitList[i]) ## Keep for diagnostics; On from 16Oct25 APM
+                    print ('finish turn on')
                 # ---- Set given device to measure
                 SBStart[i,j] = time.time()
                 #---- Grab device data
@@ -290,30 +294,35 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
                     Is.iloc[i,j] = daqin_S.get('inputLevel')
                     Ih.iloc[i,j] = daqin_H.get('inputLevel')
+                time.sleep(5)  # Added for diagnostics 26AUG26
                 if (j == (nWords-1)): # if the end of the bit line then
                     if (i == (nBits-1)): # check if this is the last bit line
                         Err = CtrlTy.nodeToHold(k+1,i+1) # Set node back to hold because that's the end of the array
                         print(Err)
                     else:
-                        Err = CtrlTy.wordShift(K+1,1) # Shift the word line back to the first row
+                        Err = CtrlTy.wordShift(k+1,1) # Shift the word line back to the first row
                         print(Err)
                         Err = CtrlTy.bitShift(i+1,i+2) # Shift to the next bit line
                         print(Err)
                 else: # if this isn't the end of the bit line
                     kNext = mapper(j+1) # Work out the next word line, bearing in mind wordline mapping
-                    Err = CtrlTy.wordShift(K+1,kNext) # Shift to next word line
+                    print(k+1,kNext+1)
+                    Err = CtrlTy.wordShift(k+1,kNext+1) # Shift to next word line
                     print (Err)
                 if GuiUpdateMode == 'point':  # Update the GUI after each device in the array (n.b. much much slower)
                     updateGUI()
-                time.sleep(1) # Added for diagnostics 26AUG26
     elif ScanDir == 'Vertical': # implements scan along wordlines starting from A
+        Err = CtrlTy.askForActiveNode()
+        print(Err)
         for j in range(nWords):
             for i in range(nBits):
                 k = mapper(j)
+                print('Measuring: ', WordList[k], BitList[i])  ## Keep for diagnostics; On from 27Aug26 APM
                 if (i == 0 and j == 0): # If this is the first node, then switch that node to measure
+                    print('turn on',k+1,i+1)
                     Err = CtrlTy.nodeToMeasure(k+1,i+1)
-                    print (Err)
-#                print('Measuring: ',WordList[k],BitList[i])  ## Keep for diagnostics; On from 16Oct25 APM
+                    print(Err)
+                    print('finish turn on')
                 SBStart[i,j] = time.time()
                 # ---- Grab device data
                 Drain = daqin_D.get('inputLevel')
@@ -330,6 +339,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
                     Is.iloc[i,j] = daqin_S.get('inputLevel')
                     Ih.iloc[i,j] = daqin_H.get('inputLevel')
+                time.sleep(5)  # Added for diagnostics 26AUG26
                 if (i == (nBits-1)): # if the end of the word line then
                     if (j == (nWords-1)): # check if this is the last word line
                         Err = CtrlTy.nodeToHold(k+1,i+1) # Set node back to hold because that's the end of the array
@@ -338,7 +348,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                         Err = CtrlTy.bitShift(i+1,1) # Shift the bit line back to the first row
                         print(Err)
                         kNext = mapper(j+1)  # Work out the next word line, bearing in mind wordline mapping
-                        Err = CtrlTy.wordShift(k+1,kNext) # Shift to the next word line
+                        print(k+1,kNext+1)
+                        Err = CtrlTy.wordShift(k+1,kNext+1) # Shift to the next word line
                         print(Err)
                 else: # if this isn't the end of the word line
                     Err = CtrlTy.bitShift(i+1,i+2) # Shift to next word line

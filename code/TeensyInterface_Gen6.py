@@ -191,6 +191,11 @@ class TeensyMUX:
         Err = self.receive()
         return Err
 
+    def askForActiveNode(self): # Asks Teensy for the active node -- APM 27AUG26
+        self.send('ACT')
+        Err = self.receive()
+        return Err
+
     def nodeToMeasure(self,word,bit): # Sets a given node to the Measure state -- APM 27JUL26
         cmd = 'M' + self.TeensyWordList[word] + self.TeensyBitList[bit]
         self.send(cmd)
@@ -343,18 +348,27 @@ class TeensyMUX:
 if __name__ == "__main__": # execute only if this script is run, not when it's being imported
     my_teensy = TeensyMUX()
     my_teensy.SysInit() # Running as main will initialise system -- APM 09SEP25
-    my_teensy.testRelaysFast()
-#    my_teensy.setWordsAsSource()
-#    my_teensy.setDrainToCSA()
-#    my_teensy.setGateToCSA()
-#    my_teensy.setDrainHighGain()
-#    my_teensy.setGateHighGain()
-#    my_teensy.setNegSource()
-#    my_teensy.setPosHold()
-#    my_teensy.nodeToMeasure(2,2)
+    Err = my_teensy.askForActiveNode()
+    print(Err)
+    Err = my_teensy.nodeToMeasure(1,1)
+    print(Err)
+    Err = my_teensy.askForActiveNode()
+    print(Err)
+    Err = my_teensy.wordShift(1,2)
+    print(Err)
+    Err = my_teensy.askForActiveNode()
+    print(Err)
+    Err = my_teensy.bitShift(1,2)
+    print(Err)
+    Err = my_teensy.askForActiveNode()
+    print(Err)
+    Err = my_teensy.nodeToHold(2,2)
+    print(Err)
+    Err = my_teensy.askForActiveNode()
+    print(Err)
+#    my_teensy.testRelaysFast()
 #    my_teensy.WordRelayTest('S',1.5)
 #    my_teensy.BitRelayTest('D',1.5)
 #    my_teensy.SysTestSingle(3,3,10) # Will connect to device A1 for 10 sec -- APM 10SEP25
-#    my_teensy.SysTest4x4(20) # Runs a test using the 4x4 board -- APM 30SEP25
 #    my_teensy.SysTestFull(0.1) # Will connect to each device for 0.1 sec -- APM 10SEP25
     my_teensy.SysReset() # Runs a reset -- APM 10SEP25
