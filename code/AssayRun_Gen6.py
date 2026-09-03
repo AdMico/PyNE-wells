@@ -12,7 +12,7 @@ Adam's to do list follows -- Updated APM 26Aug26
 from TeensyInterface_Gen6 import TeensyMUX
 from ConfigInterpreter_Gen6 import ConfigInterp
 import GlobalMeasID as ID
-from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent
+from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent,DrainType,Operation
 from SeabornInit import dataInit,dataReset
 from USB6216Out import USB6216Out
 from USB6216InSB import USB6216InSB
@@ -149,8 +149,12 @@ elif Instruments == 'Internal':
     daqout_H = MCC152Out(1)
     daqout_H.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Drain Current Measurement --------------
-    daqin_D = MCC128InSB(0,PDRange)
-    daqin_D.setOptions({"scaleFactor": 1})
+    if DrainType == 'Burst':
+        daqin_D = MCC128InSB(0,PDRange)
+        daqin_D.setOptions({"scaleFactor": 1})
+    elif DrainType == 'Single':
+        daqin_D = MCC128InSS(0,PDRange)
+        daqin_D.setOptions({"scaleFactor": 1})
     # ---- MCC128 Input Port for Gate Current Measurement --------------
     daqin_G = MCC128InSS(1,PGRange)
     daqin_G.setOptions({"scaleFactor": 1})
@@ -259,8 +263,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
         fLog.write('Grab: '+str(nGrab+1)+' started: '+str(datetime.now())+'\n')
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set DAC Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
-    daqout_S.goTo(VSource,delay=0.0)  # Run the source line up to specified voltage
-    daqout_H.goTo(VHold,delay=0.0)  # Run the hold line up to specified voltage
+    daqout_S.goTo(abs(VSource),delay=0.0)  # Run the source line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
+    daqout_H.goTo(abs(VHold),delay=0.0)  # Run the hold line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
     if (GateModeExt == 'K2401' and VGate != 0.0):
         daqin_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage if it's a Keithley and VGate is non-zero -- edited 09AUG26 APM
     RD[0]=nGrab+1
@@ -277,10 +281,18 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 #---- Grab device data
                 Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
-                print (i,j,Drain[0],Drain[1],VSource,PDGain)
-                time.sleep(5)
-                Dt.iloc[i,j] = ((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
-                Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
+                if Operation == 'Verbose':
+                    if DrainType == 'Burst':
+                        print (i,j,Drain[0],Drain[1],VSource,PDGain)
+                    elif DrainType == 'Single':
+                        print(i, j, Drain, VSource, PDGain)
+                    time.sleep(10)
+                if DrainType == 'Burst':
+                    Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                    Dterr.iloc[i,j] = abs((Drain[1]/Drain[0])*Dt.iloc[i,j])
+                elif DrainType == 'Single':
+                    Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                    Dterr.iloc[i,j] = 0.0
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
                 if GateModeExt == 'K2401':
                     AgCl = daqin_G.get('senseLevel')
@@ -313,8 +325,18 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 # ---- Grab device data
                 Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
-                Dt.iloc[i,j] = ((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
-                Dterr.iloc[i,j] = (Drain[1]/Drain[0])*Dt.iloc[i,j]
+                if Operation == 'Verbose':
+                    if DrainType == 'Burst':
+                        print (i,j,Drain[0],Drain[1],VSource,PDGain)
+                    elif DrainType == 'Single':
+                        print(i, j, Drain, VSource, PDGain)
+                    time.sleep(10)
+                if DrainType == 'Burst':
+                    Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
+                    Dterr.iloc[i,j] = abs((Drain[1]/Drain[0])*Dt.iloc[i,j])
+                elif DrainType == 'Single':
+                    Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
+                    Dterr.iloc[i, j] = 0.0
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
                 if GateModeExt == 'K2401':
                     AgCl = daqin_G.get('senseLevel')

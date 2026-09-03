@@ -18,11 +18,11 @@ TeensyPort = '/dev/ttyACM0' # Internal only -- Insert the Raspberry Pi port wher
 #TeensyPort = 'COM8' # External only -- Insert the PC port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
 
 # Scan Direction for the array: 'Horizontal' scans along bitlines, which are connected to drain; 'Vertical' scans along wordlines, which are connected to drain
-ScanDir = 'Horizontal'
-#ScanDir = 'Vertical'
+#ScanDir = 'Horizontal'
+ScanDir = 'Vertical'
 
 # Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
-VSource = float(1.0) # Cannot exceed +/- 5V if using internal DAC
+VSource = float(-1.0) # Cannot exceed +/- 5V if using internal DAC
 VGate = float(0.0) # Must be zero if set to internal
 VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
@@ -49,3 +49,5 @@ DrainGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
 GateGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
 DrainCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
 GateCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
+DrainType = 'Single' # 'Single' uses the MCC128SS.py for the drain; 'Burst' uses the MCC128SB.py for the drain
+Operation = 'Silent' # 'Verbose' spits out values at 10s pause; 'Silent' runs the code at full speed

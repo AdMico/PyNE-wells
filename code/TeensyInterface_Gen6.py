@@ -241,13 +241,13 @@ class TeensyMUX:
             self.setPosHold()
         elif HoldPol == 'Negative':
             self.setNegHold()
-        if DrainGain == 'low':
+        if DrainGain == 'Low':
             self.setDrainLowGain()
-        elif DrainGain == 'high':
+        elif DrainGain == 'High':
             self.setDrainHighGain()
-        if GateGain == 'low':
+        if GateGain == 'Low':
             self.setGateLowGain()
-        elif GateGain == 'high':
+        elif GateGain == 'High':
             self.setGateHighGain()
         if DrainCirc == 'TIA':
             self.setDrainToTIA()
