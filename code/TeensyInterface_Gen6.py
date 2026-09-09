@@ -7,7 +7,7 @@ This class sets up the Teensy to be controlled remotely. The truth table is now 
 This code mostly just handles the serial interface from the Raspberry Pi to the Teensy in the Gen 6 boxes.
 """
 
-from Config_Gen6 import Instruments,ScanDir,DrainGain,GateGain,DrainCirc,GateCirc,TeensyPort
+from Config_Gen6 import DrainInst,SourceInst,HoldInst,GateInst,ScanDir,DrainGain,GateGain,DrainCirc,GateCirc,TeensyPort
 from ConfigInterpreter_Gen6 import ConfigInterp
 import serial
 import time
@@ -222,15 +222,21 @@ class TeensyMUX:
 
     def SysInit(self):  # Runs a sequence to initialise all the relays at start -- APM 23JUL26
         self.setRelaysToOn()
-        if Instruments == 'Internal':
+        if SourceInst == 'Internal':
             self.setSourceInt()
-            self.setDrainInt()
-            self.setHoldInt()
-            self.setGateInt()
-        elif Instruments == 'External':
+        elif SourceInst == 'External':
             self.setSourceExt()
+        if DrainInst == 'Internal':
+            self.setDrainInt()
+        elif DrainInst == 'External':
             self.setDrainExt()
+        if HoldInst == 'Internal':
+            self.setHoldInt()
+        elif HoldInst == 'External':
             self.setHoldExt()
+        if GateInst == 'Internal':
+            self.setGateInt()
+        elif GateInst == 'External':
             self.setGateExt()
         SourcePol, HoldPol = ConfigInterp.Polarities()
         if SourcePol == 'Positive':

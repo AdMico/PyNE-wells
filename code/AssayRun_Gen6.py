@@ -12,11 +12,9 @@ Adam's to do list follows -- Updated APM 26Aug26
 from TeensyInterface_Gen6 import TeensyMUX
 from ConfigInterpreter_Gen6 import ConfigInterp
 import GlobalMeasID as ID
-from Config_Gen6 import Instruments,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,GateModeExt,ScanDir,PlotTwoMode,SourceHoldCurrent,DrainType,Operation
+from Config_Gen6 import SourceInst,DrainInst,HoldInst,GateInst,VSource,VGate,VHold,ItersAR,WaitAR,basePath,GuiUpdateMode,DrainExt,GateExt,ScanDir
+from Config_Gen6 import PlotTwoMode,SourceCurrMode,HoldCurrMode,DrainType,Operation
 from SeabornInit import dataInit,dataReset
-from USB6216Out import USB6216Out
-from USB6216InSB import USB6216InSB
-from USB6216InSS import USB6216InSS
 from Keithley2401 import Keithley2401
 from MCC152Out import MCC152Out
 from MCC128InSB import MCC128InSB
@@ -97,12 +95,15 @@ with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
                'Number of Grabs: ' + str(ItersAR) + '\n' +
                'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
                'Scan direction: ' + ScanDir + '\n' +
-               'Instrument set: ' + Instruments + '\n' +
+               'Source Instrument Mode: ' + SourceInst + '\n' +
                'Source Voltage on: ' + SourceOut + '\n' +
                'Source Voltage: ' + str(VSource) + ' V' + '\n' +
+               'Hold Instrument Mode: ' + HoldInst + '\n' +
                'Hold Voltage on: ' + HoldOut + '\n' +
                'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
+               'Drain Instrument Mode: ' + DrainInst + '\n' +
                'Drain Current on: ' + DrainIn + '\n' +
+               'Ag/AgCl Instrument Mode: ' + GateInst + '\n' +
                'Ag/AgCl electrode on: ' + GateIn + '\n' +
                'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
                'Source Current on: ' + SourceIn + '\n' +
@@ -122,49 +123,66 @@ print ('Initialise instruments') ## Keep for diagnostics
 # ---- Raspberry Pi --------------
 CtrlTy = TeensyMUX()
 CtrlTy.SysInit()  # Initialises the multiplexer system for running a measurement
-#---- External Instrument Initialisation
-if Instruments == 'External':
-    #---- NIDAQ Output Port for Source Voltage --------------
-    daqout_S = USB6216Out(0)
-    daqout_S.setOptions({"feedBack":"Int","scaleFactor":1})
-    #---- NIDAQ Output Port for Hold Voltage --------------
-    daqout_H = USB6216Out(1)
-    daqout_H.setOptions({"feedBack":"Int","scaleFactor":1})
-    #---- NIDAQ Input Port for Drain Current --------------
-    daqin_D = USB6216InSB(0)
-    daqin_D.setOptions({"scaleFactor":1})
-    #---- Keithley 2401 or NIDAQ Input Port for Ag/AgCl electrode current measurement --------------
-    if GateModeExt == 'K2401':
-        daqin_G = Keithley2401(27)
-        daqin_G.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
-    elif GateModeExt == 'USB6216':
-        daqin_G = USB6216InSS(1)
-        daqin_G.setOptions({"scaleFactor": 1})
-#---- Internal Instrument Initialisation
-elif Instruments == 'Internal':
+#---- Source instrument Initialisation
+if SourceInst == 'External':
+    # ---- Keithley2401 for Source Voltage --------------
+    daqout_S = Keithley2401(01)
+    daqout_S.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    if SourceCurrMode == "Active":
+        daqin_S = Keithley2401(01)
+        daqin_S.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+elif SourceInst == 'Internal':
     # ---- MCC152 Output Port for Source Voltage --------------
     daqout_S = MCC152Out(0)
-    daqout_S.setOptions({"scaleFactor": 1})
-    # ---- MCC152 Output Port for Hold Voltage --------------
-    daqout_H = MCC152Out(1)
-    daqout_H.setOptions({"scaleFactor": 1})
-    # ---- MCC128 Input Port for Drain Current Measurement --------------
-    if DrainType == 'Burst':
-        daqin_D = MCC128InSB(0,PDRange)
-        daqin_D.setOptions({"scaleFactor": 1})
-    elif DrainType == 'Single':
-        daqin_D = MCC128InSS(0,PDRange)
-        daqin_D.setOptions({"scaleFactor": 1})
-    # ---- MCC128 Input Port for Gate Current Measurement --------------
-    daqin_G = MCC128InSS(1,PGRange)
-    daqin_G.setOptions({"scaleFactor": 1})
-    if SourceHoldCurrent == 'Active':
+    daqout_S.setOptions({"scaleFactor":1})
+    if SourceCurrMode == 'Active':
         # ---- MCC128 Input Port for Source Current Measurement --------------
         daqin_S = MCC128InSS(4,PSRange)
-        daqin_S.setOptions({"scaleFactor": 1})
+        daqin_S.setOptions({"scaleFactor":1})
+#---- Drain Instrument Initialisation
+if DrainInst == 'External':
+    # ---- Keithley2401 for Drain Current --------------
+    daqin_D = Keithley2401(02)
+    daqin_D.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+elif DrainInst == 'Internal':
+    # ---- MCC128 Input Port for Drain Current --------------
+    if DrainType == 'Burst':
+        daqin_D = MCC128InSB(0,PDRange)
+        daqin_D.setOptions({"scaleFactor":1})
+    elif DrainType == 'Single':
+        daqin_D = MCC128InSS(0,PDRange)
+        daqin_D.setOptions({"scaleFactor":1})
+#---- Hold Instrument Initialisation
+if HoldInst == 'External':
+    # ---- Keithley2401 for Drain Current --------------
+    daqout_H = Keithley2401(03)
+    daqout_H.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    if HoldCurrMode == "Active":
+        daqin_H = Keithley2401(03)
+        daqin_H.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+elif HoldInst == 'Internal':
+    # ---- MCC152 Output Port for Hold Voltage --------------
+    daqout_H = MCC152Out(1)
+    daqout_H.setOptions({"scaleFactor":1})
+    if HoldCurrMode == 'Active':
         # ---- MCC128 Input Port for Hold Current Measurement --------------
         daqin_H = MCC128InSS(5,PHRange)
-        daqin_H.setOptions({"scaleFactor": 1})
+        daqin_H.setOptions({"scaleFactor":1})
+#---- Gate Instrument Initialisation
+if GateInst == 'External':
+    #---- Keithley 2401 or MCC128 Input Port for Femto for Ag/AgCl electrode current measurement --------------
+    if GateExt == 'K2401':
+        daqout_G = Keithley2401(04)
+        daqout_G.setOptions({"beepEnable": False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+        daqin_G = Keithley2401(04)
+        daqin_G.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    elif GateExt == 'Femto':
+        daqin_G = MCC128InSS(3)
+        daqin_G.setOptions({"scaleFactor": 1})
+elif GateInst == 'Internal':
+    # ---- MCC128 Input Port for Ag/AgCl electrode current Measurement --------------
+    daqin_G = MCC128InSS(1,PGRange)
+    daqin_G.setOptions({"scaleFactor": 1})
 
 def mapper(j): # Generates a k for dataframes running A-& from a j for dataframes running A-O -- last edited APM 11Nov25
     map = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,26,25,24,23,22,21,20,19,18,17,16,15,14])
@@ -250,8 +268,8 @@ def end(): # Operates mechanism to end the program entirely
         fLog.write('End: ' + str(datetime.now()) + '\n')
     daqout_S.goTo(0.0,delay=0.0)  # Run the source line back to zero
     daqout_H.goTo(0.0,delay=0.0)  # Run the hold line back to zero
-    if GateModeExt == 'K2401':
-        daqin_G.goTo(0.0,delay=0.0)  # Run the gate line back to zero if using a K2401
+    if (GateInst == "External" and GateExt == 'K2401'):
+        daqout_G.goTo(0.0,delay=0.0)  # Run the gate line back to zero if using a K2401
     CtrlTy.SysReset()
     ID.increaseID()
 
@@ -265,8 +283,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
 #    print('Set DAC Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
     daqout_S.goTo(abs(VSource),delay=0.0)  # Run the source line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
     daqout_H.goTo(abs(VHold),delay=0.0)  # Run the hold line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
-    if (GateModeExt == 'K2401' and VGate != 0.0):
-        daqin_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage if it's a Keithley and VGate is non-zero -- edited 09AUG26 APM
+    if (GateInst == 'External' and GateExt == 'K2401' and VGate != 0.0):
+        daqout_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage if it's a Keithley and VGate is non-zero -- edited 09AUG26 APM
     RD[0]=nGrab+1
     print('Measuring...')
     if ScanDir == 'Horizontal': # Implements data pull by scanning along bitlines starting from 1
@@ -279,30 +297,53 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 # ---- Set given device to measure
                 SBStart[i,j] = time.time()
                 #---- Grab device data
-                Drain = daqin_D.get('inputLevel')
+                if DrainInst == 'External':
+                    Drain == daqin_D.get('senseLevel')
+                elif DrainInst == 'Internal'
+                    Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
                 if Operation == 'Verbose':
-                    if DrainType == 'Burst':
-                        print (i,j,Drain[0],Drain[1],VSource,PDGain)
-                    elif DrainType == 'Single':
-                        print(i, j, Drain, VSource, PDGain)
-                    time.sleep(10)
-                if DrainType == 'Burst':
+                    if DrainInst == 'Internal':
+                        if DrainType == 'Burst':
+                            print (i,j,Drain[0],Drain[1],VSource,PDGain)
+                        elif DrainType == 'Single':
+                            print(i, j, Drain, VSource, PDGain)
+                        time.sleep(10)
+                    elif DrainInst == 'External':
+                        print(i,j,Drain[0],Drain[1],VSource,PDGain)
+                        time.sleep(10)
+                if GateInst == 'External':
                     Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
-                    Dterr.iloc[i,j] = abs((Drain[1]/Drain[0])*Dt.iloc[i,j])
-                elif DrainType == 'Single':
-                    Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
-                    Dterr.iloc[i,j] = 0.0
+                    Dterr.iloc[i, j] = 0.0
+                elif DrainInst == 'Internal':
+                    if DrainType == 'Burst':
+                        Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                        Dterr.iloc[i,j] = abs((Drain[1]/Drain[0])*Dt.iloc[i,j])
+                    elif DrainType == 'Single':
+                        Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                        Dterr.iloc[i,j] = 0.0
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
-                if GateModeExt == 'K2401':
-                    AgCl = daqin_G.get('senseLevel')
-                    Ig.iloc[i,j] = AgCl[0]
-                else: # Whether USB6216 or MCC128 it should still work
-                    Ig.iloc[i,j] = daqin_G.get('inputLevel')
+                if GateInst == 'Internal':
+                    Ig.iloc[i, j] = daqin_G.get('inputLevel')
+                elif GateInst == 'External':
+                   if GateExt == 'K2401':
+                        AgCl = daqin_G.get('senseLevel')
+                        Ig.iloc[i,j] = AgCl[0]
+                    else:
+                        Ig.iloc[i,j] = daqin_G.get('inputLevel')
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
-                if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
-                    Is.iloc[i,j] = daqin_S.get('inputLevel')
-                    Ih.iloc[i,j] = daqin_H.get('inputLevel')
+                if SourceCurrMode == 'Active':
+                    if SourceInst == 'Internal':
+                        Is.iloc[i,j] = daqin_S.get('inputLevel')
+                    elif SourceInst == 'External':
+                        SC = daqin_S.get('senseLevel')
+                        Is.iloc[i,j] = SC[0]
+                if HoldCurrMode == 'Active':
+                    if HoldInst == 'Internal':
+                        Ih.iloc[i,j] = daqin_H.get('inputLevel')
+                    elif HoldInst == 'External':
+                        HC = daqin_H.get('senseLevel')
+                        Ih.iloc[i,j] = HC[0]
                 if (j == (nWords-1)): # if the end of the bit line then
                     if (i == (nBits-1)): # check if this is the last bit line
                         CtrlTy.nodeToHold(k+1,i+1) # Set node back to hold because that's the end of the array
@@ -323,30 +364,53 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     CtrlTy.nodeToMeasure(k+1,i+1)
                 SBStart[i,j] = time.time()
                 # ---- Grab device data
-                Drain = daqin_D.get('inputLevel')
+                if DrainInst == 'External':
+                    Drain == daqin_D.get('senseLevel')
+                elif DrainInst == 'Internal'
+                    Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
                 if Operation == 'Verbose':
-                    if DrainType == 'Burst':
-                        print (i,j,Drain[0],Drain[1],VSource,PDGain)
-                    elif DrainType == 'Single':
-                        print(i, j, Drain, VSource, PDGain)
-                    time.sleep(10)
-                if DrainType == 'Burst':
-                    Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
-                    Dterr.iloc[i,j] = abs((Drain[1]/Drain[0])*Dt.iloc[i,j])
-                elif DrainType == 'Single':
-                    Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to conductance in microsiemens -- 30Oct25 APM
+                    if DrainInst == 'Internal':
+                        if DrainType == 'Burst':
+                            print (i,j,Drain[0],Drain[1],VSource,PDGain)
+                        elif DrainType == 'Single':
+                            print(i,j,Drain,VSource,PDGain)
+                        time.sleep(10)
+                    elif DrainInst == 'External':
+                        print(i,j,Drain[0],Drain[1],VSource,PDGain)
+                        time.sleep(10)
+                if GateInst == 'External':
+                    Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                     Dterr.iloc[i, j] = 0.0
+                elif DrainInst == 'Internal':
+                    if DrainType == 'Burst':
+                        Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                        Dterr.iloc[i,j] = abs((Drain[1]/Drain[0])*Dt.iloc[i,j])
+                    elif DrainType == 'Single':
+                        Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
+                        Dterr.iloc[i,j] = 0.0
                 # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
-                if GateModeExt == 'K2401':
-                    AgCl = daqin_G.get('senseLevel')
-                    Ig.iloc[i,j] = AgCl[0]
-                else: # Whether USB6216 or MCC128 it should still work
-                    Ig.iloc[i,j] = daqin_G.get('inputLevel')
+                if GateInst == 'Internal':
+                    Ig.iloc[i, j] = daqin_G.get('inputLevel')
+                elif GateInst == 'External':
+                   if GateExt == 'K2401':
+                        AgCl = daqin_G.get('senseLevel')
+                        Ig.iloc[i,j] = AgCl[0]
+                    else:
+                        Ig.iloc[i,j] = daqin_G.get('inputLevel')
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
-                if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
-                    Is.iloc[i,j] = daqin_S.get('inputLevel')
-                    Ih.iloc[i,j] = daqin_H.get('inputLevel')
+                if SourceCurrMode == 'Active':
+                    if SourceInst == 'Internal':
+                        Is.iloc[i,j] = daqin_S.get('inputLevel')
+                    elif SourceInst == 'External':
+                        SC = daqin_S.get('senseLevel')
+                        Is.iloc[i,j] = SC[0]
+                if HoldCurrMode == 'Active':
+                    if HoldInst == 'Internal':
+                        Ih.iloc[i,j] = daqin_H.get('inputLevel')
+                    elif HoldInst == 'External':
+                        HC = daqin_H.get('senseLevel')
+                        Ih.iloc[i,j] = HC[0]
                 if (i == (nBits-1)): # if the end of the word line then
                     if (j == (nWords-1)): # check if this is the last word line
                         CtrlTy.nodeToHold(k+1,i+1) # Set node back to hold because that's the end of the array
@@ -393,8 +457,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
     # ---- Run hold voltage back to zero
     daqout_H.goTo(0.0,delay=0.0)
     # ---- Run Ag/AgCl electrode back to zero
-    if (GateModeExt == 'K2401' and VGate != 0.0):
-        daqin_G.goTo(0.0,delay=0.0)
+    if (GateInst == 'External' and GateExt == 'K2401' and VGate != 0.0):
+        daqout_G.goTo(0.0,delay=0.0)
     # ---- Switch Multiplexer to off state.
     CtrlTy.SysReset()
     print('Update GUI')
