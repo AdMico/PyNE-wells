@@ -126,11 +126,11 @@ CtrlTy.SysInit()  # Initialises the multiplexer system for running a measurement
 #---- Source instrument Initialisation
 if SourceInst == 'External':
     # ---- Keithley2401 for Source Voltage --------------
-    daqout_S = Keithley2401(01)
-    daqout_S.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    daqout_S = Keithley2401(1)
+    daqout_S.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-2,"compliance":20.0E-3,"scaleFactor":1})
     if SourceCurrMode == "Active":
-        daqin_S = Keithley2401(01)
-        daqin_S.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+        daqin_S = Keithley2401(1)
+        daqin_S.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-2,"compliance":20.0E-3,"scaleFactor":1})
 elif SourceInst == 'Internal':
     # ---- MCC152 Output Port for Source Voltage --------------
     daqout_S = MCC152Out(0)
@@ -142,8 +142,8 @@ elif SourceInst == 'Internal':
 #---- Drain Instrument Initialisation
 if DrainInst == 'External':
     # ---- Keithley2401 for Drain Current --------------
-    daqin_D = Keithley2401(02)
-    daqin_D.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    daqin_D = Keithley2401(2)
+    daqin_D.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-2,"compliance":20.0E-3,"scaleFactor":1})
 elif DrainInst == 'Internal':
     # ---- MCC128 Input Port for Drain Current --------------
     if DrainType == 'Burst':
@@ -155,11 +155,11 @@ elif DrainInst == 'Internal':
 #---- Hold Instrument Initialisation
 if HoldInst == 'External':
     # ---- Keithley2401 for Drain Current --------------
-    daqout_H = Keithley2401(03)
-    daqout_H.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+    daqout_H = Keithley2401(3)
+    daqout_H.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-2,"compliance":20.0E-3,"scaleFactor":1})
     if HoldCurrMode == "Active":
-        daqin_H = Keithley2401(03)
-        daqin_H.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+        daqin_H = Keithley2401(3)
+        daqin_H.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-2,"compliance":20.0E-3,"scaleFactor":1})
 elif HoldInst == 'Internal':
     # ---- MCC152 Output Port for Hold Voltage --------------
     daqout_H = MCC152Out(1)
@@ -172,10 +172,10 @@ elif HoldInst == 'Internal':
 if GateInst == 'External':
     #---- Keithley 2401 or MCC128 Input Port for Femto for Ag/AgCl electrode current measurement --------------
     if GateExt == 'K2401':
-        daqout_G = Keithley2401(04)
-        daqout_G.setOptions({"beepEnable": False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
-        daqin_G = Keithley2401(04)
-        daqin_G.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+        daqout_G = Keithley2401(4)
+        daqout_G.setOptions({"beepEnable": False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-4,"compliance":1.0E-4,"scaleFactor":1})
+        daqin_G = Keithley2401(4)
+        daqin_G.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05E-4,"compliance":1.0E-4,"scaleFactor":1})
     elif GateExt == 'Femto':
         daqin_G = MCC128InSS(3)
         daqin_G.setOptions({"scaleFactor": 1})
@@ -299,7 +299,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 #---- Grab device data
                 if DrainInst == 'External':
                     Drain == daqin_D.get('senseLevel')
-                elif DrainInst == 'Internal'
+                elif DrainInst == 'Internal':
                     Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
                 if Operation == 'Verbose':
@@ -326,7 +326,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 if GateInst == 'Internal':
                     Ig.iloc[i, j] = daqin_G.get('inputLevel')
                 elif GateInst == 'External':
-                   if GateExt == 'K2401':
+                    if GateExt == 'K2401':
                         AgCl = daqin_G.get('senseLevel')
                         Ig.iloc[i,j] = AgCl[0]
                     else:
@@ -365,8 +365,8 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 SBStart[i,j] = time.time()
                 # ---- Grab device data
                 if DrainInst == 'External':
-                    Drain == daqin_D.get('senseLevel')
-                elif DrainInst == 'Internal'
+                    Drain = daqin_D.get('senseLevel')
+                elif DrainInst == 'Internal':
                     Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
                 if Operation == 'Verbose':
@@ -393,7 +393,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 if GateInst == 'Internal':
                     Ig.iloc[i, j] = daqin_G.get('inputLevel')
                 elif GateInst == 'External':
-                   if GateExt == 'K2401':
+                    if GateExt == 'K2401':
                         AgCl = daqin_G.get('senseLevel')
                         Ig.iloc[i,j] = AgCl[0]
                     else:
@@ -439,8 +439,12 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             # ---- send data from this grab to file
             with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList2[j]) + str(BitList[i]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
-                if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'): # Include Source and Hold Current measurements with Drain and Gate information.
+                if (SourceCurrMode == 'Active' and HoldCurrMode == 'Active'):
                     writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Is.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                elif (SourceCurrMode == 'Active' and HoldCurrMode == 'Inactive'):
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Is.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                elif (SourceCurrMode == 'Inactive' and HoldCurrMode == 'Active'):
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
                 else: # Include Drain and Gate information only.
                     writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
             #---- End of row timing
@@ -489,8 +493,12 @@ def measLoop():
             k = mapper(j)
             with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList2[k]+BitList[i]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
-                if (Instruments == 'Internal' and SourceHoldCurrent == 'Active'):
+                if (SourceCurrMode == 'Active' and HoldCurrMode == 'Active'):
                     writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Is (A)','Ih (A)','timestamp'])
+                elif (SourceCurrMode == 'Active' and HoldCurrMode == 'Inactive'):
+                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Is (A)','timestamp'])
+                elif (SourceCurrMode == 'Inactive' and HoldCurrMode == 'Active'):
+                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Ih (A)','timestamp'])
                 else:
                     writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','timestamp'])
     for i in range(ItersAR):

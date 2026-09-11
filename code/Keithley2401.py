@@ -121,12 +121,12 @@ class Keithley2401(Instrument.Instrument):
     def _setSenseRange(self, senseRange):
         mode = self.get("sourceMode", forceCached = False)
         if (mode == "voltage"): # when sourcing a voltage we usually sense current aka set its range
-            if float(senseRange) in (1.05E-4,1.05E-5,1.05E-6):   
+            if float(senseRange) in (1.05E0,1.05E-1,1.05E-2,1.05E-3,1.05E-4,1.05E-5,1.05E-6):
                 self.dev.write("SENS:CURR:RANG "+str(senseRange))
             else:
                 raise ValueError(
                     "\"{}\" is not a valid current measurement range for the Keithley 2401.".format(senseRange) +
-                    " Valid current sensing ranges are: 1.05E-4, 1.05E-5 and 1.05E-6 Amps and equivalent representations."
+                    " Valid current sensing ranges are: 1.05, 1.05E-1, 1.05E-2, 1.05E-3, 1.05E-4, 1.05E-5 and 1.05E-6 Amps and equivalent representations."
                 )
         elif (mode == "current"): # when sourcing a current we sense voltage 
             if float(senseRange) in (21.00,2.10,0.21):   

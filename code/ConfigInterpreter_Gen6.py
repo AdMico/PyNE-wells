@@ -28,7 +28,7 @@ class ConfigInterp:
     def SourceVoltage():
         if SourceInst == "External":  # External Instrument Settings
             SourceOutput = "K2401"
-        elif sourceInst == "Internal":  # Internal Instrument Settings
+        elif SourceInst == "Internal":  # Internal Instrument Settings
             SourceOutput = "MCC152/ao0"
         return SourceOutput
 
@@ -43,9 +43,9 @@ class ConfigInterp:
         if DrainInst == "External":  # External Instrument Settings
             if DrainExt == "K2401":
                 DrainCurrent = "K2401"
-            elif DrainExt == "Femto"
+            elif DrainExt == "Femto":
                 DrainCurrent = "MCC128/Ch2"
-        elif Instruments == "Internal":  # Internal Instrument Settings
+        elif DrainInst == "Internal":  # Internal Instrument Settings
             DrainCurrent = "MCC128/Ch0"
         return DrainCurrent
 
@@ -55,7 +55,7 @@ class ConfigInterp:
                 GateCurrent = "K2401"
             elif GateExt == "Femto":
                 GateCurrent = "MCC128/Ch3"
-        elif Instruments == "Internal":  # Internal Instrument Settings
+        elif GateInst == "Internal":  # Internal Instrument Settings
             GateCurrent = "MCC128/Ch1"
         return GateCurrent
 
@@ -120,7 +120,7 @@ class ConfigInterp:
         # Gain Setting for Gate Current Preamplifier.
         if GateInst == "External":  # External Instrument Setting
             if GateExt == "K2401":
-                PDGain float(1e0)
+                PGGain = float(1e0)
             elif GateExt == "Femto":
                 PGGain = FemtoTwoGain # Gain for the Femto connected to the gate line
         elif GateInst == "Internal":  # Internal Instrument Setting
@@ -153,7 +153,7 @@ class ConfigInterp:
         # Range Setting for Drain Current Preamplifier.
         if DrainInst == "External":  # External Instrument Setting
             if DrainExt == "K2401":
-                PDRange == "Auto"
+                PDRange = "Auto"
             elif DrainExt == "Femto":
                 PDRange = "BIP_10V"
         elif DrainInst == "Internal":  # Internal Instrument Only
@@ -170,7 +170,7 @@ class ConfigInterp:
                 PGRange = "Auto"
             elif GateExt == "Femto":
                 PGRange = "BIP_10V"
-        elif Instruments == "Internal":  # Internal Instrument Only
+        elif GateInst == "Internal":  # Internal Instrument Only
             if GateCirc == "TIA":
                 PGRange = "BIP_5V" # 5V range for TIA
             elif GateCirc == "CSA":

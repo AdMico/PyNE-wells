@@ -17,9 +17,9 @@ This informs various parts of the software about aspects of your bench setup. Ed
 ## IMPORTANT -- I've designed the software for two different instrument configurations: External and Internal
 ## 'External' runs with the Gen 5 instrument pack (K2401 in source, hold and gate, preamp to NIDAQ on drain) -- Needs to be run on a Windows PC with both the teensy and the NI-DAQ connected to that PC.
 ## 'Internal' runs with the Gen 6 instrument pack (everything via the MCC128/152 DAQHAT system) -- Needs to be run on a Raspberry Pi with the teensy connected to the Raspberry Pi
-SourceInst = 'Internal'
-DrainInst = 'Internal'
-HoldInst = 'Internal'
+SourceInst = 'External'
+DrainInst = 'External'
+HoldInst = 'External'
 GateInst = 'Internal'
 
 DrainExt = 'K2401' # 'K2401' if using K2401 on the drain line, 'Femto' if using DLPCA-200 on the drain line -- 09SEP26 APM
@@ -40,7 +40,7 @@ VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
 # AssayRun Settings
 ItersAR = int(5) # Number of iterations of device sampling to run before program ends
-WaitAR = float(30) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
+WaitAR = float(230) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- Added 30Oct25 APM
 basePath = '../data'
 GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- Added 11Sep25 APM
