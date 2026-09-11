@@ -15,20 +15,20 @@ AO1GoTo = -1.0
 
 # 1) Initialize Instruments
 #---- Keithley2401 Output Port for AO0 --------------
-daqout_AO0 = Keithley2401(01)
-daqout_AO0.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+daqout_AO0 = Keithley2401(1)
+daqout_AO0.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-2,"compliance":50.0e-3,"scaleFactor":1})
 
 #---- Keithley2401 Output Port for AO1 --------------
-daqout_AO1 = Keithley2401(02)
-daqout_AO1.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+daqout_AO1 = Keithley2401(2)
+daqout_AO1.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-2,"compliance":50.0e-3,"scaleFactor":1})
 
 #---- Keithley2401 Input Port for AI0 --------------
-daqin_AI0 = Keithley2401(01)
-daqin_AI0.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+daqin_AI0 = Keithley2401(1)
+daqin_AI0.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-2,"compliance":50.0e-3,"scaleFactor":1})
 
 #---- Keithley2401 Input Port for AI1 --------------
-daqin_AI1 = Keithley2401(02)
-daqin_AI1.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-4,"compliance":1.0e-4,"scaleFactor":1})
+daqin_AI1 = Keithley2401(2)
+daqin_AI1.setOptions({"beepEnable":False,"sourceMode":"voltage","sourceRange":10,"senseRange":1.05e-2,"compliance":50.0e-3,"scaleFactor":1})
 
 daqout_AO0.goTo(AO0GoTo,stepsize=0.01,delay=0.01)
 daqout_AO1.goTo(AO1GoTo,stepsize=0.01,delay=0.01)
