@@ -298,7 +298,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                 SBStart[i,j] = time.time()
                 #---- Grab device data
                 if DrainInst == 'External':
-                    Drain == daqin_D.get('senseLevel')
+                    Drain = daqin_D.get('senseLevel')
                 elif DrainInst == 'Internal':
                     Drain = daqin_D.get('inputLevel')
                 # ---- Calculate conductance values and uncertainties
@@ -312,7 +312,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     elif DrainInst == 'External':
                         print(i,j,Drain[0],Drain[1],VSource,PDGain)
                         time.sleep(10)
-                if GateInst == 'External':
+                if DrainInst == 'External':
                     Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                     Dterr.iloc[i, j] = 0.0
                 elif DrainInst == 'Internal':
@@ -379,7 +379,7 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     elif DrainInst == 'External':
                         print(i,j,Drain[0],Drain[1],VSource,PDGain)
                         time.sleep(10)
-                if GateInst == 'External':
+                if DrainInst == 'External':
                     Dt.iloc[i,j] = abs((Drain[0]/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                     Dterr.iloc[i, j] = 0.0
                 elif DrainInst == 'Internal':

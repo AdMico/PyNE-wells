@@ -30,8 +30,8 @@ TeensyPort = '/dev/ttyACM0' # Internal only -- Insert the Raspberry Pi port wher
 #TeensyPort = 'COM8' # External only -- Insert the PC port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
 
 # Scan Direction for the array: 'Horizontal' scans along bitlines, which are connected to drain; 'Vertical' scans along wordlines, which are connected to drain
-#ScanDir = 'Horizontal'
-ScanDir = 'Vertical'
+ScanDir = 'Horizontal'
+#ScanDir = 'Vertical'
 
 # Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
 VSource = float(-1.0) # Cannot exceed +/- 5V if using internal DAC
