@@ -281,8 +281,14 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
         fLog.write('Grab: '+str(nGrab+1)+' started: '+str(datetime.now())+'\n')
 #    print('Start of grab: ',nGrab+1) ## Keep for diagnostics; Off from 18JAN24 APM
 #    print('Set DAC Voltage')  ## Keep for diagnostics; Off from 17JAN24 APM
-    daqout_S.goTo(abs(VSource),delay=0.0)  # Run the source line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
-    daqout_H.goTo(abs(VHold),delay=0.0)  # Run the hold line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
+    if (SourceInst == 'Internal'):
+        daqout_S.goTo(abs(VSource),delay=0.0)  # Run the source line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
+    elif (SourceInst == 'External'):
+        daqout_S.goTo(VSource,delay=0.0)  # Run the source line up to specified voltage -- Edited 15SEP26 APM for K2401
+    if (HoldInst == 'Internal'):
+        daqout_H.goTo(abs(VHold),delay=0.0)  # Run the hold line up to specified voltage -- Edited to abs() 02SEP26 APM to deal with unipolarity of MCC152
+    elif (HoldInst == 'External'):
+        daqout_H.goTo(VHold,delay=0.0)  # Run the hold line up to specified voltage -- Edited 15SEP26 APM for K2401
     if (GateInst == 'External' and GateExt == 'K2401' and VGate != 0.0):
         daqout_G.goTo(VGate,delay=0.0)  # Run the gate up to specified voltage if it's a Keithley and VGate is non-zero -- edited 09AUG26 APM
     RD[0]=nGrab+1
