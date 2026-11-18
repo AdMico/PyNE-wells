@@ -461,15 +461,6 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     elif DrainType == "Single":
                         Dt.iloc[i,j] = abs((Drain/(VSource*PDGain))/1e-6)  ## Updated to Conductance in microsiemens -- 30Oct25 APM
                         Dterr.iloc[i,j] = 0.0
-                # ---- Generate the Ag/AgCl electrode data arrays -- edited for all options 09AUG26 APM
-                if GateInst == "Internal":
-                    Ig.iloc[i, j] = daqin_G.get("inputLevel")
-                elif GateInst == "External":
-                    if GateExt == "K2401":
-                        AgCl = daqin_G.get("senseLevel")
-                        Ig.iloc[i,j] = AgCl[0]
-                    else:
-                        Ig.iloc[i,j] = daqin_G.get("inputLevel")
                 # ---- If Instruments in Internal Mode and SourceHoldCurrent is Active get the source and hold currents -- Added 12AUG26 APM
                 if SourceCurrMode == "Active":
                     if SourceInst == "Internal":
@@ -477,12 +468,38 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
                     elif SourceInst == "External":
                         SC = daqin_S.get("senseLevel")
                         Is.iloc[i,j] = SC[0]
-                if HoldCurrMode == "Active":
+                if HGMode == "GateTIA":
+                    # ---- Generate the gate and hold current data arrays -- edited for all options 09AUG26 APM
+                    if GateInst == "Internal":
+                        Ig.iloc[i, j] = daqin_G.get("inputLevel")
+                    elif GateInst == "External":
+                        if GateExt == "K2401":
+                            GC = daqin_G.get("senseLevel")
+                            Ig.iloc[i,j] = GC[0]
+                        else:
+                            Ig.iloc[i,j] = daqin_G.get("inputLevel")
+                    if HGCurrMode == "Active":
+                        if HoldInst == "Internal":
+                            Ih.iloc[i,j] = daqin_H.get("inputLevel")
+                        elif HoldInst == "External":
+                            HC = daqin_H.get("senseLevel")
+                            Ih.iloc[i,j] = HC[0]
+                elif HGMode == "HoldTIA":
+                    # ---- Generate the gate and hold current data arrays -- edited for all options 09AUG26 APM
                     if HoldInst == "Internal":
-                        Ih.iloc[i,j] = daqin_H.get("inputLevel")
+                        Ih.iloc[i, j] = daqin_H.get("inputLevel")
                     elif HoldInst == "External":
-                        HC = daqin_H.get("senseLevel")
-                        Ih.iloc[i,j] = HC[0]
+                        if HoldExt == "K2401":
+                            HC = daqin_H.get("senseLevel")
+                            Ih.iloc[i,j] = HC[0]
+                        else:
+                            Ih.iloc[i,j] = daqin_H.get("inputLevel")
+                    if HGCurrMode == "Active":
+                        if GateInst == "Internal":
+                            Ig.iloc[i,j] = daqin_G.get("inputLevel")
+                        elif GateInst == "External":
+                            GC = daqin_G.get("senseLevel")
+                            Ig.iloc[i,j] = GC[0]
                 if (i == (nBits-1)): # if the end of the word line then
                     if (j == (nWords-1)): # check if this is the last word line
                         CtrlTy.nodeToHold(k+1,i+1) # Set node back to hold because that"s the end of the array
@@ -511,14 +528,20 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
             # ---- send data from this grab to file
             with open(runPath + "/" + t + "_" + measurementName + "_G" + str(nRun) + "_Dev" + str(WordList2[j]) + str(BitList[i]) + ".csv","a",newline="") as f:
                 writer = csv.writer(f)
-                if (SourceCurrMode == "Active" and HoldCurrMode == "Active"):
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Is.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
-                elif (SourceCurrMode == "Active" and HoldCurrMode == "Inactive"):
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Is.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
-                elif (SourceCurrMode == "Inactive" and HoldCurrMode == "Active"):
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
-                else: # Include Drain and Gate information only.
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                if (SourceCurrMode == "Active" and HGCurrMode == "Active"):
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Is.iloc[i,j]),str(Ih.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                elif (SourceCurrMode == "Active" and HGCurrMode == "Inactive"):
+                    if HGMode == "GateTIA":
+                        writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Is.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                    elif HGMode == "HoldTIA":
+                        writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Is.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                elif (SourceCurrMode == "Inactive" and HGCurrMode == "Active"):
+                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ih.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                else: # Include Drain and Hold/Gate information only.
+                    if HGMode == "GateTIA":
+                        writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                    elif HGMode == "HoldTIA":
+                        writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ih.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
             #---- End of row timing
             SBEnd[i,j] = time.time()
             SBTime[i,j] = SBEnd[i,j]-SBStart[i,j]
@@ -530,11 +553,15 @@ def grab(nGrab): # Code to implement a single grab of all the devices on a chip 
         writer.writerow(RD[:])
     # ---- Run source voltage back to zero
     daqout_S.goTo(0.0,delay=0.0)
-    # ---- Run hold voltage back to zero
-    daqout_H.goTo(0.0,delay=0.0)
-    # ---- Run Ag/AgCl electrode back to zero
-    if (GateInst == "External" and GateExt == "K2401" and VGate != 0.0):
-        daqout_G.goTo(0.0,delay=0.0)
+    # ---- Run hold and gate voltages back to zero
+    if HGMode == "GateTIA":
+        daqout_H.goTo(0.0,delay=0.0)  # Run the hold line back to zero
+        if (GateInst == "External" and GateExt == "K2401"):
+            daqout_G.goTo(0.0,delay=0.0)  # Run the gate line back to zero if using a K2401
+    elif HGMode == "HoldTIA":
+        daqout_G.goTo(0.0, delay=0.0)  # Run the gate line back to zero
+        if (HoldInst == "External" and HoldExt == "K2401"):
+            daqout_H.goTo(0.0, delay=0.0)  # Run the hold line back to zero if using a K2401
     # ---- Switch Multiplexer to off state.
     CtrlTy.SysReset()
     print("Update GUI")
@@ -565,14 +592,20 @@ def measLoop():
             k = mapper(j)
             with open(runPath+"/"+t+"_"+measurementName+"_G"+str(nRun)+"_Dev"+WordList2[k]+BitList[i]+".csv", "w", newline="") as f:
                 writer = csv.writer(f)
-                if (SourceCurrMode == "Active" and HoldCurrMode == "Active"):
-                    writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ig (A)","Is (A)","Ih (A)","timestamp"])
-                elif (SourceCurrMode == "Active" and HoldCurrMode == "Inactive"):
-                    writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ig (A)","Is (A)","timestamp"])
-                elif (SourceCurrMode == "Inactive" and HoldCurrMode == "Active"):
-                    writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ig (A)","Ih (A)","timestamp"])
+                if (SourceCurrMode == "Active" and HGCurrMode == "Active"):
+                    writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Is (A)","Ih (A)","Ig (A)","timestamp"])
+                elif (SourceCurrMode == "Active" and HGCurrMode == "Inactive"):
+                    if HGMode == "GateTIA":
+                        writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Is (A)","Ig (A)","timestamp"])
+                    elif HGMode == "HoldTIA":
+                        writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Is (A)","Ih (A)","timestamp"])
+                elif (SourceCurrMode == "Inactive" and HGCurrMode == "Active"):
+                    writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ih (A)","Ig (A)","timestamp"])
                 else:
-                    writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ig (A)","timestamp"])
+                    if HGMode == "GateTIA":
+                        writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ig (A)","timestamp"])
+                    elif HGMode == "HoldTIA":
+                        writer.writerow(["Grab","Conductance (uS)","Uncertainty (uS)","Ih (A)","timestamp"])
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
@@ -598,9 +631,7 @@ def measLoop():
     print()
     print("Measurement Daemon Completed Successfully")
     with open(dataPath + "/log_"+t+"_"+measurementName+".txt", "a") as fLog:
-        fLog.write("Measurement "+measurementName+"R"+str(nRun)+" finished at: "+str(datetime.now())+"\n"+
-                   "with "+str(nGrab+1)+" of "+str(ItersAR)+" grabs completed."+"\n \n"
-                   )
+        fLog.write("Measurement "+measurementName+"R"+str(nRun)+" finished at: "+str(datetime.now())+"\n"+"with "+str(nGrab+1)+" of "+str(ItersAR)+" grabs completed."+"\n\n")
     nRun += 1
     print("Finish Set-up")  ## Keep for diagnostics
     # ---- Reset the switch box to defaults.
