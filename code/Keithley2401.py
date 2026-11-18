@@ -1,11 +1,11 @@
 """
-Brought to PyNE-wells v2.0.0 on Thu Apr 30 2026 by APM
+Brought to PyNE-wells v2.1.0 on Wed Nov 18 2026 by APM
 
 @developers: Adam Micolich & Jan Gluschke
 
 @author: Jakob Seidl
 
-This is the K2401 module from PyNE-probe package, implemented here for monitoring the Ag/AgCl voltage and Ag/AgCl current
+This is the K2401 module from PyNE-probe package, implemented here for use as an external voltage source
 """
 
 import pyvisa as visa

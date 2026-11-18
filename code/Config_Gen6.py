@@ -1,5 +1,5 @@
 """
-Brought to PyNE-wells v2.0.0 on Fri Aug 15 2025 by APM
+Brought to PyNE-wells v2.1.0 on Wed Nov 18 2026 by APM
 
 @developers: Adam Micolich & Jan Gluschke
 
@@ -9,57 +9,60 @@ This informs various parts of the software about aspects of your bench setup. Ed
 ## IMPORTANT -- Software is designed to run on Raspberry Pi with a serial connection to the Teensy 4.1 microcontroller on the Gen6 board
 ## IMPORTANT -- YOU NEED TO SET TeensyPort CORRECTLY BEFORE YOU FIRST USE THE SOFTWARE to avoid having the relay switching fail -- see main README.md file
 
-## IMPORTANT -- I've designed the Gen6 system to enable individual ports to be configured as Internal or External -- Change from 09Sep26 APM
-# 'Internal' runs using the MCC128 as current input or MCC152 as voltage output, it will switch the control relays accordingly.
-# 'External' runs using a K2401 or DLPCA-200 as current input or K2401 as voltage output, it will switch the control relays accordingly.
+## IMPORTANT -- I"ve designed the Gen6 system to enable individual ports to be configured as Internal or External -- Change from 09Sep26 APM
+# "Internal" runs using the MCC128 as current input or MCC152 as voltage output, it will switch the control relays accordingly.
+# "External" runs using a K2401 or DLPCA-200 as current input or K2401 as voltage output, it will switch the control relays accordingly.
 
+## IMPORTANT -- I"ve designed the software for two different instrument configurations: External and Internal
+## "External" runs with the Gen 5 instrument pack (K2401 in source, hold and gate, preamp to NIDAQ on drain) -- Needs to be run on a Windows PC with both the teensy and the NI-DAQ connected to that PC.
+## "Internal" runs with the Gen 6 instrument pack (everything via the MCC128/152 DAQHAT system) -- Needs to be run on a Raspberry Pi with the teensy connected to the Raspberry Pi
+SourceInst = "Internal"
+DrainInst = "Internal"
+HoldInst = "Internal"
+GateInst = "Internal"
 
-## IMPORTANT -- I've designed the software for two different instrument configurations: External and Internal
-## 'External' runs with the Gen 5 instrument pack (K2401 in source, hold and gate, preamp to NIDAQ on drain) -- Needs to be run on a Windows PC with both the teensy and the NI-DAQ connected to that PC.
-## 'Internal' runs with the Gen 6 instrument pack (everything via the MCC128/152 DAQHAT system) -- Needs to be run on a Raspberry Pi with the teensy connected to the Raspberry Pi
-SourceInst = 'External'
-DrainInst = 'External'
-HoldInst = 'External'
-GateInst = 'Internal'
-
-DrainExt = 'K2401' # 'K2401' if using K2401 on the drain line, 'Femto' if using DLPCA-200 on the drain line -- 09SEP26 APM
-GateExt = 'K2401' # 'K2401' if using K2401 on the hold line, 'Femto' if using DLPCA-200 on the hold line -- 09SEP26 APM
+DrainExt = "K2401" # "K2401" if using K2401 on the drain line, "Femto" if using DLPCA-200 on the drain line -- 18NOV26 APM
+HoldExt = "K2401" # "K2401" if using K2401 on the hold line, "Femto" if using DLPCA-200 on the hold line -- 18NOV26 APM
+GateExt = "K2401" # "K2401" if using K2401 on the gate line, "Femto" if using DLPCA-200 on the gate line -- 18NOV26 APM
 
 # Information about which Raspberry Pi USB port you are using for the Teensy Serial Connection for switching relays
-TeensyPort = '/dev/ttyACM0' # Internal only -- Insert the Raspberry Pi port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
-#TeensyPort = 'COM8' # External only -- Insert the PC port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
+TeensyPort = "/dev/ttyACM0" # Insert the Raspberry Pi port where your Teensy 4.1 is connected here -- it can be found using the Arduino IDE
 
-# Scan Direction for the array: 'Horizontal' scans along bitlines, which are connected to drain; 'Vertical' scans along wordlines, which are connected to drain
-ScanDir = 'Horizontal'
-#ScanDir = 'Vertical'
+# Scan Direction for the array: "Horizontal" scans along bitlines, which are connected to drain; "Vertical" scans along wordlines, which are connected to drain
+ScanDir = "Horizontal"
+#ScanDir = "Vertical"
 
-# Settings for Measurement Biases -- VHold must be same sign as VSource (or zero) -- APM 28JUL26
+# Determine state of Control Relay 2: Whether Hold is on TIA and Gate on AO1 or vice versa -- APM 18NOV26
+HGMode = "HoldTIA"
+#HGMode = "GateTIA"
+
+# Settings for Measurement Biases -- APM 18NOV26
 VSource = float(-1.0) # Cannot exceed +/- 5V if using internal DAC
-VGate = float(0.0) # Must be zero if set to internal
+VGate = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 VHold = float(0.0) # Cannot exceed +/- 5V if using internal DAC
 
 # AssayRun Settings
 ItersAR = int(5) # Number of iterations of device sampling to run before program ends
 WaitAR = float(230) # Wait time in seconds between end of one iteration and start of the next -- APM to update to be pace independent
 zeroThres = float(0.1) # If conductance is lower, the GUI will display zero for GUI management reasons (but correct conductance will go to data file) -- Added 30Oct25 APM
-basePath = '../data'
-GuiUpdateMode = 'grab' # Two options 'point' to update each device pair in a grab, or 'grab' to only update at the end of the whole grab (faster) -- Added 11Sep25 APM
-PlotTwoMode = 'First' # Two options 'First' makes second Seaborn panel in Gen 5 difference to start, 'Last' makes difference to last grab.
-SourceCurrMode = 'Active' # 'Active' will measure source current, set to 'Inactive' to not do this.
-HoldCurrMode = 'Active' # 'Active' will measure hold current, set to 'Inactive' to not do this.
-Operation = 'Silent' # 'Verbose' spits out values at 10s pause; 'Silent' runs the code at full speed
+basePath = "../data"
+GuiUpdateMode = "grab" # Two options "point" to update each device pair in a grab, or "grab" to only update at the end of the whole grab (faster) -- Added 11Sep25 APM
+PlotTwoMode = "First" # Two options "First" makes second Seaborn panel in Gen 5 difference to start, "Last" makes difference to last grab.
+SourceCurrMode = "Active" # "Active" will measure source current, set to "Inactive" to not do this.
+HGCurrMode = "Active" # "Active" will measure hold/gate current (depending on which is on AO1), set to "Inactive" to not do this.
+Operation = "Silent" # "Verbose" spits out values at 10s pause; "Silent" runs the code at full speed
 
 # External Instrument Settings
 SR_Ext = float(4e5)  # Sample Rate in samples/second. 4e5 is maximum for single channel.
 SpC_Ext = int(1e3)  # Samples per Channel per measurement -- strongly influences speed
-FemtoOneGain = float(1e4) # Gain setting on Preamp 1 for the drain circuit to USB6216/ai0.
-FemtoTwoGain = float(1e4) # Gain setting on Preamp 2 for the gate circuit to USB6216/ai1 (virtual ground).
+FemtoOneGain = float(1e4) # Gain setting on Preamp 1 for the drain circuit to MCC128/Ch2 (virtual ground).
+FemtoTwoGain = float(1e4) # Gain setting on Preamp 2 for the hold/gate circuit to MCC128/Ch3 (virtual ground).
 
 # Internal Instrument Settings
 SR_Int = float(1e5)  # Sample Rate in samples/second. 1e5 is maximum for single channel.
 SpC_Int = int(1e3)  # Samples per Channel per measurement -- strongly influences speed
-DrainGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
-GateGain = 'Low' # 'Low' is 10^3 V/A and 'High' is 10^4 V/A
-DrainCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
-GateCirc = 'TIA' # 'TIA' uses the transimpedance amplifier circuit; 'CSA' uses the current sense amplifier circuit
-DrainType = 'Single' # 'Single' uses the MCC128SS.py for the drain; 'Burst' uses the MCC128SB.py for the drain
+DrainGain = "Low" # "Low" is 10^3 V/A and "High" is 10^4 V/A
+HGGain = "Low" # "Low" is 10^3 V/A and "High" is 10^4 V/A
+DrainCirc = "TIA" # "TIA" uses the transimpedance amplifier circuit; "CSA" uses the current sense amplifier circuit
+HGCirc = "TIA" # "TIA" uses the transimpedance amplifier circuit; "CSA" uses the current sense amplifier circuit
+DrainType = "Single" # "Single" uses the MCC128SS.py for the drain; "Burst" uses the MCC128SB.py for the drain

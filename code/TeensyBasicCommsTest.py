@@ -1,6 +1,14 @@
+"""
+Brought to PyNE-wells v2.1.0 on Wed Nov 18 2026 by APM
+
+@developers: Adam Micolich
+
+Python code handling basic serial comms to Teensy 4.1 to issue manual commands for Gen6 hardware debugging
+"""
+
 import serial
 
-port = "/dev/ttyACM0"#put your port here
+port = "/dev/ttyACM0" # put your port here
 baudrate = 9600
 ser = serial.Serial(port, baudrate)
 flag = True
@@ -21,7 +29,7 @@ while flag == True:
     if val=='exit':
         flag = False
     else:
-        tell(val) # send it to arduino
-        var = hear() # listen to arduino
-        print(var) #print what arduino sent
+        tell(val) # send it to Teensy
+        var = hear() # listen to Teensy
+        print(var) # print what Teensy sent
 

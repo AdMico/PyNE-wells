@@ -1,14 +1,14 @@
 """
-Brought to PyNE-wells v2.0.0 on Thu Apr 30 2026 by APM
+Brought to PyNE-wells v2.1.0 on Wed Nov 18 2026 by APM
 
-@developers: Adam Micolich & Jan Gluschke
+@developers: Adam Micolich
 
 Version of AssayRunGen5.py where the hardware lines are all stripped out so it can
 be run on machines outside the lab to test aspects of the GUI code.
 """
 
 import GlobalMeasID as ID
-from Config import PiBox,P1Gain,VSource,VGate,VHold,ItersAR,WaitAR,zeroThres,basePath,SR,SpC,GuiUpdateMode,GateMode
+from Config_Gen6 import VSource,VGate,VHold,ItersAR,WaitAR,zeroThres,basePath,GuiUpdateMode
 from SeabornInit import dataInit
 import pandas as pd
 import numpy as np
@@ -36,9 +36,6 @@ Dt = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=
 D0 = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
 dD = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
 Dterr = pd.DataFrame(np.zeros((nBits,nWords),dtype='float'),columns=WordList,index=BitList)
-if GateMode == 'K2401':
-    Ig = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList,index=BitList)
-    Vg = pd.DataFrame(np.zeros((nBits,nWords), dtype='float'),columns=WordList,index=BitList)
 RD = np.zeros(1459)
 GrabStart = np.zeros(ItersAR,dtype='float') # For use in determining time taken to run a grab
 GrabEnd = np.zeros(ItersAR,dtype='float') # For use in determining time taken to run a grab
@@ -46,7 +43,7 @@ GrabTime = np.zeros(ItersAR,dtype='float') # for use in determining time taken t
 GrabTime[:] = np.nan
 #---- Initialization of files for data and control
 stopText = """If you want to stop the program, simply replace this text with 'stop' and save it.""" # Resets the code used to end a grab before quitting program
-with open('stop.txt', 'w') as fStop: # Initialise stop button
+with open('../stop.txt', 'w') as fStop: # Initialise stop button
     fStop.write(stopText)
 nRun=1
 measurementName = str(ID.readCurrentSetup()) + str(ID.readCurrentID())
@@ -58,16 +55,11 @@ if not os.path.exists(dataPath):
 with open(dataPath + '/log_'+t+'_'+measurementName+'.txt', 'w') as fLog:
     fLog.write('Start: '+str(datetime.now()) + '\n' +
                'Assay Number: ' + measurementName + '\n' +
-               'Pi Box: ' + PiBox + '\n' +
-               'Preamp 1 gain: ' + str(P1Gain) + '\n' +
                'Source Voltage: ' + str(VSource) + ' V' + '\n' +
                'Hold Voltage: ' + str(VHold) + ' V' + '\n' +
                'Gate Voltage: ' + str(VGate) + ' V' + '\n' +
-               'NIDAQ Sample Rate: ' + str(SR) + ' Hz' + '\n' +
-               'NIDAQ Samples per Channel: ' + str(SpC) + '\n' +
                'Number of Grabs: ' + str(ItersAR) + '\n' +
-               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n' +
-               'Ag/AgCl electrode on: ' + GateMode + '\n \n'
+               'Time between Grabs: ' + str(WaitAR) + ' s' + '\n'
                )
 
 #---- Initialization of instruments
@@ -145,7 +137,7 @@ def grabStart(): # Operates the Grab Start button in the GUI
     updateThread.start()
 
 def stop(): # Operates mechanism to complete grab before ending program -- last edited APM 17Jan24
-    with open('stop.txt', 'w') as fStop:
+    with open('../stop.txt', 'w') as fStop:
         fStop.write('stop')
 
 def end(): # Operates mechanism to end the program entirely
@@ -200,10 +192,7 @@ def grab(nGrab,zeroThres): # Code to implement a single grab of all the devices 
             # ---- send data from this grab to file
             with open(runPath + '/' + t + '_' + measurementName + '_G' + str(nRun) + '_Dev' + str(WordList[j]) + str(BitList[i]) + '.csv','a',newline='') as f:
                 writer = csv.writer(f)
-                if GateMode == 'K2401':
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(Ig.iloc[i,j]),str(Vg.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
-                else:
-                    writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
+                writer.writerow([str(nGrab+1),str(Dt.iloc[i,j]),str(Dterr.iloc[i,j]),str(datetime.now().strftime("%H:%M:%S"))])
     #---- Drop all device data to megatable at end of grab
     with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'.csv','a',newline='') as f:
         writer = csv.writer(f)
@@ -239,10 +228,7 @@ def measLoop():
         for j in range(nWords):
             with open(runPath+'/'+t+'_'+measurementName+'_G'+str(nRun)+'_Dev'+WordList[j]+BitList[i]+'.csv', 'w', newline='') as f:
                 writer = csv.writer(f)
-                if GateMode == 'K2401':
-                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','Ig (A)','Vg (V)','timestamp'])
-                else:
-                    writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
+                writer.writerow(['Grab','Conductance (uS)','Uncertainty (uS)','timestamp'])
     for i in range(ItersAR):
         nGrab = i
         GrabStart[i] = time.time()
@@ -254,7 +240,7 @@ def measLoop():
         print(f'GrabTime = {GrabTime[i]:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         print(f'GT = {GT:.2f} s') ## Keep for diagnostics; Off from 11Sep25 APM
         #---- check for grab-stop signal
-        with open('stop.txt', 'r') as fStop:
+        with open('../stop.txt', 'r') as fStop:
             r = fStop.read()
             if r == 'stop':
                 print('Stopped safely after completed grab: ',nGrab+1)
